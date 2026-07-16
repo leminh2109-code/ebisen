@@ -55,3 +55,16 @@ export function today(): string {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
+
+/**
+ * Ngày hôm nay theo giờ Việt Nam, dạng "YYYY-MM-DD". Dùng ở server action (server
+ * chạy giờ UTC) để sale_date luôn đúng ngày lịch VN, không lệch lúc gần nửa đêm.
+ */
+export function todayVN(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+}

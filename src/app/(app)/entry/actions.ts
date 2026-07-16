@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { todayVN } from '@/lib/format';
 
 export type EntryState = { ok: boolean; error: string | null };
 
@@ -23,7 +24,8 @@ export async function createSale(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: 'Phiên đăng nhập hết hạn.' };
 
-  const sale_date = String(formData.get('sale_date') ?? '').trim();
+  // Ngày bán = ngày hôm nay (giờ VN). Form không còn ô chọn ngày.
+  const sale_date = todayVN();
   const menu_item_id = String(formData.get('menu_item_id') ?? '').trim() || null;
   const quantity = parseNumber(String(formData.get('quantity') ?? ''));
   let unit_price = parseNumber(String(formData.get('unit_price') ?? ''));
@@ -31,7 +33,6 @@ export async function createSale(
   const staff_id = String(formData.get('staff_id') ?? '').trim() || null;
   const note = String(formData.get('note') ?? '').trim() || null;
 
-  if (!sale_date) return { ok: false, error: 'Thiếu ngày bán.' };
   if (!menu_item_id) return { ok: false, error: 'Chọn món trong thực đơn.' };
   if (quantity === null || quantity <= 0) return { ok: false, error: 'Số lượng không hợp lệ.' };
 
@@ -61,7 +62,7 @@ export async function createSale(
 
   const { error } = await supabase.from('sales').insert({
     sale_date,
-    sold_at: new Date(sale_date).toISOString(),
+    // sold_at để trống → mặc định now() (đúng thời điểm gửi form).
     menu_item_id,
     cake_type: item.name, // snapshot tên món
     quantity,

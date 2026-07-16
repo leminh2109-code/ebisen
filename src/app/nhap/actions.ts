@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { todayVN } from '@/lib/format';
 import type { EntryState } from '@/app/(app)/entry/actions';
 
 /** Chuẩn hóa tiền/số: bỏ dấu chấm/phẩy ngăn cách. */
@@ -23,7 +24,8 @@ export async function submitPublicSale(
   const token = String(formData.get('token') ?? '').trim();
   if (!token) return { ok: false, error: 'Link không hợp lệ.' };
 
-  const sale_date = String(formData.get('sale_date') ?? '').trim();
+  // Ngày bán = ngày hôm nay (giờ VN). Form không còn ô chọn ngày.
+  const sale_date = todayVN();
   const menu_item_id = String(formData.get('menu_item_id') ?? '').trim() || null;
   const quantity = parseNumber(String(formData.get('quantity') ?? ''));
   const unit_price = parseNumber(String(formData.get('unit_price') ?? ''));
@@ -31,7 +33,6 @@ export async function submitPublicSale(
   const staff_id = String(formData.get('staff_id') ?? '').trim() || null;
   const note = String(formData.get('note') ?? '').trim() || null;
 
-  if (!sale_date) return { ok: false, error: 'Thiếu ngày bán.' };
   if (!menu_item_id) return { ok: false, error: 'Chọn món trong danh sách.' };
   if (quantity === null || quantity <= 0)
     return { ok: false, error: 'Số lượng không hợp lệ.' };

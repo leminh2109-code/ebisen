@@ -233,6 +233,10 @@ export type Database = {
         Args: Record<string, never>;
         Returns: string;
       };
+      set_public_form_slug: {
+        Args: { p_slug: string };
+        Returns: string;
+      };
     };
     Enums: {
       user_role: UserRole;

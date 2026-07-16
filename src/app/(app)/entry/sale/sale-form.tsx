@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef } from 'react';
 import { createSale, type EntryState } from '../actions';
-import { today, formatCurrency } from '@/lib/format';
+import { formatCurrency } from '@/lib/format';
 import { groupDigits, formatMoneyInput } from '@/lib/number-input';
 import type { MenuItem, Employee } from '@/lib/queries';
 
@@ -73,10 +73,6 @@ export default function SaleForm({
   return (
     <form ref={formRef} action={formAction} className="space-y-4">
       {token && <input type="hidden" name="token" value={token} />}
-      <Field label="Ngày bán" required>
-        <input name="sale_date" type="date" required defaultValue={today()} className={inputCls} />
-      </Field>
-
       <Field label="Món" required>
         <select
           ref={menuRef}
