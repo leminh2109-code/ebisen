@@ -35,7 +35,11 @@ const NAV: { section: string; items: NavItem[] }[] = [
   },
   {
     section: 'Cấu hình',
-    items: [{ href: '/menu', label: 'Thực đơn', icon: '☰' }],
+    items: [
+      { href: '/menu', label: 'Thực đơn', icon: '☰' },
+      { href: '/employees', label: 'Nhân viên', icon: '☺' },
+      { href: '/share', label: 'Link nhập liệu', icon: '🔗' },
+    ],
   },
 ];
 
@@ -51,9 +55,13 @@ export default function Sidebar({
 
   const nav = NAV.map((group) => ({
     ...group,
-    // Ẩn P&L và Thực đơn với staff (gate cứng ở server; đây chỉ là ẩn UI).
+    // Ẩn P&L, Thực đơn, Nhân viên với staff (gate cứng ở server; đây chỉ là ẩn UI).
     items: group.items.filter(
-      (item) => !(['/pnl', '/menu'].includes(item.href) && role !== 'owner'),
+      (item) =>
+        !(
+          ['/pnl', '/menu', '/employees', '/share'].includes(item.href) &&
+          role !== 'owner'
+        ),
     ),
   })).filter((g) => g.items.length > 0);
 

@@ -2,6 +2,7 @@
 // Toàn bộ số liệu tính ở DB (xem supabase/migrations/0002_redesign.sql), không tính ở đây.
 // Nguồn doanh thu chính thức = daily_revenue.
 import { createClient } from '@/lib/supabase/server';
+import type { PublicFormBootstrap } from '@/lib/supabase/types';
 
 export type MonthlyRevenue = { month: string; days: number; revenue: number; cakes: number };
 export type DailyRevenue = {
@@ -18,6 +19,7 @@ export type CategoryExpense = { month: string; category: string; expenses: numbe
 export type SaleRow = {
   id: string;
   sale_date: string;
+  sold_at: string;
   cake_type: string | null;
   quantity: number;
   unit_price: number;
@@ -87,8 +89,9 @@ export async function getSales(limit = 200): Promise<SaleRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('sales')
-    .select('id, sale_date, cake_type, quantity, unit_price, amount, source, staff, note')
+    .select('id, sale_date, sold_at, cake_type, quantity, unit_price, amount, source, staff, note')
     .order('sale_date', { ascending: false })
+    .order('sold_at', { ascending: false })
     .limit(limit);
   if (error) throw error;
   return data ?? [];
@@ -168,6 +171,32 @@ export async function getActiveMenu(): Promise<MenuItem[]> {
   return items.filter((m) => m.active);
 }
 
+export type Employee = {
+  id: string;
+  name: string;
+  phone: string | null;
+  active: boolean;
+  sort_order: number;
+};
+
+/** Nhân viên — tất cả (cho trang quản lý). */
+export async function getEmployees(): Promise<Employee[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('employees')
+    .select('id, name, phone, active, sort_order')
+    .order('sort_order', { ascending: true })
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Nhân viên đang làm (cho dropdown form nhập bán hàng). */
+export async function getActiveEmployees(): Promise<Employee[]> {
+  const items = await getEmployees();
+  return items.filter((e) => e.active);
+}
+
 /** Trung tâm chi phí đã dùng (gợi ý trong form). */
 export async function getCostCenters(): Promise<string[]> {
   const supabase = await createClient();
@@ -192,6 +221,27 @@ export async function getCakeTypes(): Promise<string[]> {
   const set = new Set<string>();
   for (const r of data ?? []) if (r.cake_type) set.add(r.cake_type);
   return [...set].sort();
+}
+
+/** Dữ liệu form công khai (menu + NV) theo token. Gọi RPC security definer. */
+export async function getPublicFormData(token: string): Promise<PublicFormBootstrap> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('public_form_bootstrap', { p_token: token });
+  if (error) throw error;
+  return data as PublicFormBootstrap;
+}
+
+/** Token link công khai đang active (owner đọc để hiển thị/copy). */
+export async function getPublicFormToken(): Promise<string | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('public_form_tokens')
+    .select('token')
+    .eq('active', true)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data?.token ?? null;
 }
 
 /** Role của user hiện tại — dùng để gate trang P&L. */

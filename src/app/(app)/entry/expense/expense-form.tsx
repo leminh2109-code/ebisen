@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from 'react';
 import { createExpense, type EntryState } from '../actions';
 import { today } from '@/lib/format';
+import { formatMoneyInput } from '@/lib/number-input';
 
 const initial: EntryState = { ok: false, error: null };
 
@@ -42,6 +43,7 @@ export default function ExpenseForm({
             name="amount"
             inputMode="numeric"
             required
+            onInput={(e) => formatMoneyInput(e.currentTarget)}
             className={`${inputCls} tabular`}
             placeholder="500.000"
           />

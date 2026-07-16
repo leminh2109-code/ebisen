@@ -33,7 +33,7 @@ export default async function DashboardPage() {
         }
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Doanh thu tháng này" amount={summary.thisMonthRevenue} />
         <StatCard label="Chi phí tháng này" amount={summary.thisMonthExpenses} />
         {isOwner ? (
@@ -47,6 +47,12 @@ export default async function DashboardPage() {
             Lãi/Lỗ chỉ chủ DN xem
           </div>
         )}
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <p className="text-sm text-muted">Số bánh bán tháng này</p>
+          <p className="mt-1 text-2xl font-semibold tabular">
+            {Number(summary.thisMonthCakes).toLocaleString('vi-VN')} bánh
+          </p>
+        </div>
       </div>
 
       {isOwner && (
@@ -55,13 +61,6 @@ export default async function DashboardPage() {
           <StatCard label="Lãi/Lỗ năm nay (YTD)" amount={summary.ytdProfit} tone="auto" />
         </div>
       )}
-
-      <div className="mt-4 rounded-xl border border-border bg-surface p-4">
-        <p className="text-sm text-muted">Số bánh bán tháng này</p>
-        <p className="mt-1 text-2xl font-semibold tabular">
-          {Number(summary.thisMonthCakes).toLocaleString('vi-VN')} bánh
-        </p>
-      </div>
 
       {isOwner && (
         <Card title="Lãi/Lỗ 6 tháng gần nhất" className="mt-6">

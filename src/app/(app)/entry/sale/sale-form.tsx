@@ -3,18 +3,43 @@
 import { useActionState, useEffect, useRef } from 'react';
 import { createSale, type EntryState } from '../actions';
 import { today, formatCurrency } from '@/lib/format';
-import type { MenuItem } from '@/lib/queries';
+import { groupDigits, formatMoneyInput } from '@/lib/number-input';
+import type { MenuItem, Employee } from '@/lib/queries';
 
 const initial: EntryState = { ok: false, error: null };
 const parse = (s: string) => Number(s.replace(/[.\s,]/g, '')) || 0;
 
-export default function SaleForm({ menu }: { menu: MenuItem[] }) {
-  const [state, action, pending] = useActionState(createSale, initial);
+type SaleAction = (state: EntryState, formData: FormData) => Promise<EntryState>;
+
+export default function SaleForm({
+  menu,
+  employees,
+  action = createSale,
+  token,
+}: {
+  menu: MenuItem[];
+  employees: Employee[];
+  /** Server action nhận (state, formData). Mặc định createSale (bản đăng nhập). */
+  action?: SaleAction;
+  /** Token của link công khai — chèn vào formData để server xác thực. */
+  token?: string;
+}) {
+  const [state, formAction, pending] = useActionState(action, initial);
   const formRef = useRef<HTMLFormElement>(null);
   const menuRef = useRef<HTMLSelectElement>(null);
   const qtyRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
   const totalRef = useRef<HTMLSpanElement>(null);
+  const sourceRef = useRef<HTMLSelectElement>(null);
+
+  // Tô màu ô Nguồn theo giá trị: TM = đỏ, CK = xanh dương (tương phản).
+  const paintSource = () => {
+    const el = sourceRef.current;
+    if (!el) return;
+    el.classList.remove('text-negative', 'text-blue-600', 'font-medium');
+    if (el.value === 'TM') el.classList.add('text-negative', 'font-medium');
+    else if (el.value === 'CK') el.classList.add('text-blue-600', 'font-medium');
+  };
 
   const recompute = () => {
     if (totalRef.current) {
@@ -27,7 +52,12 @@ export default function SaleForm({ menu }: { menu: MenuItem[] }) {
   const onMenuChange = () => {
     const id = menuRef.current?.value;
     const item = menu.find((m) => m.id === id);
-    if (item && priceRef.current) priceRef.current.value = String(item.price);
+    if (item && priceRef.current) priceRef.current.value = groupDigits(String(item.price));
+    recompute();
+  };
+
+  const onPriceInput = () => {
+    if (priceRef.current) formatMoneyInput(priceRef.current);
     recompute();
   };
 
@@ -35,12 +65,14 @@ export default function SaleForm({ menu }: { menu: MenuItem[] }) {
     if (state.ok) {
       formRef.current?.reset();
       if (totalRef.current) totalRef.current.textContent = formatCurrency(0);
+      paintSource();
       menuRef.current?.focus();
     }
   }, [state]);
 
   return (
-    <form ref={formRef} action={action} className="space-y-4">
+    <form ref={formRef} action={formAction} className="space-y-4">
+      {token && <input type="hidden" name="token" value={token} />}
       <Field label="Ngày bán" required>
         <input name="sale_date" type="date" required defaultValue={today()} className={inputCls} />
       </Field>
@@ -87,7 +119,7 @@ export default function SaleForm({ menu }: { menu: MenuItem[] }) {
             ref={priceRef}
             name="unit_price"
             inputMode="numeric"
-            onInput={recompute}
+            onInput={onPriceInput}
             className={`${inputCls} tabular`}
             placeholder="Tự điền theo món"
           />
@@ -103,10 +135,35 @@ export default function SaleForm({ menu }: { menu: MenuItem[] }) {
 
       <div className="grid grid-cols-2 gap-4">
         <Field label="Nguồn">
-          <input name="source" autoComplete="off" className={inputCls} placeholder="TM / CK" />
+          <select
+            ref={sourceRef}
+            name="source"
+            defaultValue="TM"
+            onChange={paintSource}
+            className={`${inputCls} text-negative font-medium`}
+          >
+            <option value="TM" className="text-negative">
+              TM (tiền mặt)
+            </option>
+            <option value="CK" className="text-blue-600">
+              CK (chuyển khoản)
+            </option>
+          </select>
         </Field>
         <Field label="Nhân viên">
-          <input name="staff" autoComplete="off" className={inputCls} />
+          <select name="staff_id" defaultValue="" className={inputCls}>
+            <option value="">— Chọn nhân viên —</option>
+            {employees.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.name}
+              </option>
+            ))}
+          </select>
+          {employees.length === 0 && (
+            <p className="mt-1 text-xs text-muted">
+              Chưa có nhân viên. Chủ DN vào trang Nhân viên để thêm.
+            </p>
+          )}
         </Field>
       </div>
 

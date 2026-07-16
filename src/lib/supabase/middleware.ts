@@ -4,7 +4,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 import type { Database } from './types';
 
 // Đường dẫn công khai, không cần đăng nhập.
-const PUBLIC_PATHS = ['/login', '/auth'];
+// /nhap = link nhập bán hàng công khai (gated bằng token trong URL, xem 0005).
+const PUBLIC_PATHS = ['/login', '/auth', '/nhap'];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

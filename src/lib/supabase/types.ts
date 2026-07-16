@@ -3,6 +3,15 @@
 
 export type UserRole = 'owner' | 'staff';
 
+/** Kết quả public_form_bootstrap: menu + nhân viên cho form công khai. */
+export type PublicFormBootstrap =
+  | { valid: false }
+  | {
+      valid: true;
+      menu: { id: string; name: string; price: number }[];
+      employees: { id: string; name: string }[];
+    };
+
 // Mỗi bảng cần Relationships để thỏa GenericTable của supabase-js.
 type Rel = [];
 
@@ -29,6 +38,20 @@ export type Database = {
         Update: { name?: string; price?: number; active?: boolean; sort_order?: number };
         Relationships: Rel;
       };
+      employees: {
+        Row: {
+          id: string;
+          name: string;
+          phone: string | null;
+          active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: { name: string; phone?: string | null; active?: boolean; sort_order?: number };
+        Update: { name?: string; phone?: string | null; active?: boolean; sort_order?: number };
+        Relationships: Rel;
+      };
       sales: {
         Row: {
           id: string;
@@ -42,6 +65,7 @@ export type Database = {
           source: string | null;
           customer_type: string | null;
           staff: string | null;
+          staff_id: string | null;
           note: string | null;
           created_at: string;
           created_by: string | null;
@@ -59,6 +83,7 @@ export type Database = {
           source?: string | null;
           customer_type?: string | null;
           staff?: string | null;
+          staff_id?: string | null;
           note?: string | null;
           created_by?: string | null;
         };
@@ -72,6 +97,7 @@ export type Database = {
           source?: string | null;
           customer_type?: string | null;
           staff?: string | null;
+          staff_id?: string | null;
           note?: string | null;
           updated_by?: string | null;
         };
@@ -108,6 +134,12 @@ export type Database = {
           note?: string | null;
           source?: string;
         };
+        Relationships: Rel;
+      };
+      public_form_tokens: {
+        Row: { id: string; token: string; active: boolean; created_at: string };
+        Insert: { token: string; active?: boolean };
+        Update: { active?: boolean };
         Relationships: Rel;
       };
       expenses: {
@@ -180,6 +212,27 @@ export type Database = {
     };
     Functions: {
       is_owner: { Args: Record<string, never>; Returns: boolean };
+      public_form_bootstrap: {
+        Args: { p_token: string };
+        Returns: PublicFormBootstrap;
+      };
+      public_submit_sale: {
+        Args: {
+          p_token: string;
+          p_sale_date: string;
+          p_menu_item_id: string;
+          p_quantity: number;
+          p_unit_price: number | null;
+          p_source: string | null;
+          p_staff_id: string | null;
+          p_note: string | null;
+        };
+        Returns: string;
+      };
+      regenerate_public_form_token: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
     };
     Enums: {
       user_role: UserRole;

@@ -28,7 +28,7 @@ export async function createSale(
   const quantity = parseNumber(String(formData.get('quantity') ?? ''));
   let unit_price = parseNumber(String(formData.get('unit_price') ?? ''));
   const source = String(formData.get('source') ?? '').trim() || null;
-  const staff = String(formData.get('staff') ?? '').trim() || null;
+  const staff_id = String(formData.get('staff_id') ?? '').trim() || null;
   const note = String(formData.get('note') ?? '').trim() || null;
 
   if (!sale_date) return { ok: false, error: 'Thiếu ngày bán.' };
@@ -47,6 +47,18 @@ export async function createSale(
 
   const amount = quantity * unit_price;
 
+  // Snapshot tên nhân viên từ bảng employees (giữ nguyên nếu sau này sửa/xóa NV).
+  let staff: string | null = null;
+  if (staff_id) {
+    const { data: emp } = await supabase
+      .from('employees')
+      .select('name')
+      .eq('id', staff_id)
+      .single();
+    if (!emp) return { ok: false, error: 'Nhân viên không tồn tại.' };
+    staff = emp.name;
+  }
+
   const { error } = await supabase.from('sales').insert({
     sale_date,
     sold_at: new Date(sale_date).toISOString(),
@@ -56,7 +68,8 @@ export async function createSale(
     unit_price,
     amount,
     source,
-    staff,
+    staff, // snapshot tên NV
+    staff_id,
     note,
     created_by: user.id,
   });

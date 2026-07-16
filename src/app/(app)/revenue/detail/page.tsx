@@ -1,14 +1,52 @@
 import Link from 'next/link';
-import { getSales } from '@/lib/queries';
-import { formatCurrency, formatDate } from '@/lib/format';
+import { getSales, type SaleRow } from '@/lib/queries';
+import { formatCurrency, today } from '@/lib/format';
 import { PageHeader, Card, EmptyState } from '@/components/ui';
+import {
+  SalesDetailTable,
+  type DayGroup,
+  type MonthGroup,
+} from './sales-detail-table';
 
 export const dynamic = 'force-dynamic';
+
+/** Nhóm sales (đã sắp xếp sale_date/sold_at giảm dần) theo tháng, rồi theo ngày. */
+function groupByMonthDay(sales: SaleRow[]): MonthGroup[] {
+  const months: MonthGroup[] = [];
+  let month: MonthGroup | undefined;
+  let day: DayGroup | undefined;
+
+  for (const s of sales) {
+    const monthKey = s.sale_date.slice(0, 7); // "YYYY-MM"
+    const dayKey = s.sale_date; // "YYYY-MM-DD"
+    const amount = Number(s.amount);
+    const quantity = Number(s.quantity);
+
+    if (!month || month.key !== monthKey) {
+      month = { key: monthKey, qty: 0, total: 0, days: [] };
+      months.push(month);
+      day = undefined;
+    }
+    if (!day || day.key !== dayKey) {
+      day = { key: dayKey, qty: 0, total: 0, rows: [] };
+      month.days.push(day);
+    }
+
+    day.rows.push(s);
+    day.qty += quantity;
+    day.total += amount;
+    month.qty += quantity;
+    month.total += amount;
+  }
+
+  return months;
+}
 
 export default async function SalesDetailPage() {
   const sales = await getSales(300);
   const total = sales.reduce((s, i) => s + Number(i.amount), 0);
   const qty = sales.reduce((s, i) => s + Number(i.quantity), 0);
+  const months = groupByMonthDay(sales);
 
   return (
     <div>
@@ -25,47 +63,13 @@ export default async function SalesDetailPage() {
         }
       />
 
-      <Card>
-        {sales.length === 0 ? (
+      {sales.length === 0 ? (
+        <Card>
           <EmptyState message="Chưa có lần bán nào." />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[680px]">
-              <thead>
-                <tr className="border-b border-border text-left text-muted">
-                  <th className="px-4 py-2 font-medium">Ngày</th>
-                  <th className="px-4 py-2 font-medium">Loại bánh</th>
-                  <th className="px-4 py-2 font-medium text-right">SL</th>
-                  <th className="px-4 py-2 font-medium text-right">Đơn giá</th>
-                  <th className="px-4 py-2 font-medium">Nguồn</th>
-                  <th className="px-4 py-2 font-medium text-right">Thành tiền</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sales.map((s) => (
-                  <tr
-                    key={s.id}
-                    className="border-b border-border last:border-0 hover:bg-background"
-                  >
-                    <td className="px-4 py-2.5 whitespace-nowrap">
-                      {formatDate(s.sale_date)}
-                    </td>
-                    <td className="px-4 py-2.5">{s.cake_type ?? '—'}</td>
-                    <td className="px-4 py-2.5 text-right tabular">{s.quantity}</td>
-                    <td className="px-4 py-2.5 text-right tabular">
-                      {formatCurrency(s.unit_price)}
-                    </td>
-                    <td className="px-4 py-2.5 text-muted">{s.source ?? ''}</td>
-                    <td className="px-4 py-2.5 text-right tabular font-medium whitespace-nowrap">
-                      {formatCurrency(s.amount)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+        </Card>
+      ) : (
+        <SalesDetailTable months={months} todayKey={today()} />
+      )}
     </div>
   );
 }

@@ -26,6 +26,10 @@ sụp đổ lý do migrate.
   - `manual` = owner sửa tay.
 - **`expenses`** — chi phí + `category` + `expense_type` (cố định/biến đổi) + `cost_center`.
 - **`menu`** (Thực đơn) — giá HIỆN TẠI mỗi món. `sales.menu_item_id` link tới đây.
+- **`employees`** (Nhân viên) — danh sách NV. `sales.staff_id` link tới đây; `sales.staff`
+  giữ SNAPSHOT tên NV lúc bán (đổi/xóa NV không ảnh hưởng sales cũ).
+- **`public_form_tokens`** — token bí mật cho LINK NHẬP CÔNG KHAI (`/nhap/[token]`).
+  Chỉ 1 token `active`. Owner tạo lại ở `/share` (thu hồi link cũ).
 - **`profiles`** — user + `role` (owner/staff). User ĐẦU TIÊN đăng ký tự thành owner.
 
 Views: `revenue_by_day`, `revenue_by_month`, `sales_by_month`, `expenses_by_month`,
@@ -45,9 +49,14 @@ Views: `revenue_by_day`, `revenue_by_month`, `sales_by_month`, `expenses_by_mont
 
 ## Phân quyền
 
-- P&L (`/pnl`) và Thực đơn (`/menu`) — **chỉ owner** (gate cứng ở server component +
-  RLS). Staff nhập sales/chi phí, xem báo cáo cơ bản.
+- P&L (`/pnl`), Thực đơn (`/menu`), Nhân viên (`/employees`), Link nhập liệu (`/share`)
+  — **chỉ owner** (gate cứng ở server component + RLS). Staff nhập sales/chi phí, xem
+  báo cáo cơ bản.
 - RLS bật trên mọi bảng. Ghi qua migration script dùng `service_role` (bypass RLS).
+- **Link nhập công khai** (`/nhap/[token]`, không đăng nhập): gated bằng token bí mật.
+  Anon KHÔNG có RLS insert — mọi thao tác đi qua hàm `security definer`
+  (`public_form_bootstrap`, `public_submit_sale`) tự kiểm token. KHÔNG dùng
+  service_role ở server. `/nhap` được whitelist trong `PUBLIC_PATHS` (middleware).
 
 ## Migrate Airtable (đã xong, giữ để tham khảo/chạy lại)
 

@@ -32,6 +32,16 @@ export function formatDate(iso: string | null | undefined): string {
   });
 }
 
+/** timestamptz -> "14:32" (giờ:phút, local) */
+export function formatTime(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleTimeString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 /** "2026-07-01" (month bucket) -> "Tháng 7/2026" */
 export function formatMonth(iso: string | null | undefined): string {
   if (!iso) return '';
