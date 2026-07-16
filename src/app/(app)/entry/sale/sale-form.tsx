@@ -107,7 +107,7 @@ export default function SaleForm({
             required
             onInput={recompute}
             className={`${inputCls} tabular`}
-            placeholder="2"
+            placeholder="Nhập số lượng"
           />
         </Field>
         <Field label="Đơn giá (₫)">
