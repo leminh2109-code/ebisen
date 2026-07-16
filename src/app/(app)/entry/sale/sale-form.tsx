@@ -3,19 +3,19 @@
 import { useActionState, useEffect, useRef } from 'react';
 import { createSale, type EntryState } from '../actions';
 import { today, formatCurrency } from '@/lib/format';
+import type { MenuItem } from '@/lib/queries';
 
 const initial: EntryState = { ok: false, error: null };
 const parse = (s: string) => Number(s.replace(/[.\s,]/g, '')) || 0;
 
-export default function SaleForm({ cakeTypes }: { cakeTypes: string[] }) {
+export default function SaleForm({ menu }: { menu: MenuItem[] }) {
   const [state, action, pending] = useActionState(createSale, initial);
   const formRef = useRef<HTMLFormElement>(null);
-  const firstFieldRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLSelectElement>(null);
   const qtyRef = useRef<HTMLInputElement>(null);
   const priceRef = useRef<HTMLInputElement>(null);
   const totalRef = useRef<HTMLSpanElement>(null);
 
-  // Cập nhật "Thành tiền" qua DOM (không dùng React state → không setState-in-effect).
   const recompute = () => {
     if (totalRef.current) {
       const amount = parse(qtyRef.current?.value ?? '') * parse(priceRef.current?.value ?? '');
@@ -23,40 +23,51 @@ export default function SaleForm({ cakeTypes }: { cakeTypes: string[] }) {
     }
   };
 
+  // Chọn món -> tự điền giá từ thực đơn (nhân viên vẫn sửa được để giảm giá).
+  const onMenuChange = () => {
+    const id = menuRef.current?.value;
+    const item = menu.find((m) => m.id === id);
+    if (item && priceRef.current) priceRef.current.value = String(item.price);
+    recompute();
+  };
+
   useEffect(() => {
     if (state.ok) {
       formRef.current?.reset();
       if (totalRef.current) totalRef.current.textContent = formatCurrency(0);
-      firstFieldRef.current?.focus();
+      menuRef.current?.focus();
     }
   }, [state]);
 
   return (
     <form ref={formRef} action={action} className="space-y-4">
       <Field label="Ngày bán" required>
-        <input
-          ref={firstFieldRef}
-          name="sale_date"
-          type="date"
-          required
-          defaultValue={today()}
-          className={inputCls}
-        />
+        <input name="sale_date" type="date" required defaultValue={today()} className={inputCls} />
       </Field>
 
-      <Field label="Loại bánh">
-        <input
-          name="cake_type"
-          list="cake-types"
-          autoComplete="off"
+      <Field label="Món" required>
+        <select
+          ref={menuRef}
+          name="menu_item_id"
+          required
+          defaultValue=""
+          onChange={onMenuChange}
           className={inputCls}
-          placeholder="VD: 2 tôm"
-        />
-        <datalist id="cake-types">
-          {cakeTypes.map((c) => (
-            <option key={c} value={c} />
+        >
+          <option value="" disabled>
+            — Chọn món —
+          </option>
+          {menu.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name} ({formatCurrency(m.price)})
+            </option>
           ))}
-        </datalist>
+        </select>
+        {menu.length === 0 && (
+          <p className="mt-1 text-xs text-negative">
+            Chưa có món nào. Chủ DN vào trang Thực đơn để thêm.
+          </p>
+        )}
       </Field>
 
       <div className="grid grid-cols-2 gap-4">
@@ -71,15 +82,14 @@ export default function SaleForm({ cakeTypes }: { cakeTypes: string[] }) {
             placeholder="2"
           />
         </Field>
-        <Field label="Đơn giá (₫)" required>
+        <Field label="Đơn giá (₫)">
           <input
             ref={priceRef}
             name="unit_price"
             inputMode="numeric"
-            required
             onInput={recompute}
             className={`${inputCls} tabular`}
-            placeholder="90.000"
+            placeholder="Tự điền theo món"
           />
         </Field>
       </div>
@@ -93,7 +103,7 @@ export default function SaleForm({ cakeTypes }: { cakeTypes: string[] }) {
 
       <div className="grid grid-cols-2 gap-4">
         <Field label="Nguồn">
-          <input name="source" autoComplete="off" className={inputCls} placeholder="TM" />
+          <input name="source" autoComplete="off" className={inputCls} placeholder="TM / CK" />
         </Field>
         <Field label="Nhân viên">
           <input name="staff" autoComplete="off" className={inputCls} />
@@ -105,13 +115,11 @@ export default function SaleForm({ cakeTypes }: { cakeTypes: string[] }) {
       </Field>
 
       {state.error && <p className="text-sm text-negative">{state.error}</p>}
-      {state.ok && (
-        <p className="text-sm text-positive">✓ Đã lưu. Nhập tiếp bên dưới.</p>
-      )}
+      {state.ok && <p className="text-sm text-positive">✓ Đã lưu. Nhập tiếp bên dưới.</p>}
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || menu.length === 0}
         className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-50"
       >
         {pending ? 'Đang lưu…' : 'Lưu bán hàng'}

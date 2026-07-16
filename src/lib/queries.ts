@@ -142,6 +142,32 @@ export async function getExpenseCategories(): Promise<string[]> {
   return [...set].sort();
 }
 
+export type MenuItem = {
+  id: string;
+  name: string;
+  price: number;
+  active: boolean;
+  sort_order: number;
+};
+
+/** Thực đơn — mọi món (cho trang quản lý). */
+export async function getMenu(): Promise<MenuItem[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('menu')
+    .select('id, name, price, active, sort_order')
+    .order('sort_order', { ascending: true })
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Món đang bán (cho dropdown form nhập bán hàng). */
+export async function getActiveMenu(): Promise<MenuItem[]> {
+  const items = await getMenu();
+  return items.filter((m) => m.active);
+}
+
 /** Trung tâm chi phí đã dùng (gợi ý trong form). */
 export async function getCostCenters(): Promise<string[]> {
   const supabase = await createClient();

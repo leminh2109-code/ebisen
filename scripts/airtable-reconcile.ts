@@ -49,30 +49,50 @@ async function main() {
     airtableSum('Chi phí tháng', 'Số tiền (Amount)'),
   ]);
 
-  const { data: rev } = await supabase.from('revenue_by_month').select('revenue');
+  // So sánh FIDELITY: chỉ phần lịch sử (source='airtable') phải khớp Airtable.
+  // Ngày 'auto' (doanh thu mới tự tính từ sales, chưa có trong bảng ngày Airtable)
+  // báo riêng — đó là dữ liệu mới hợp lệ, không phải lỗi migrate.
+  const { data: histRows } = await supabase
+    .from('daily_revenue')
+    .select('revenue')
+    .eq('source', 'airtable');
+  const { data: autoRows } = await supabase
+    .from('daily_revenue')
+    .select('revenue, revenue_date')
+    .eq('source', 'auto');
   const { data: exp } = await supabase.from('expenses_by_month').select('expenses');
-  const sbRevenue = (rev ?? []).reduce((s, r) => s + Number(r.revenue), 0);
+
+  const sbRevenueHist = (histRows ?? []).reduce((s, r) => s + Number(r.revenue), 0);
+  const sbRevenueAuto = (autoRows ?? []).reduce((s, r) => s + Number(r.revenue), 0);
   const sbExpense = (exp ?? []).reduce((s, r) => s + Number(r.expenses), 0);
 
   const rows = [
-    ['Doanh thu', atRevenue, sbRevenue],
+    ['Doanh thu (lịch sử)', atRevenue, sbRevenueHist],
     ['Chi phí', atExpense, sbExpense],
   ] as const;
 
-  console.log('\n              Airtable            Supabase              Lệch');
-  console.log('─'.repeat(66));
+  console.log('\n                        Airtable            Supabase              Lệch');
+  console.log('─'.repeat(76));
   let allMatch = true;
   for (const [label, at, sb] of rows) {
     const diff = sb - at;
     if (Math.abs(diff) >= 1) allMatch = false;
     const flag = Math.abs(diff) < 1 ? '✓' : '✗ LỆCH';
-    console.log(`${label.padEnd(10)} ${fmt(at).padStart(16)} ${fmt(sb).padStart(18)} ${fmt(diff).padStart(12)}  ${flag}`);
+    console.log(`${label.padEnd(22)} ${fmt(at).padStart(14)} ${fmt(sb).padStart(18)} ${fmt(diff).padStart(12)}  ${flag}`);
   }
-  console.log('─'.repeat(66));
+  console.log('─'.repeat(76));
+
+  if (autoRows && autoRows.length > 0) {
+    console.log(
+      `\nℹ ${autoRows.length} ngày doanh thu MỚI (tự tính từ sales, chưa có trong Airtable): ${fmt(sbRevenueAuto)}`,
+    );
+    console.log(`  (${autoRows.map((r) => r.revenue_date).join(', ')})`);
+  }
+
   console.log(
     allMatch
-      ? '\n✓ Khớp hoàn toàn. An toàn để hủy Airtable khi đủ 1 tháng khớp liên tục.\n'
-      : '\n✗ CÓ LỆCH. KHÔNG hủy Airtable. Kiểm tra mapping và logic tính toán.\n',
+      ? '\n✓ Phần lịch sử khớp hoàn toàn. An toàn để hủy Airtable khi đủ 1 tháng khớp liên tục.\n'
+      : '\n✗ CÓ LỆCH ở phần lịch sử. KHÔNG hủy Airtable. Kiểm tra mapping và logic tính toán.\n',
   );
   process.exit(allMatch ? 0 : 1);
 }

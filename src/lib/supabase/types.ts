@@ -15,11 +15,26 @@ export type Database = {
         Update: { full_name?: string | null; role?: UserRole };
         Relationships: Rel;
       };
+      menu: {
+        Row: {
+          id: string;
+          name: string;
+          price: number;
+          active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: { name: string; price?: number; active?: boolean; sort_order?: number };
+        Update: { name?: string; price?: number; active?: boolean; sort_order?: number };
+        Relationships: Rel;
+      };
       sales: {
         Row: {
           id: string;
           sold_at: string;
           sale_date: string;
+          menu_item_id: string | null;
           cake_type: string | null;
           quantity: number;
           unit_price: number;
@@ -36,6 +51,7 @@ export type Database = {
         Insert: {
           sold_at?: string;
           sale_date: string;
+          menu_item_id?: string | null;
           cake_type?: string | null;
           quantity?: number;
           unit_price?: number;
@@ -48,6 +64,7 @@ export type Database = {
         };
         Update: {
           sale_date?: string;
+          menu_item_id?: string | null;
           cake_type?: string | null;
           quantity?: number;
           unit_price?: number;

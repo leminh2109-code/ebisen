@@ -24,23 +24,34 @@ export async function createSale(
   if (!user) return { ok: false, error: 'Phiên đăng nhập hết hạn.' };
 
   const sale_date = String(formData.get('sale_date') ?? '').trim();
-  const cake_type = String(formData.get('cake_type') ?? '').trim() || null;
+  const menu_item_id = String(formData.get('menu_item_id') ?? '').trim() || null;
   const quantity = parseNumber(String(formData.get('quantity') ?? ''));
-  const unit_price = parseNumber(String(formData.get('unit_price') ?? ''));
+  let unit_price = parseNumber(String(formData.get('unit_price') ?? ''));
   const source = String(formData.get('source') ?? '').trim() || null;
   const staff = String(formData.get('staff') ?? '').trim() || null;
   const note = String(formData.get('note') ?? '').trim() || null;
 
   if (!sale_date) return { ok: false, error: 'Thiếu ngày bán.' };
+  if (!menu_item_id) return { ok: false, error: 'Chọn món trong thực đơn.' };
   if (quantity === null || quantity <= 0) return { ok: false, error: 'Số lượng không hợp lệ.' };
-  if (unit_price === null) return { ok: false, error: 'Đơn giá không hợp lệ.' };
+
+  // Snapshot tên món + giá từ thực đơn tại thời điểm bán. Nếu nhân viên sửa đơn
+  // giá (giảm giá), dùng giá đã sửa; nếu không, lấy giá menu hiện tại.
+  const { data: item } = await supabase
+    .from('menu')
+    .select('name, price')
+    .eq('id', menu_item_id)
+    .single();
+  if (!item) return { ok: false, error: 'Món không tồn tại.' };
+  if (unit_price === null) unit_price = Number(item.price);
 
   const amount = quantity * unit_price;
 
   const { error } = await supabase.from('sales').insert({
     sale_date,
     sold_at: new Date(sale_date).toISOString(),
-    cake_type,
+    menu_item_id,
+    cake_type: item.name, // snapshot tên món
     quantity,
     unit_price,
     amount,
