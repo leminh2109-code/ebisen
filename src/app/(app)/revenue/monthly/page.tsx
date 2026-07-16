@@ -31,13 +31,14 @@ export default async function RevenueMonthlyPage() {
 
       <Card>
         {rows.length === 0 ? (
-          <EmptyState message="Chưa có hóa đơn nào. Vào 'Nhập hóa đơn' để bắt đầu." />
+          <EmptyState message="Chưa có doanh thu nào." />
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-muted">
                 <th className="px-4 py-2 font-medium">Tháng</th>
-                <th className="px-4 py-2 font-medium text-right">Số hóa đơn</th>
+                <th className="px-4 py-2 font-medium text-right">Số ngày</th>
+                <th className="px-4 py-2 font-medium text-right">Số bánh</th>
                 <th className="px-4 py-2 font-medium text-right">Doanh thu</th>
               </tr>
             </thead>
@@ -45,8 +46,9 @@ export default async function RevenueMonthlyPage() {
               {rows.map((r) => (
                 <tr key={r.month} className="border-b border-border last:border-0">
                   <td className="px-4 py-2.5">{formatMonth(r.month)}</td>
+                  <td className="px-4 py-2.5 text-right tabular">{r.days}</td>
                   <td className="px-4 py-2.5 text-right tabular">
-                    {r.invoice_count}
+                    {Number(r.cakes).toLocaleString('vi-VN')}
                   </td>
                   <td className="px-4 py-2.5 text-right tabular font-medium">
                     {formatCurrency(r.revenue)}

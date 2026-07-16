@@ -1,39 +1,32 @@
-// Kiểu dữ liệu cho database. Viết tay để có type-safety ngay, khớp với
-// supabase/migrations/0001_init.sql. Khi schema thay đổi (sau migrate Airtable),
-// có thể regenerate bằng: supabase gen types typescript --local > src/lib/supabase/types.ts
+// Kiểu dữ liệu database, khớp supabase/migrations/0002_redesign.sql.
+// Regenerate khi schema đổi: supabase gen types typescript --local > src/lib/supabase/types.ts
 
 export type UserRole = 'owner' | 'staff';
 
-// Mỗi bảng cần khóa Relationships để thỏa GenericTable của supabase-js;
-// thiếu nó, .from() suy ra kiểu `never`. Để [] cho đơn giản (join vẫn hoạt động
-// ở runtime; type join dùng dạng lỏng và được chuẩn hóa trong queries.ts).
+// Mỗi bảng cần Relationships để thỏa GenericTable của supabase-js.
 type Rel = [];
 
 export type Database = {
   public: {
     Tables: {
       profiles: {
-        Row: {
-          id: string;
-          full_name: string | null;
-          role: UserRole;
-          created_at: string;
-        };
-        Insert: {
-          id: string;
-          full_name?: string | null;
-          role?: UserRole;
-        };
-        Update: {
-          full_name?: string | null;
-          role?: UserRole;
-        };
+        Row: { id: string; full_name: string | null; role: UserRole; created_at: string };
+        Insert: { id: string; full_name?: string | null; role?: UserRole };
+        Update: { full_name?: string | null; role?: UserRole };
         Relationships: Rel;
       };
-      customers: {
+      sales: {
         Row: {
           id: string;
-          name: string;
+          sold_at: string;
+          sale_date: string;
+          cake_type: string | null;
+          quantity: number;
+          unit_price: number;
+          amount: number;
+          source: string | null;
+          customer_type: string | null;
+          staff: string | null;
           note: string | null;
           created_at: string;
           created_by: string | null;
@@ -41,51 +34,62 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
-          name: string;
+          sold_at?: string;
+          sale_date: string;
+          cake_type?: string | null;
+          quantity?: number;
+          unit_price?: number;
+          amount: number;
+          source?: string | null;
+          customer_type?: string | null;
+          staff?: string | null;
           note?: string | null;
           created_by?: string | null;
         };
         Update: {
-          name?: string;
-          note?: string | null;
-          updated_by?: string | null;
-        };
-        Relationships: Rel;
-      };
-      expense_categories: {
-        Row: { id: string; name: string; created_at: string };
-        Insert: { name: string };
-        Update: { name?: string };
-        Relationships: Rel;
-      };
-      invoices: {
-        Row: {
-          id: string;
-          invoice_number: string;
-          customer_id: string | null;
-          issue_date: string;
-          amount: number;
-          note: string | null;
-          created_at: string;
-          created_by: string | null;
-          updated_at: string;
-          updated_by: string | null;
-        };
-        Insert: {
-          invoice_number: string;
-          customer_id?: string | null;
-          issue_date: string;
-          amount: number;
-          note?: string | null;
-          created_by?: string | null;
-        };
-        Update: {
-          invoice_number?: string;
-          customer_id?: string | null;
-          issue_date?: string;
+          sale_date?: string;
+          cake_type?: string | null;
+          quantity?: number;
+          unit_price?: number;
           amount?: number;
+          source?: string | null;
+          customer_type?: string | null;
+          staff?: string | null;
           note?: string | null;
           updated_by?: string | null;
+        };
+        Relationships: Rel;
+      };
+      daily_revenue: {
+        Row: {
+          revenue_date: string;
+          revenue: number;
+          cakes: number | null;
+          shrimp_used: number | null;
+          weather: string | null;
+          station_traffic: number | null;
+          note: string | null;
+          source: string;
+          updated_at: string;
+        };
+        Insert: {
+          revenue_date: string;
+          revenue?: number;
+          cakes?: number | null;
+          shrimp_used?: number | null;
+          weather?: string | null;
+          station_traffic?: number | null;
+          note?: string | null;
+          source?: string;
+        };
+        Update: {
+          revenue?: number;
+          cakes?: number | null;
+          shrimp_used?: number | null;
+          weather?: string | null;
+          station_traffic?: number | null;
+          note?: string | null;
+          source?: string;
         };
         Relationships: Rel;
       };
@@ -93,10 +97,11 @@ export type Database = {
         Row: {
           id: string;
           expense_date: string;
-          category_id: string | null;
-          vendor: string | null;
           amount: number;
-          note: string | null;
+          category: string | null;
+          expense_type: string | null;
+          cost_center: string | null;
+          description: string | null;
           created_at: string;
           created_by: string | null;
           updated_at: string;
@@ -104,18 +109,20 @@ export type Database = {
         };
         Insert: {
           expense_date: string;
-          category_id?: string | null;
-          vendor?: string | null;
           amount: number;
-          note?: string | null;
+          category?: string | null;
+          expense_type?: string | null;
+          cost_center?: string | null;
+          description?: string | null;
           created_by?: string | null;
         };
         Update: {
           expense_date?: string;
-          category_id?: string | null;
-          vendor?: string | null;
           amount?: number;
-          note?: string | null;
+          category?: string | null;
+          expense_type?: string | null;
+          cost_center?: string | null;
+          description?: string | null;
           updated_by?: string | null;
         };
         Relationships: Rel;
@@ -123,11 +130,22 @@ export type Database = {
     };
     Views: {
       revenue_by_day: {
-        Row: { day: string; invoice_count: number; revenue: number };
+        Row: {
+          day: string;
+          revenue: number;
+          cakes: number | null;
+          shrimp_used: number | null;
+          station_traffic: number | null;
+          weather: string | null;
+        };
         Relationships: Rel;
       };
       revenue_by_month: {
-        Row: { month: string; invoice_count: number; revenue: number };
+        Row: { month: string; days: number; revenue: number; cakes: number };
+        Relationships: Rel;
+      };
+      sales_by_month: {
+        Row: { month: string; sale_count: number; quantity: number; amount: number };
         Relationships: Rel;
       };
       expenses_by_month: {
@@ -135,12 +153,7 @@ export type Database = {
         Relationships: Rel;
       };
       expenses_by_month_category: {
-        Row: {
-          month: string;
-          category_id: string | null;
-          category_name: string;
-          expenses: number;
-        };
+        Row: { month: string; category: string; expenses: number };
         Relationships: Rel;
       };
       pnl_by_month: {

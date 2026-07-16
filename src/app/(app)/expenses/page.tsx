@@ -89,11 +89,8 @@ export default async function ExpensesPage() {
               </thead>
               <tbody>
                 {byCategory.map((c) => (
-                  <tr
-                    key={c.category_id ?? 'none'}
-                    className="border-b border-border last:border-0"
-                  >
-                    <td className="px-4 py-2.5">{c.category_name}</td>
+                  <tr key={c.category} className="border-b border-border last:border-0">
+                    <td className="px-4 py-2.5">{c.category}</td>
                     <td className="px-4 py-2.5 text-right tabular font-medium">
                       {formatCurrency(c.expenses)}
                     </td>

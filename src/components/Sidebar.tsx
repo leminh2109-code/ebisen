@@ -15,7 +15,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
     section: 'Doanh thu',
     items: [
       { href: '/revenue/monthly', label: 'Doanh thu tháng', icon: '↗' },
-      { href: '/revenue/detail', label: 'Doanh thu chi tiết', icon: '≣' },
+      { href: '/revenue/detail', label: 'Bán hàng chi tiết', icon: '≣' },
     ],
   },
   {
@@ -29,7 +29,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
   {
     section: 'Nhập liệu',
     items: [
-      { href: '/entry/invoice', label: 'Nhập hóa đơn', icon: '＋' },
+      { href: '/entry/sale', label: 'Nhập bán hàng', icon: '＋' },
       { href: '/entry/expense', label: 'Nhập chi phí', icon: '＋' },
     ],
   },

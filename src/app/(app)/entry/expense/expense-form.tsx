@@ -8,8 +8,10 @@ const initial: EntryState = { ok: false, error: null };
 
 export default function ExpenseForm({
   categories,
+  costCenters,
 }: {
-  categories: { id: string; name: string }[];
+  categories: string[];
+  costCenters: string[];
 }) {
   const [state, action, pending] = useActionState(createExpense, initial);
   const formRef = useRef<HTMLFormElement>(null);
@@ -47,29 +49,51 @@ export default function ExpenseForm({
       </div>
 
       <Field label="Danh mục">
-        <select name="category_id" className={inputCls} defaultValue="">
-          <option value="">— Chọn danh mục —</option>
+        <input
+          name="category"
+          list="expense-categories"
+          autoComplete="off"
+          className={inputCls}
+          placeholder="VD: Vận chuyển"
+        />
+        <datalist id="expense-categories">
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
+            <option key={c} value={c} />
           ))}
-        </select>
+        </datalist>
       </Field>
 
-      <Field label="Nhà cung cấp / Người nhận">
-        <input name="vendor" autoComplete="off" className={inputCls} />
-      </Field>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Loại chi phí">
+          <select name="expense_type" className={inputCls} defaultValue="">
+            <option value="">— Chọn —</option>
+            <option value="Cố định">Cố định</option>
+            <option value="Biến đổi">Biến đổi</option>
+          </select>
+        </Field>
+        <Field label="Trung tâm chi phí">
+          <input
+            name="cost_center"
+            list="cost-centers"
+            autoComplete="off"
+            className={inputCls}
+            placeholder="VD: Bao bì"
+          />
+          <datalist id="cost-centers">
+            {costCenters.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+        </Field>
+      </div>
 
-      <Field label="Ghi chú">
-        <textarea name="note" rows={2} className={inputCls} />
+      <Field label="Mô tả">
+        <textarea name="description" rows={2} className={inputCls} />
       </Field>
 
       {state.error && <p className="text-sm text-negative">{state.error}</p>}
       {state.ok && (
-        <p className="text-sm text-positive">
-          ✓ Đã lưu khoản chi. Nhập tiếp bên dưới.
-        </p>
+        <p className="text-sm text-positive">✓ Đã lưu. Nhập tiếp bên dưới.</p>
       )}
 
       <button

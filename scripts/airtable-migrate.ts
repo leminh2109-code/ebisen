@@ -1,48 +1,20 @@
 /**
- * Migrate dữ liệu Airtable -> Supabase.
+ * Migrate dữ liệu Airtable -> Supabase (model bánh tôm).
  * Chạy: npm run airtable:migrate
  *
- * Cần trong .env.local:
- *   AIRTABLE_TOKEN=pat...
- *   AIRTABLE_BASE_ID=app...
- *   NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
- *   SUPABASE_SERVICE_ROLE_KEY=...   (service_role — BỎ QUA RLS để nạp dữ liệu)
+ * Nạp 3 bảng:
+ *   "Ghi nhận bán hàng" -> sales
+ *   "Doanh thu tháng"   -> daily_revenue (source='airtable', được bảo vệ khỏi trigger)
+ *   "Chi phí tháng"     -> expenses
  *
- * ⚠️  MAPPING bên dưới là GIẢ ĐỊNH. Chạy `npm run airtable:discover` trước,
- *     rồi chỉnh tên bảng + tên trường cho khớp base thật của bạn.
+ * QUAN TRỌNG: nạp daily_revenue với source='airtable' để trigger sync_daily_revenue
+ * KHÔNG ghi đè số lịch sử bằng tổng sales (vốn ghi thiếu ở tháng 6).
  *
- * Script idempotent theo mức hợp lý: dùng invoice_number làm khóa chống trùng
- * cho hóa đơn. Chạy lại sẽ bỏ qua hóa đơn đã có.
+ * Script idempotent: xóa sạch 3 bảng trước khi nạp lại (chạy nhiều lần an toàn).
  */
-import 'dotenv/config';
+import { config } from 'dotenv';
+config({ path: '.env.local', quiet: true });
 import { createClient } from '@supabase/supabase-js';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MAPPING — CHỈNH CHO KHỚP BASE AIRTABLE THẬT (sau khi chạy airtable:discover)
-// ─────────────────────────────────────────────────────────────────────────────
-const MAP = {
-  invoices: {
-    table: 'Hóa đơn', // tên bảng Airtable
-    fields: {
-      invoice_number: 'Số hóa đơn',
-      issue_date: 'Ngày',
-      amount: 'Số tiền',
-      customer_name: 'Khách hàng',
-      note: 'Ghi chú',
-    },
-  },
-  expenses: {
-    table: 'Chi phí',
-    fields: {
-      expense_date: 'Ngày',
-      amount: 'Số tiền',
-      category_name: 'Danh mục',
-      vendor: 'Nhà cung cấp',
-      note: 'Ghi chú',
-    },
-  },
-} as const;
-// ─────────────────────────────────────────────────────────────────────────────
 
 const {
   AIRTABLE_TOKEN,
@@ -51,169 +23,164 @@ const {
   SUPABASE_SERVICE_ROLE_KEY,
 } = process.env;
 
-function requireEnv() {
-  const missing = [
-    ['AIRTABLE_TOKEN', AIRTABLE_TOKEN],
-    ['AIRTABLE_BASE_ID', AIRTABLE_BASE_ID],
-    ['NEXT_PUBLIC_SUPABASE_URL', NEXT_PUBLIC_SUPABASE_URL],
-    ['SUPABASE_SERVICE_ROLE_KEY', SUPABASE_SERVICE_ROLE_KEY],
-  ].filter(([, v]) => !v);
-  if (missing.length) {
-    console.error('Thiếu biến môi trường:', missing.map(([k]) => k).join(', '));
-    process.exit(1);
-  }
+if (!AIRTABLE_TOKEN || !AIRTABLE_BASE_ID || !NEXT_PUBLIC_SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('Thiếu biến môi trường (xem .env.example).');
+  process.exit(1);
 }
 
-type AirtableRecord = { id: string; fields: Record<string, unknown> };
+const supabase = createClient(NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
+});
 
-async function fetchAll(table: string): Promise<AirtableRecord[]> {
-  const out: AirtableRecord[] = [];
+type Rec = { id: string; fields: Record<string, unknown> };
+
+async function fetchAll(table: string): Promise<Rec[]> {
+  const out: Rec[] = [];
   let offset: string | undefined;
   do {
-    const url = new URL(
-      `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(table)}`,
-    );
-    url.searchParams.set('pageSize', '100');
-    if (offset) url.searchParams.set('offset', offset);
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` },
-    });
-    if (!res.ok) {
-      throw new Error(`Airtable ${table} lỗi ${res.status}: ${await res.text()}`);
-    }
-    const data = (await res.json()) as { records: AirtableRecord[]; offset?: string };
-    out.push(...data.records);
-    offset = data.offset;
+    const u = new URL(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(table)}`);
+    u.searchParams.set('pageSize', '100');
+    if (offset) u.searchParams.set('offset', offset);
+    const r = await fetch(u, { headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` } });
+    if (!r.ok) throw new Error(`${table} lỗi ${r.status}: ${await r.text()}`);
+    const d = (await r.json()) as { records: Rec[]; offset?: string };
+    out.push(...d.records);
+    offset = d.offset;
   } while (offset);
   return out;
 }
 
-function str(v: unknown): string | null {
+const str = (v: unknown): string | null => {
   if (v == null) return null;
   if (Array.isArray(v)) return v.map(String).join(', ');
+  if (typeof v === 'object') return null; // formula lỗi trả object -> bỏ
   return String(v);
-}
-function num(v: unknown): number | null {
+};
+const num = (v: unknown): number | null => {
   if (v == null || v === '') return null;
+  if (typeof v === 'object') return null;
   const n = Number(String(v).replace(/[.\s,₫đ]/gi, ''));
   return Number.isFinite(n) ? n : null;
-}
+};
+const dateOnly = (v: unknown): string | null => {
+  const s = str(v);
+  return s ? s.slice(0, 10) : null;
+};
 
 async function main() {
-  requireEnv();
-  const supabase = createClient(
-    NEXT_PUBLIC_SUPABASE_URL!,
-    SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } },
-  );
+  // Idempotent: xóa sạch trước.
+  console.log('Xóa dữ liệu cũ (nếu có)…');
+  await supabase.from('sales').delete().not('id', 'is', null);
+  await supabase.from('daily_revenue').delete().not('revenue_date', 'is', null);
+  await supabase.from('expenses').delete().not('id', 'is', null);
 
-  // Cache khách hàng & danh mục theo tên -> id.
-  const customerCache = new Map<string, string>();
-  const categoryCache = new Map<string, string>();
-
-  async function customerId(name: string | null): Promise<string | null> {
-    if (!name) return null;
-    if (customerCache.has(name)) return customerCache.get(name)!;
-    const { data: existing } = await supabase
-      .from('customers')
-      .select('id')
-      .eq('name', name)
-      .maybeSingle();
-    let id = existing?.id;
-    if (!id) {
-      const { data, error } = await supabase
-        .from('customers')
-        .insert({ name })
-        .select('id')
-        .single();
-      if (error) throw error;
-      id = data.id;
-    }
-    customerCache.set(name, id);
-    return id;
-  }
-
-  async function categoryId(name: string | null): Promise<string | null> {
-    if (!name) return null;
-    if (categoryCache.has(name)) return categoryCache.get(name)!;
-    const { data: existing } = await supabase
-      .from('expense_categories')
-      .select('id')
-      .eq('name', name)
-      .maybeSingle();
-    let id = existing?.id;
-    if (!id) {
-      const { data, error } = await supabase
-        .from('expense_categories')
-        .insert({ name })
-        .select('id')
-        .single();
-      if (error) throw error;
-      id = data.id;
-    }
-    categoryCache.set(name, id);
-    return id;
-  }
-
-  // ── Hóa đơn ──
-  console.log(`Đọc bảng "${MAP.invoices.table}"…`);
-  const invoiceRecords = await fetchAll(MAP.invoices.table);
-  const f = MAP.invoices.fields;
-  let invOk = 0,
-    invSkip = 0;
-  for (const rec of invoiceRecords) {
-    const invoice_number = str(rec.fields[f.invoice_number]);
-    const amount = num(rec.fields[f.amount]);
-    const issue_date = str(rec.fields[f.issue_date]);
-    if (!invoice_number || amount == null || !issue_date) {
-      invSkip++;
-      continue;
-    }
-    const { error } = await supabase.from('invoices').upsert(
-      {
-        invoice_number,
-        issue_date,
+  // Chuẩn bị SALES ← "Ghi nhận bán hàng" (nạp SAU daily_revenue)
+  const saleRecs = await fetchAll('Ghi nhận bán hàng');
+  const salesRows = saleRecs
+    .map((r) => {
+      const f = r.fields;
+      const sale_date = dateOnly(f['Ngày '] ?? f['Ngày bán']);
+      const quantity = num(f['Số lượng']) ?? 0;
+      const unit_price = num(f['Đơn giá']) ?? 0;
+      const amount = num(f['Thành tiền']) ?? quantity * unit_price;
+      if (!sale_date || amount == null) return null;
+      return {
+        sale_date,
+        sold_at: str(f['Ngày bán']) ?? new Date(sale_date).toISOString(),
+        cake_type: str(f['Loại bánh ']),
+        quantity,
+        unit_price,
         amount,
-        customer_id: await customerId(str(rec.fields[f.customer_name])),
-        note: str(rec.fields[f.note]),
-      },
-      { onConflict: 'invoice_number', ignoreDuplicates: true },
-    );
-    if (error) {
-      console.warn(`  bỏ qua ${invoice_number}: ${error.message}`);
-      invSkip++;
-    } else invOk++;
-  }
-  console.log(`  hóa đơn: ${invOk} nạp, ${invSkip} bỏ qua`);
+        source: str(f['Nguồn']),
+        customer_type: str(f['Loại khách hàng']),
+        staff: str(f['Nhân viên']),
+        note: str(f['Ghi chú']),
+      };
+    })
+    .filter(Boolean);
 
-  // ── Chi phí ──
-  console.log(`Đọc bảng "${MAP.expenses.table}"…`);
-  const expenseRecords = await fetchAll(MAP.expenses.table);
-  const g = MAP.expenses.fields;
-  let expOk = 0,
-    expSkip = 0;
-  for (const rec of expenseRecords) {
-    const amount = num(rec.fields[g.amount]);
-    const expense_date = str(rec.fields[g.expense_date]);
-    if (amount == null || !expense_date) {
-      expSkip++;
-      continue;
-    }
-    const { error } = await supabase.from('expenses').insert({
-      expense_date,
-      amount,
-      category_id: await categoryId(str(rec.fields[g.category_name])),
-      vendor: str(rec.fields[g.vendor]),
-      note: str(rec.fields[g.note]),
-    });
-    if (error) {
-      console.warn(`  bỏ qua chi phí: ${error.message}`);
-      expSkip++;
-    } else expOk++;
+  // ── DAILY_REVENUE ← "Doanh thu tháng" (source='airtable') — NẠP TRƯỚC ──
+  // Nạp trước để các ngày lịch sử được bảo vệ; khi nạp sales sau, trigger sẽ
+  // bỏ qua đúng những ngày này (không ghi đè số nhập tay bằng tổng sales).
+  console.log('Nạp "Doanh thu tháng" -> daily_revenue…');
+  const dailyRecs = await fetchAll('Doanh thu tháng');
+  // Gộp theo ngày (phòng khi có nhiều dòng cùng ngày).
+  const byDate = new Map<string, { revenue: number; cakes: number; shrimp: number; traffic: number; weather: string | null; note: string | null }>();
+  for (const r of dailyRecs) {
+    const f = r.fields;
+    const d = dateOnly(f['Ngày thu']);
+    const rev = num(f['Doanh thu ngày']);
+    if (!d || rev == null) continue;
+    const cur = byDate.get(d) ?? { revenue: 0, cakes: 0, shrimp: 0, traffic: 0, weather: null, note: null };
+    cur.revenue += rev;
+    cur.cakes += num(f['Số bánh']) ?? 0;
+    cur.shrimp += num(f['Số tôm sử dụng']) ?? 0;
+    cur.traffic += num(f['Lưu lượng trạm']) ?? 0;
+    cur.weather = str(f['Thời tiết']) ?? cur.weather;
+    cur.note = str(f['Ghi chú (Notes)']) ?? cur.note;
+    byDate.set(d, cur);
   }
-  console.log(`  chi phí: ${expOk} nạp, ${expSkip} bỏ qua`);
+  const dailyRows = [...byDate.entries()].map(([revenue_date, v]) => ({
+    revenue_date,
+    revenue: v.revenue,
+    cakes: v.cakes || null,
+    shrimp_used: v.shrimp || null,
+    station_traffic: v.traffic || null,
+    weather: v.weather,
+    note: v.note,
+    source: 'airtable',
+  }));
+  await insertChunks('daily_revenue', dailyRows);
+  console.log(`  daily_revenue: ${dailyRows.length} ngày (source=airtable, được bảo vệ)`);
 
-  console.log('\nXong. Đối chiếu số Supabase với Airtable trước khi hủy Airtable.');
+  // ── SALES (nạp sau; trigger bỏ qua các ngày airtable đã có) ──
+  console.log('Nạp "Ghi nhận bán hàng" -> sales…');
+  await insertChunks('sales', salesRows as object[]);
+  console.log(`  sales: ${salesRows.length} dòng`);
+
+  // Dọn các dòng daily_revenue 'auto' mà trigger tạo cho những ngày CÓ sales
+  // nhưng KHÔNG có trong bảng doanh thu ngày Airtable. Giữ daily_revenue lịch sử
+  // = đúng Airtable để reconcile khớp. (Sales của những ngày đó vẫn còn.)
+  const { data: autoRows } = await supabase
+    .from('daily_revenue')
+    .delete()
+    .eq('source', 'auto')
+    .select('revenue_date');
+  if (autoRows && autoRows.length > 0) {
+    console.log(`  (dọn ${autoRows.length} ngày 'auto' ngoài Airtable: ${autoRows.map((r) => r.revenue_date).join(', ')})`);
+  }
+
+  // ── EXPENSES ← "Chi phí tháng" ──
+  console.log('Nạp "Chi phí tháng" -> expenses…');
+  const expRecs = await fetchAll('Chi phí tháng');
+  const expRows = expRecs
+    .map((r) => {
+      const f = r.fields;
+      const expense_date = dateOnly(f['Ngày chi (Expense Date)']);
+      const amount = num(f['Số tiền (Amount)']);
+      if (!expense_date || amount == null) return null;
+      return {
+        expense_date,
+        amount,
+        category: str(f['Danh mục chi phí (Expense Category)']),
+        expense_type: str(f['Loại chi phí']),
+        cost_center: str(f['Trung tâm chi phí ']),
+        description: str(f['Mô tả (Description)']),
+      };
+    })
+    .filter(Boolean);
+  await insertChunks('expenses', expRows as object[]);
+  console.log(`  expenses: ${expRows.length} dòng`);
+
+  console.log('\nXong. Chạy `npm run airtable:reconcile` để đối chiếu số.');
+}
+
+async function insertChunks(table: string, rows: object[]) {
+  for (let i = 0; i < rows.length; i += 200) {
+    const chunk = rows.slice(i, i + 200);
+    const { error } = await supabase.from(table).insert(chunk);
+    if (error) throw new Error(`insert ${table}: ${error.message}`);
+  }
 }
 
 main().catch((e) => {

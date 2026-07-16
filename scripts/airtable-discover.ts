@@ -9,7 +9,8 @@
  * Đây là bước ĐẦU TIÊN của migration: xem base thật có gì trước khi chỉnh
  * schema Postgres (supabase/migrations/0001_init.sql) cho khớp.
  */
-import 'dotenv/config';
+import { config } from 'dotenv';
+config({ path: '.env.local' });
 
 const TOKEN = process.env.AIRTABLE_TOKEN;
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
