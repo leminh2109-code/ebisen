@@ -1,5 +1,11 @@
 import Link from 'next/link';
-import { getExpensesDetail, type ExpenseRow } from '@/lib/queries';
+import {
+  getExpensesDetail,
+  getExpenseCategories,
+  getCostCenters,
+  getCurrentRole,
+  type ExpenseRow,
+} from '@/lib/queries';
 import { formatCurrency } from '@/lib/format';
 import { PageHeader } from '@/components/ui';
 import { ExpensesDetailTable, type MonthGroup } from './expenses-detail-table';
@@ -24,7 +30,12 @@ function groupByMonth(rows: ExpenseRow[]): MonthGroup[] {
 }
 
 export default async function ExpensesDetailPage() {
-  const rows = await getExpensesDetail();
+  const [rows, categories, costCenters, role] = await Promise.all([
+    getExpensesDetail(),
+    getExpenseCategories(),
+    getCostCenters(),
+    getCurrentRole(),
+  ]);
   const total = rows.reduce((s, r) => s + Number(r.amount), 0);
   const months = groupByMonth(rows);
 
@@ -43,7 +54,12 @@ export default async function ExpensesDetailPage() {
         }
       />
 
-      <ExpensesDetailTable months={months} />
+      <ExpensesDetailTable
+        months={months}
+        categories={categories}
+        costCenters={costCenters}
+        canDelete={role === 'owner'}
+      />
     </div>
   );
 }

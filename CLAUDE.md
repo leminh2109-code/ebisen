@@ -79,11 +79,15 @@ bạn bạn). **Áp migration bằng cách dán SQL vào Supabase SQL Editor.** 
 ## Lệnh
 
 ```
-npm run dev         # dev (cổng 3000)
-npm run build       # production build
-npm run typecheck   # tsc --noEmit
-npm run lint        # eslint (chú ý rule react-hooks/set-state-in-effect)
+npm run dev -- -p 3100   # dev (CỔNG 3100 — TUYỆT ĐỐI KHÔNG dùng 3000)
+npm run build            # production build
+npm run typecheck        # tsc --noEmit
+npm run lint             # eslint (chú ý rule react-hooks/set-state-in-effect)
 ```
+
+**Cổng dev = 3100, KHÔNG BAO GIỜ dùng 3000.** Cổng 3000 dành cho việc khác trên máy
+chủ DN. `.claude/launch.json` đã chốt `-p 3100` (`autoPort: false`) — khi khởi động
+server qua công cụ preview cũng phải ra 3100.
 
 ## Deploy
 
