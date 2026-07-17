@@ -20,7 +20,10 @@ const NAV: { section: string; items: NavItem[] }[] = [
   },
   {
     section: 'Chi phí',
-    items: [{ href: '/expenses', label: 'Chi phí theo tháng', icon: '↘' }],
+    items: [
+      { href: '/expenses', label: 'Chi phí theo tháng', icon: '↘' },
+      { href: '/expenses/detail', label: 'Chi phí chi tiết', icon: '≣' },
+    ],
   },
   {
     section: 'Lãi/Lỗ',
@@ -65,6 +68,13 @@ export default function Sidebar({
     ),
   })).filter((g) => g.items.length > 0);
 
+  // Href khớp cụ thể nhất với path hiện tại (tránh cả cha /expenses lẫn con
+  // /expenses/detail cùng sáng). Chọn href dài nhất là tiền tố của pathname.
+  const activeHref = nav
+    .flatMap((g) => g.items.map((i) => i.href))
+    .filter((h) => pathname === h || pathname.startsWith(`${h}/`))
+    .sort((a, b) => b.length - a.length)[0];
+
   return (
     <>
       {/* Topbar mobile */}
@@ -104,9 +114,7 @@ export default function Sidebar({
               </p>
               <ul className="space-y-0.5">
                 {group.items.map((item) => {
-                  const active =
-                    pathname === item.href ||
-                    pathname.startsWith(`${item.href}/`);
+                  const active = item.href === activeHref;
                   return (
                     <li key={item.href}>
                       <Link

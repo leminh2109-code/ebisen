@@ -2,7 +2,7 @@
 // Toàn bộ số liệu tính ở DB (xem supabase/migrations/0002_redesign.sql), không tính ở đây.
 // Nguồn doanh thu chính thức = daily_revenue.
 import { createClient } from '@/lib/supabase/server';
-import type { PublicFormBootstrap } from '@/lib/supabase/types';
+import type { PublicFormBootstrap, PublicSalesView } from '@/lib/supabase/types';
 
 export type MonthlyRevenue = { month: string; days: number; revenue: number; cakes: number };
 export type DailyRevenue = {
@@ -15,7 +15,25 @@ export type DailyRevenue = {
 };
 export type MonthlyExpense = { month: string; expense_count: number; expenses: number };
 export type MonthlyPnl = { month: string; revenue: number; expenses: number; profit: number };
-export type CategoryExpense = { month: string; category: string; expenses: number };
+/** Một nhóm chi phí (theo danh mục / loại / trung tâm chi phí) trong 1 tháng. */
+export type ExpenseGroupRow = {
+  month: string;
+  key: string;
+  expense_count: number;
+  expenses: number;
+};
+/** Chiều phân nhóm chi phí để phân tích. */
+export type ExpenseDimension = 'category' | 'expense_type' | 'cost_center';
+/** Một khoản chi lẻ (cho trang Chi phí chi tiết). */
+export type ExpenseRow = {
+  id: string;
+  expense_date: string;
+  amount: number;
+  category: string | null;
+  expense_type: string | null;
+  cost_center: string | null;
+  description: string | null;
+};
 export type SaleRow = {
   id: string;
   sale_date: string;
@@ -64,15 +82,47 @@ export async function getExpensesByMonth(): Promise<MonthlyExpense[]> {
   return data ?? [];
 }
 
-export async function getExpensesByCategory(month: string): Promise<CategoryExpense[]> {
+// Mỗi chiều đọc từ một view riêng; cột nhóm alias về `key` để dùng chung UI.
+// Tính toán (sum/count/trim) nằm ở view — xem 0007_expense_groups.sql.
+const EXPENSE_GROUP_VIEW = {
+  category: { view: 'expenses_by_month_category', col: 'category' },
+  expense_type: { view: 'expenses_by_month_type', col: 'expense_type' },
+  cost_center: { view: 'expenses_by_month_cost_center', col: 'cost_center' },
+} as const satisfies Record<ExpenseDimension, { view: string; col: string }>;
+
+/** Chi phí nhóm theo `dimension`, mọi tháng (mới → cũ, trong tháng: lớn → nhỏ). */
+export async function getExpensesGrouped(
+  dimension: ExpenseDimension,
+): Promise<ExpenseGroupRow[]> {
+  const { view, col } = EXPENSE_GROUP_VIEW[dimension];
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from('expenses_by_month_category')
-    .select('*')
-    .eq('month', month)
+    .from(view)
+    .select(`month, key:${col}, expense_count, expenses`)
+    .order('month', { ascending: false })
     .order('expenses', { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as unknown as ExpenseGroupRow[];
+}
+
+/** Toàn bộ khoản chi lẻ (mới → cũ) cho trang Chi phí chi tiết. */
+export async function getExpensesDetail(): Promise<ExpenseRow[]> {
+  const supabase = await createClient();
+  const PAGE = 1000;
+  const all: ExpenseRow[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('expenses')
+      .select('id, expense_date, amount, category, expense_type, cost_center, description')
+      .order('expense_date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all.push(...(data as ExpenseRow[]));
+    if (data.length < PAGE) break;
+  }
+  return all;
 }
 
 export async function getPnlByMonth(): Promise<MonthlyPnl[]> {
@@ -85,16 +135,30 @@ export async function getPnlByMonth(): Promise<MonthlyPnl[]> {
   return data ?? [];
 }
 
-export async function getSales(limit = 200): Promise<SaleRow[]> {
+/**
+ * Lấy TOÀN BỘ sales (mới → cũ). Phân trang theo range để vượt cap mặc định
+ * 1000 dòng của PostgREST — nếu chỉ bỏ `.limit()` thì Supabase vẫn chặn thầm
+ * lặng ở 1000 dòng và các ngày cũ nhất lại bị mất khỏi trang chi tiết.
+ */
+export async function getSales(): Promise<SaleRow[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('sales')
-    .select('id, sale_date, sold_at, cake_type, quantity, unit_price, amount, source, staff, note')
-    .order('sale_date', { ascending: false })
-    .order('sold_at', { ascending: false })
-    .limit(limit);
-  if (error) throw error;
-  return data ?? [];
+  const PAGE = 1000;
+  const all: SaleRow[] = [];
+
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('sales')
+      .select('id, sale_date, sold_at, cake_type, quantity, unit_price, amount, source, staff, note')
+      .order('sale_date', { ascending: false })
+      .order('sold_at', { ascending: false })
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < PAGE) break;
+  }
+
+  return all;
 }
 
 /** Tổng quan tháng hiện tại cho Dashboard. */
@@ -231,11 +295,32 @@ export async function getPublicFormData(token: string): Promise<PublicFormBootst
   return data as PublicFormBootstrap;
 }
 
-/** Token link công khai đang active (owner đọc để hiển thị/copy). */
+/** Token link nhập công khai đang active (owner đọc để hiển thị/copy). */
 export async function getPublicFormToken(): Promise<string | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from('public_form_tokens')
+    .select('token')
+    .eq('active', true)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data?.token ?? null;
+}
+
+/** Bán hàng chi tiết (chỉ đọc) theo token link xem công khai. RPC security definer. */
+export async function getPublicSalesView(token: string): Promise<PublicSalesView> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('public_sales_view', { p_token: token });
+  if (error) throw error;
+  return data as PublicSalesView;
+}
+
+/** Token link XEM công khai đang active (owner đọc để hiển thị/copy). */
+export async function getPublicViewToken(): Promise<string | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('public_view_tokens')
     .select('token')
     .eq('active', true)
     .order('created_at', { ascending: false })

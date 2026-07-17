@@ -5,7 +5,8 @@ import type { Database } from './types';
 
 // Đường dẫn công khai, không cần đăng nhập.
 // /nhap = link nhập bán hàng công khai (gated bằng token trong URL, xem 0005).
-const PUBLIC_PATHS = ['/login', '/auth', '/nhap'];
+// /xem  = link XEM bán hàng chi tiết công khai, chỉ đọc (token, xem 0008).
+const PUBLIC_PATHS = ['/login', '/auth', '/nhap', '/xem'];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

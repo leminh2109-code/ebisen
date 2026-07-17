@@ -12,6 +12,22 @@ export type PublicFormBootstrap =
       employees: { id: string; name: string }[];
     };
 
+/** Một dòng bán hàng cho link XEM công khai (chỉ các cột bảng chi tiết hiển thị). */
+export type PublicSaleRow = {
+  id: string;
+  sale_date: string;
+  sold_at: string;
+  cake_type: string | null;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+  source: string | null;
+};
+/** Kết quả public_sales_view: toàn bộ bán hàng chi tiết (nếu token hợp lệ). */
+export type PublicSalesView =
+  | { valid: false }
+  | { valid: true; sales: PublicSaleRow[] };
+
 // Mỗi bảng cần Relationships để thỏa GenericTable của supabase-js.
 type Rel = [];
 
@@ -142,6 +158,12 @@ export type Database = {
         Update: { active?: boolean };
         Relationships: Rel;
       };
+      public_view_tokens: {
+        Row: { id: string; token: string; active: boolean; created_at: string };
+        Insert: { token: string; active?: boolean };
+        Update: { active?: boolean };
+        Relationships: Rel;
+      };
       expenses: {
         Row: {
           id: string;
@@ -202,7 +224,15 @@ export type Database = {
         Relationships: Rel;
       };
       expenses_by_month_category: {
-        Row: { month: string; category: string; expenses: number };
+        Row: { month: string; category: string; expense_count: number; expenses: number };
+        Relationships: Rel;
+      };
+      expenses_by_month_type: {
+        Row: { month: string; expense_type: string; expense_count: number; expenses: number };
+        Relationships: Rel;
+      };
+      expenses_by_month_cost_center: {
+        Row: { month: string; cost_center: string; expense_count: number; expenses: number };
         Relationships: Rel;
       };
       pnl_by_month: {
@@ -234,6 +264,18 @@ export type Database = {
         Returns: string;
       };
       set_public_form_slug: {
+        Args: { p_slug: string };
+        Returns: string;
+      };
+      public_sales_view: {
+        Args: { p_token: string };
+        Returns: PublicSalesView;
+      };
+      regenerate_public_view_token: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
+      set_public_view_slug: {
         Args: { p_slug: string };
         Returns: string;
       };

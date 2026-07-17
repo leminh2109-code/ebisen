@@ -1,15 +1,19 @@
 import Link from 'next/link';
-import { getExpensesByMonth, getExpensesByCategory } from '@/lib/queries';
+import { getExpensesByMonth, getExpensesGrouped } from '@/lib/queries';
 import { formatCurrency, formatMonth } from '@/lib/format';
 import { PageHeader, Card, EmptyState } from '@/components/ui';
 import { BarChart } from '@/components/BarChart';
+import { ExpenseGroups } from './expense-groups';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ExpensesPage() {
   const rows = await getExpensesByMonth();
-  const latestMonth = rows[0]?.month;
-  const byCategory = latestMonth ? await getExpensesByCategory(latestMonth) : [];
+  const [byCategory, byType] = await Promise.all([
+    getExpensesGrouped('category'),
+    getExpensesGrouped('expense_type'),
+  ]);
+  const months = rows.map((r) => r.month); // đã sắp mới → cũ
 
   const chart = rows
     .slice(0, 12)
@@ -27,12 +31,20 @@ export default async function ExpensesPage() {
         title="Chi phí theo tháng"
         subtitle={`Tổng cộng: ${formatCurrency(total)}`}
         action={
-          <Link
-            href="/entry/expense"
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
-          >
-            + Nhập chi phí
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/expenses/detail"
+              className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-background"
+            >
+              Chi tiết
+            </Link>
+            <Link
+              href="/entry/expense"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
+            >
+              + Nhập chi phí
+            </Link>
+          </div>
         }
       />
 
@@ -70,36 +82,13 @@ export default async function ExpensesPage() {
           )}
         </Card>
 
-        <Card
-          title={
-            latestMonth
-              ? `Phân loại — ${formatMonth(latestMonth)}`
-              : 'Phân loại chi phí'
-          }
-        >
-          {byCategory.length === 0 ? (
-            <EmptyState message="Chưa có dữ liệu." />
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-muted">
-                  <th className="px-4 py-2 font-medium">Danh mục</th>
-                  <th className="px-4 py-2 font-medium text-right">Chi phí</th>
-                </tr>
-              </thead>
-              <tbody>
-                {byCategory.map((c) => (
-                  <tr key={c.category} className="border-b border-border last:border-0">
-                    <td className="px-4 py-2.5">{c.category}</td>
-                    <td className="px-4 py-2.5 text-right tabular font-medium">
-                      {formatCurrency(c.expenses)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Card>
+        <ExpenseGroups
+          groups={{
+            category: byCategory,
+            expense_type: byType,
+          }}
+          months={months}
+        />
       </div>
     </div>
   );

@@ -1,14 +1,31 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { regenerateLink, setSlug, type RegenState } from './actions';
+import type { RegenState } from './actions';
+
+export type ShareTexts = {
+  /** Nhãn ô link, vd "Link nhập bán hàng". */
+  linkLabel: string;
+  /** Chú thích dưới ô link. */
+  help: string;
+  /** Placeholder ô slug, vd "ebisen". */
+  slugPlaceholder: string;
+};
 
 export function SharePanel({
   initialToken,
   baseUrl,
+  basePath,
+  regenerateAction,
+  setSlugAction,
+  texts,
 }: {
   initialToken: string | null;
   baseUrl: string;
+  basePath: string; // '/nhap' | '/xem'
+  regenerateAction: () => Promise<RegenState>;
+  setSlugAction: (slug: string) => Promise<RegenState>;
+  texts: ShareTexts;
 }) {
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<RegenState>({ token: null, error: null });
@@ -17,7 +34,7 @@ export function SharePanel({
 
   // Token hiển thị = token mới (sau khi tạo lại) hoặc token ban đầu.
   const token = result.token ?? initialToken;
-  const url = token ? `${baseUrl}/nhap/${token}` : '';
+  const url = token ? `${baseUrl}${basePath}/${token}` : '';
 
   const copy = async () => {
     if (!url) return;
@@ -38,13 +55,13 @@ export function SharePanel({
     if (
       token &&
       !window.confirm(
-        `Đổi link thành .../nhap/${s} sẽ vô hiệu link cũ. Nhân viên đang dùng link cũ sẽ phải nhận link mới. Tiếp tục?`,
+        `Đổi link thành ...${basePath}/${s} sẽ vô hiệu link cũ. Ai đang dùng link cũ sẽ phải nhận link mới. Tiếp tục?`,
       )
     ) {
       return;
     }
     startTransition(async () => {
-      const r = await setSlug(s);
+      const r = await setSlugAction(s);
       setResult(r);
       if (r.token) {
         setSlugInput('');
@@ -57,13 +74,13 @@ export function SharePanel({
     if (
       token &&
       !window.confirm(
-        'Tạo link ngẫu nhiên sẽ vô hiệu link cũ. Nhân viên đang dùng link cũ sẽ phải nhận link mới. Tiếp tục?',
+        'Tạo link ngẫu nhiên sẽ vô hiệu link cũ. Ai đang dùng link cũ sẽ phải nhận link mới. Tiếp tục?',
       )
     ) {
       return;
     }
     startTransition(async () => {
-      const r = await regenerateLink();
+      const r = await regenerateAction();
       setResult(r);
       setCopied(false);
     });
@@ -74,7 +91,7 @@ export function SharePanel({
       {token ? (
         <div>
           <label className="block text-sm font-medium mb-1">
-            Link nhập bán hàng
+            {texts.linkLabel}
           </label>
           <div className="flex gap-2">
             <input
@@ -91,10 +108,7 @@ export function SharePanel({
               {copied ? '✓ Đã chép' : 'Sao chép'}
             </button>
           </div>
-          <p className="mt-2 text-xs text-muted">
-            Gửi link này cho nhân viên. Ai có link đều nhập được bán hàng (không
-            cần đăng nhập), nhưng không xem được báo cáo hay P&amp;L.
-          </p>
+          <p className="mt-2 text-xs text-muted">{texts.help}</p>
         </div>
       ) : (
         <p className="text-sm text-muted">
@@ -108,11 +122,11 @@ export function SharePanel({
         </label>
         <div className="flex flex-wrap items-stretch gap-2">
           <div className="flex flex-1 min-w-[220px] items-center rounded-lg border border-border bg-white pl-3 text-sm focus-within:border-accent focus-within:ring-1 focus-within:ring-accent">
-            <span className="text-muted whitespace-nowrap">.../nhap/</span>
+            <span className="text-muted whitespace-nowrap">...{basePath}/</span>
             <input
               value={slug}
               onChange={(e) => setSlugInput(e.target.value)}
-              placeholder="ebisen"
+              placeholder={texts.slugPlaceholder}
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}

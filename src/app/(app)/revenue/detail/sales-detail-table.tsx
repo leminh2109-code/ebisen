@@ -3,21 +3,9 @@
 import { Fragment, useState } from 'react';
 import { formatCurrency, formatDate, formatMonth, formatTime } from '@/lib/format';
 import { Card } from '@/components/ui';
-import type { SaleRow } from '@/lib/queries';
+import type { MonthGroup } from './group';
 
-export type DayGroup = {
-  key: string;
-  qty: number;
-  total: number;
-  rows: SaleRow[];
-};
-
-export type MonthGroup = {
-  key: string;
-  qty: number;
-  total: number;
-  days: DayGroup[];
-};
+export type { DayGroup, MonthGroup } from './group';
 
 export function SalesDetailTable({
   months,
