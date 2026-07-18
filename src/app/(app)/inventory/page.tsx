@@ -6,7 +6,7 @@ import {
   getCurrentRole,
 } from '@/lib/queries';
 import { PageHeader, Card, EmptyState } from '@/components/ui';
-import { formatDate } from '@/lib/format';
+import { formatDate, formatCurrency } from '@/lib/format';
 import { deleteShrimpPurchase, deleteShrimpGift } from '../entry/actions';
 
 export const dynamic = 'force-dynamic';
@@ -62,11 +62,20 @@ export default async function InventoryPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-        <NumberCard label="Tổng đã nhập" value={`${n(inventory.total_in)} con`} />
-        <NumberCard label="Tổng đã dùng" value={`${n(inventory.total_used)} con`} />
+        <NumberCard
+          label="Giá trị tồn kho tôm"
+          value={formatCurrency(inventory.inventory_value)}
+          sub={`đơn giá ${formatCurrency(inventory.unit_cost)}/con${
+            Number(inventory.total_kg) > 0
+              ? ` · ${formatCurrency(Number(inventory.total_cost_in) / Number(inventory.total_kg))}/kg`
+              : ''
+          }`}
+        />
+        <NumberCard label="Tổng đã nhập" value={`${n(inventory.total_in)} con`} sub={formatCurrency(inventory.total_cost_in)} />
         <NumberCard
           label="Bắt đầu theo dõi"
           value={inventory.start_date ? formatDate(inventory.start_date) : '—'}
+          sub={`Tổng đã dùng: ${n(inventory.total_used)} con`}
         />
       </div>
 
@@ -81,6 +90,7 @@ export default async function InventoryPage() {
                   <th className="px-4 py-2 font-medium">Ngày</th>
                   <th className="px-4 py-2 font-medium text-right">Số con</th>
                   <th className="px-4 py-2 font-medium text-right">Số kg</th>
+                  <th className="px-4 py-2 font-medium text-right">Số tiền</th>
                   <th className="px-4 py-2 font-medium">Ghi chú</th>
                   {isOwner && <th className="px-4 py-2 font-medium text-right">Xóa</th>}
                 </tr>
@@ -92,6 +102,9 @@ export default async function InventoryPage() {
                     <td className="px-4 py-2 text-right tabular font-medium">{n(p.shrimp_count)}</td>
                     <td className="px-4 py-2 text-right tabular text-muted">
                       {p.kg === null ? '—' : n(p.kg)}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular text-muted">
+                      {p.total_cost === null ? '—' : formatCurrency(p.total_cost)}
                     </td>
                     <td className="px-4 py-2 text-muted">{p.note ?? ''}</td>
                     {isOwner && (
@@ -155,7 +168,9 @@ export default async function InventoryPage() {
       <p className="mt-4 text-xs text-muted">
         Tồn kho = tổng con tôm đã nhập − tổng con tôm đã dùng. Tôm đã dùng gồm cả
         bánh BÁN và bánh TẶNG (số lượng × số con mỗi bánh, cấu hình ở trang Thực đơn),
-        tính từ ngày nhập đầu tiên. Mọi con số tính trong Postgres.
+        tính từ ngày nhập đầu tiên. Giá trị tồn = tồn × đơn giá (bình quân), chỉ để
+        tham khảo — KHÔNG cộng vào P&L (tiền mua tôm đã ghi ở mục Chi phí). Mọi con
+        số tính trong Postgres.
       </p>
     </div>
   );

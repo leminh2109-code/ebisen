@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from 'react';
 import { createShrimpPurchase, type EntryState } from '../actions';
 import { today } from '@/lib/format';
+import { formatMoneyInput } from '@/lib/number-input';
 
 const initial: EntryState = { ok: false, error: null };
 
@@ -35,14 +36,25 @@ export default function ShrimpForm() {
         />
       </Field>
 
-      <Field label="Số kg (tùy chọn)">
-        <input
-          name="kg"
-          inputMode="numeric"
-          className={`${inputCls} tabular`}
-          placeholder="VD: 50 — chỉ để tham khảo"
-        />
-      </Field>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Số kg (tùy chọn)">
+          <input
+            name="kg"
+            inputMode="numeric"
+            className={`${inputCls} tabular`}
+            placeholder="VD: 50"
+          />
+        </Field>
+        <Field label="Tổng chi phí (₫, tùy chọn)">
+          <input
+            name="total_cost"
+            inputMode="numeric"
+            onInput={(e) => formatMoneyInput(e.currentTarget)}
+            className={`${inputCls} tabular`}
+            placeholder="VD: 20.000.000"
+          />
+        </Field>
+      </div>
 
       <Field label="Ghi chú">
         <textarea name="note" rows={2} className={inputCls} placeholder="VD: 5 thùng, nhà cung cấp…" />

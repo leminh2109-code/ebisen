@@ -217,6 +217,9 @@ export type ShrimpInventory = {
   total_used: number;
   on_hand: number;
   start_date: string | null;
+  total_cost_in: number;
+  unit_cost: number;
+  inventory_value: number;
 };
 export type MonthlyShrimpPurchased = {
   month: string;
@@ -240,6 +243,7 @@ export type ShrimpPurchaseRow = {
   purchase_date: string;
   kg: number | null;
   shrimp_count: number;
+  total_cost: number | null;
   note: string | null;
 };
 
@@ -297,7 +301,7 @@ export async function getShrimpPurchases(): Promise<ShrimpPurchaseRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('shrimp_purchases')
-    .select('id, purchase_date, kg, shrimp_count, note')
+    .select('id, purchase_date, kg, shrimp_count, total_cost, note')
     .order('purchase_date', { ascending: false })
     .order('created_at', { ascending: false });
   if (error) throw error;

@@ -136,6 +136,7 @@ export async function createShrimpPurchase(
   const purchase_date = String(formData.get('purchase_date') ?? '').trim();
   const shrimp_count = parseNumber(String(formData.get('shrimp_count') ?? ''));
   const kg = parseNumber(String(formData.get('kg') ?? '')); // tùy chọn
+  const total_cost = parseNumber(String(formData.get('total_cost') ?? '')); // tùy chọn
   const note = String(formData.get('note') ?? '').trim() || null;
 
   if (!purchase_date) return { ok: false, error: 'Thiếu ngày nhập.' };
@@ -146,6 +147,7 @@ export async function createShrimpPurchase(
     purchase_date,
     shrimp_count,
     kg: kg === null || kg <= 0 ? null : kg,
+    total_cost: total_cost === null || total_cost < 0 ? null : total_cost,
     note,
     created_by: user.id,
   });

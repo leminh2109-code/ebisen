@@ -190,6 +190,7 @@ export type Database = {
           purchase_date: string;
           kg: number | null;
           shrimp_count: number;
+          total_cost: number | null;
           note: string | null;
           created_at: string;
           created_by: string | null;
@@ -198,6 +199,7 @@ export type Database = {
           purchase_date: string;
           shrimp_count: number;
           kg?: number | null;
+          total_cost?: number | null;
           note?: string | null;
           created_by?: string | null;
         };
@@ -494,6 +496,9 @@ export type Database = {
           total_used: number;
           on_hand: number;
           start_date: string | null;
+          total_cost_in: number;
+          unit_cost: number;
+          inventory_value: number;
         };
         Relationships: Rel;
       };
