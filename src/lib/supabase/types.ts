@@ -71,8 +71,7 @@ export type Database = {
         Row: {
           id: string;
           purchase_date: string;
-          kg: number;
-          size_per_kg: number;
+          kg: number | null;
           shrimp_count: number;
           note: string | null;
           created_at: string;
@@ -80,15 +79,15 @@ export type Database = {
         };
         Insert: {
           purchase_date: string;
-          kg: number;
-          size_per_kg: number;
+          shrimp_count: number;
+          kg?: number | null;
           note?: string | null;
           created_by?: string | null;
         };
         Update: {
           purchase_date?: string;
-          kg?: number;
-          size_per_kg?: number;
+          shrimp_count?: number;
+          kg?: number | null;
           note?: string | null;
         };
         Relationships: Rel;

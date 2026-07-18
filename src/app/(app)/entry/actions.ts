@@ -134,20 +134,18 @@ export async function createShrimpPurchase(
   if (!user) return { ok: false, error: 'Phiên đăng nhập hết hạn.' };
 
   const purchase_date = String(formData.get('purchase_date') ?? '').trim();
-  const kg = parseNumber(String(formData.get('kg') ?? ''));
-  const size_per_kg = parseNumber(String(formData.get('size_per_kg') ?? ''));
+  const shrimp_count = parseNumber(String(formData.get('shrimp_count') ?? ''));
+  const kg = parseNumber(String(formData.get('kg') ?? '')); // tùy chọn
   const note = String(formData.get('note') ?? '').trim() || null;
 
   if (!purchase_date) return { ok: false, error: 'Thiếu ngày nhập.' };
-  if (kg === null || kg <= 0) return { ok: false, error: 'Số kg không hợp lệ.' };
-  if (size_per_kg === null || size_per_kg <= 0)
-    return { ok: false, error: 'Size (con/kg) không hợp lệ.' };
+  if (shrimp_count === null || shrimp_count <= 0)
+    return { ok: false, error: 'Số con tôm không hợp lệ.' };
 
-  // shrimp_count là cột generated (kg × size) — không insert tay.
   const { error } = await supabase.from('shrimp_purchases').insert({
     purchase_date,
-    kg,
-    size_per_kg,
+    shrimp_count,
+    kg: kg === null || kg <= 0 ? null : kg,
     note,
     created_by: user.id,
   });
@@ -157,4 +155,14 @@ export async function createShrimpPurchase(
   revalidatePath('/inventory');
   revalidatePath('/dashboard');
   return { ok: true, error: null };
+}
+
+/** Xóa một lần nhập tôm (RLS chỉ cho owner xóa). */
+export async function deleteShrimpPurchase(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const id = String(formData.get('id') ?? '').trim();
+  if (!id) return;
+  await supabase.from('shrimp_purchases').delete().eq('id', id);
+  revalidatePath('/inventory');
+  revalidatePath('/dashboard');
 }

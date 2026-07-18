@@ -5,27 +5,16 @@ import { createShrimpPurchase, type EntryState } from '../actions';
 import { today } from '@/lib/format';
 
 const initial: EntryState = { ok: false, error: null };
-const parse = (s: string) => Number(s.replace(/[.\s,]/g, '')) || 0;
 
-export default function ShrimpForm({ defaultSize = 35 }: { defaultSize?: number }) {
+export default function ShrimpForm() {
   const [state, action, pending] = useActionState(createShrimpPurchase, initial);
   const formRef = useRef<HTMLFormElement>(null);
-  const kgRef = useRef<HTMLInputElement>(null);
-  const sizeRef = useRef<HTMLInputElement>(null);
-  const countRef = useRef<HTMLSpanElement>(null);
-
-  const recompute = () => {
-    if (countRef.current) {
-      const count = Math.round(parse(kgRef.current?.value ?? '') * parse(sizeRef.current?.value ?? ''));
-      countRef.current.textContent = count.toLocaleString('vi-VN');
-    }
-  };
+  const countRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (state.ok) {
       formRef.current?.reset();
-      recompute();
-      kgRef.current?.focus();
+      countRef.current?.focus();
     }
   }, [state]);
 
@@ -35,41 +24,28 @@ export default function ShrimpForm({ defaultSize = 35 }: { defaultSize?: number 
         <input name="purchase_date" type="date" required defaultValue={today()} className={inputCls} />
       </Field>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Số kg" required>
-          <input
-            ref={kgRef}
-            name="kg"
-            inputMode="numeric"
-            required
-            onInput={recompute}
-            className={`${inputCls} tabular`}
-            placeholder="VD: 20"
-          />
-        </Field>
-        <Field label="Size (con/kg)" required>
-          <input
-            ref={sizeRef}
-            name="size_per_kg"
-            inputMode="numeric"
-            required
-            defaultValue={String(defaultSize)}
-            onInput={recompute}
-            className={`${inputCls} tabular`}
-            placeholder="VD: 35"
-          />
-        </Field>
-      </div>
+      <Field label="Số con tôm" required>
+        <input
+          ref={countRef}
+          name="shrimp_count"
+          inputMode="numeric"
+          required
+          className={`${inputCls} tabular`}
+          placeholder="VD: 1750"
+        />
+      </Field>
 
-      <div className="rounded-lg bg-background px-3 py-2 text-sm flex justify-between">
-        <span className="text-muted">Số con tôm nhập</span>
-        <span className="font-semibold tabular">
-          <span ref={countRef}>0</span> con
-        </span>
-      </div>
+      <Field label="Số kg (tùy chọn)">
+        <input
+          name="kg"
+          inputMode="numeric"
+          className={`${inputCls} tabular`}
+          placeholder="VD: 50 — chỉ để tham khảo"
+        />
+      </Field>
 
       <Field label="Ghi chú">
-        <textarea name="note" rows={2} className={inputCls} placeholder="VD: nhà cung cấp, giá…" />
+        <textarea name="note" rows={2} className={inputCls} placeholder="VD: 5 thùng, nhà cung cấp…" />
       </Field>
 
       {state.error && <p className="text-sm text-negative">{state.error}</p>}

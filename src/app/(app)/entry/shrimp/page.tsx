@@ -11,8 +11,8 @@ export default function ShrimpEntryPage() {
         <ShrimpForm />
       </Card>
       <p className="mt-4 text-xs text-muted">
-        Số con tôm nhập = số kg × size (con/kg). Tồn kho = tổng nhập − tổng tôm đã
-        dùng (tính từ số lượng bánh bán × số con mỗi bánh).
+        Nhập thẳng số con tôm mỗi lần nhập kho (ô kg chỉ để tham khảo). Tồn kho =
+        tổng con nhập − tổng con đã dùng (số lượng bánh bán × số con mỗi bánh).
       </p>
     </div>
   );

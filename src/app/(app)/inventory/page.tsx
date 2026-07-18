@@ -1,18 +1,21 @@
 import Link from 'next/link';
-import { getShrimpSummary, getShrimpPurchases } from '@/lib/queries';
+import { getShrimpSummary, getShrimpPurchases, getCurrentRole } from '@/lib/queries';
 import { PageHeader, Card, EmptyState } from '@/components/ui';
 import { formatDate } from '@/lib/format';
+import { deleteShrimpPurchase } from '../entry/actions';
 
 export const dynamic = 'force-dynamic';
 
-const n = (v: number) => Number(v).toLocaleString('vi-VN');
+const n = (v: number | null) => Number(v ?? 0).toLocaleString('vi-VN');
 
 export default async function InventoryPage() {
-  const [summary, purchases] = await Promise.all([
+  const [summary, purchases, role] = await Promise.all([
     getShrimpSummary(),
     getShrimpPurchases(),
+    getCurrentRole(),
   ]);
   const { inventory, thisMonthIn, thisMonthUsed } = summary;
+  const isOwner = role === 'owner';
   const low = inventory.on_hand <= 0;
 
   return (
@@ -41,7 +44,7 @@ export default async function InventoryPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-        <NumberCard label="Tổng đã nhập" value={`${n(inventory.total_in)} con`} sub={`${n(inventory.total_kg)} kg`} />
+        <NumberCard label="Tổng đã nhập" value={`${n(inventory.total_in)} con`} />
         <NumberCard label="Tổng đã dùng" value={`${n(inventory.total_used)} con`} />
         <NumberCard
           label="Bắt đầu theo dõi"
@@ -58,20 +61,35 @@ export default async function InventoryPage() {
               <thead>
                 <tr className="border-b border-border text-left text-muted">
                   <th className="px-4 py-2 font-medium">Ngày</th>
-                  <th className="px-4 py-2 font-medium text-right">Số kg</th>
-                  <th className="px-4 py-2 font-medium text-right">Size (con/kg)</th>
                   <th className="px-4 py-2 font-medium text-right">Số con</th>
+                  <th className="px-4 py-2 font-medium text-right">Số kg</th>
                   <th className="px-4 py-2 font-medium">Ghi chú</th>
+                  {isOwner && <th className="px-4 py-2 font-medium text-right">Xóa</th>}
                 </tr>
               </thead>
               <tbody>
                 {purchases.map((p) => (
                   <tr key={p.id} className="border-b border-border last:border-0">
                     <td className="px-4 py-2 tabular">{formatDate(p.purchase_date)}</td>
-                    <td className="px-4 py-2 text-right tabular">{n(p.kg)}</td>
-                    <td className="px-4 py-2 text-right tabular">{n(p.size_per_kg)}</td>
                     <td className="px-4 py-2 text-right tabular font-medium">{n(p.shrimp_count)}</td>
+                    <td className="px-4 py-2 text-right tabular text-muted">
+                      {p.kg === null ? '—' : n(p.kg)}
+                    </td>
                     <td className="px-4 py-2 text-muted">{p.note ?? ''}</td>
+                    {isOwner && (
+                      <td className="px-4 py-2 text-right">
+                        <form action={deleteShrimpPurchase}>
+                          <input type="hidden" name="id" value={p.id} />
+                          <button
+                            type="submit"
+                            className="text-negative hover:underline text-xs"
+                            title="Xóa lần nhập này"
+                          >
+                            Xóa
+                          </button>
+                        </form>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -92,12 +110,10 @@ export default async function InventoryPage() {
 function NumberCard({
   label,
   value,
-  sub,
   tone = 'neutral',
 }: {
   label: string;
   value: string;
-  sub?: string;
   tone?: 'neutral' | 'positive' | 'negative';
 }) {
   const color =
@@ -106,7 +122,6 @@ function NumberCard({
     <div className="rounded-xl border border-border bg-surface p-4">
       <p className="text-sm text-muted">{label}</p>
       <p className={`mt-1 text-2xl font-semibold tabular ${color}`}>{value}</p>
-      {sub && <p className="mt-1 text-xs text-muted tabular">{sub}</p>}
     </div>
   );
 }
