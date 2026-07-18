@@ -487,6 +487,59 @@ export async function getPublicViewToken(): Promise<string | null> {
   return data?.token ?? null;
 }
 
+// ─── Khách hàng (CRM) ────────────────────────────────────────────────────────
+/** Một khách + thống kê (từ view customer_stats). */
+export type CustomerStats = {
+  id: string;
+  phone: string;
+  name: string | null;
+  address: string | null;
+  note: string | null;
+  created_at: string;
+  order_count: number;
+  total_qty: number;
+  first_order: string | null;
+  last_order: string | null;
+  top_cake: string | null;
+};
+/** Một lần mua của khách. */
+export type CustomerOrderRow = {
+  id: string;
+  order_date: string;
+  cake_type: string | null;
+  quantity: number;
+  note: string | null;
+};
+
+/** Danh sách khách + thống kê (mua gần nhất trước). */
+export async function getCustomers(): Promise<CustomerStats[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('customer_stats').select('*');
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Một khách theo id (kèm thống kê). */
+export async function getCustomer(id: string): Promise<CustomerStats | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('customer_stats').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/** Lịch sử mua của một khách (mới → cũ). */
+export async function getCustomerOrders(customerId: string): Promise<CustomerOrderRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('customer_orders')
+    .select('id, order_date, cake_type, quantity, note')
+    .eq('customer_id', customerId)
+    .order('order_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
 /** Role của user hiện tại — dùng để gate trang P&L. */
 export async function getCurrentRole(): Promise<'owner' | 'staff' | null> {
   const supabase = await createClient();

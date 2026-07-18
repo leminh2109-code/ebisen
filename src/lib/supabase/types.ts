@@ -67,6 +67,62 @@ export type Database = {
         };
         Relationships: Rel;
       };
+      customers: {
+        Row: {
+          id: string;
+          phone: string;
+          name: string | null;
+          address: string | null;
+          note: string | null;
+          created_at: string;
+          created_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          phone: string;
+          name?: string | null;
+          address?: string | null;
+          note?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          phone?: string;
+          name?: string | null;
+          address?: string | null;
+          note?: string | null;
+        };
+        Relationships: Rel;
+      };
+      customer_orders: {
+        Row: {
+          id: string;
+          customer_id: string;
+          order_date: string;
+          menu_item_id: string | null;
+          cake_type: string | null;
+          quantity: number;
+          note: string | null;
+          created_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          customer_id: string;
+          order_date: string;
+          quantity: number;
+          menu_item_id?: string | null;
+          cake_type?: string | null;
+          note?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          order_date?: string;
+          quantity?: number;
+          menu_item_id?: string | null;
+          cake_type?: string | null;
+          note?: string | null;
+        };
+        Relationships: Rel;
+      };
       shrimp_gifts: {
         Row: {
           id: string;
@@ -322,6 +378,22 @@ export type Database = {
           qty_2tom: number;
           qty_other: number;
           qty_total: number;
+        };
+        Relationships: Rel;
+      };
+      customer_stats: {
+        Row: {
+          id: string;
+          phone: string;
+          name: string | null;
+          address: string | null;
+          note: string | null;
+          created_at: string;
+          order_count: number;
+          total_qty: number;
+          first_order: string | null;
+          last_order: string | null;
+          top_cake: string | null;
         };
         Relationships: Rel;
       };
