@@ -31,7 +31,10 @@ const NAV: { section: string; items: NavItem[] }[] = [
   },
   {
     section: 'Tồn kho',
-    items: [{ href: '/inventory', label: 'Tồn kho tôm', icon: '🦐' }],
+    items: [
+      { href: '/inventory', label: 'Tồn kho tôm', icon: '🦐' },
+      { href: '/materials', label: 'Tồn kho vật tư', icon: '📦' },
+    ],
   },
   {
     section: 'Khách hàng',
@@ -44,6 +47,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { href: '/entry/expense', label: 'Nhập chi phí', icon: '＋' },
       { href: '/entry/shrimp', label: 'Nhập tôm', icon: '＋' },
       { href: '/entry/gift', label: 'Nhập bánh tặng', icon: '＋' },
+      { href: '/entry/material', label: 'Nhập túi/tem', icon: '＋' },
       { href: '/entry/customer', label: 'Nhập khách hàng', icon: '＋' },
     ],
   },

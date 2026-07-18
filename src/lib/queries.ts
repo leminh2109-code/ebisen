@@ -26,7 +26,14 @@ export type MonthlyPaymentSplit = {
   other: number;
   total: number;
 };
-export type MonthlyPnl = { month: string; revenue: number; expenses: number; profit: number };
+export type MonthlyPnl = {
+  month: string;
+  revenue: number;
+  cash_expenses: number;
+  material_cost: number;
+  expenses: number; // = cash_expenses + material_cost
+  profit: number;
+};
 /** Một nhóm chi phí (theo danh mục / loại / trung tâm chi phí) trong 1 tháng. */
 export type ExpenseGroupRow = {
   month: string;
@@ -296,6 +303,77 @@ export async function getShrimpPurchases(): Promise<ShrimpPurchaseRow[]> {
   return data ?? [];
 }
 
+// ─── Vật tư (túi, tem) ───────────────────────────────────────────────────────
+/** Tồn kho một vật tư (túi/tem). */
+export type MaterialInventory = {
+  material: string;
+  total_in: number;
+  total_cost_in: number;
+  unit_cost: number;
+  start_date: string | null;
+  used: number;
+  on_hand: number;
+  inventory_value: number;
+};
+export type MonthlyMaterialCost = {
+  month: string;
+  tui_cost: number;
+  tem_cost: number;
+  material_cost: number;
+};
+/** Một lần nhập vật tư (cho bảng lịch sử). */
+export type MaterialPurchaseRow = {
+  id: string;
+  material: string;
+  purchase_date: string;
+  quantity: number;
+  total_cost: number;
+  note: string | null;
+};
+
+export async function getMaterialInventory(): Promise<MaterialInventory[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('material_inventory').select('*');
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getMaterialCostByMonth(): Promise<MonthlyMaterialCost[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('material_cost_by_month')
+    .select('*')
+    .order('month', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Lịch sử nhập vật tư (mới → cũ). */
+export async function getMaterialPurchases(): Promise<MaterialPurchaseRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('material_purchases')
+    .select('id, material, purchase_date, quantity, total_cost, note')
+    .order('purchase_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Tổng quan vật tư cho trang Tồn kho vật tư. */
+export async function getMaterialSummary() {
+  const [inventory, costByMonth] = await Promise.all([
+    getMaterialInventory(),
+    getMaterialCostByMonth(),
+  ]);
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const thisMonthCost = costByMonth.find((c) => c.month === currentMonth)?.material_cost ?? 0;
+  const tui = inventory.find((i) => i.material === 'tui') ?? null;
+  const tem = inventory.find((i) => i.material === 'tem') ?? null;
+  return { tui, tem, thisMonthCost, costByMonth };
+}
+
 /** Tổng quan tồn kho tôm cho trang Tồn kho + thẻ dashboard. */
 export async function getShrimpSummary() {
   const [inventory, purchasedByMonth, usedByMonth, giftByMonth] = await Promise.all([
@@ -318,9 +396,8 @@ export async function getShrimpSummary() {
 
 /** Tổng quan tháng hiện tại cho Dashboard. */
 export async function getDashboardSummary() {
-  const [revByMonth, expByMonth, pnl, paymentSplit] = await Promise.all([
+  const [revByMonth, pnl, paymentSplit] = await Promise.all([
     getRevenueByMonth(),
-    getExpensesByMonth(),
     getPnlByMonth(),
     getPaymentSplitByMonth(),
   ]);
@@ -328,9 +405,13 @@ export async function getDashboardSummary() {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 
+  const thisMonthPnl = pnl.find((p) => p.month === currentMonth);
   const thisMonthRevenue = revByMonth.find((r) => r.month === currentMonth)?.revenue ?? 0;
-  const thisMonthExpenses = expByMonth.find((e) => e.month === currentMonth)?.expenses ?? 0;
-  const thisMonthProfit = pnl.find((p) => p.month === currentMonth)?.profit ?? 0;
+  // Chi phí tháng = tiền mặt + vật tư lũy tiến (khớp với Lãi/Lỗ).
+  const thisMonthExpenses = thisMonthPnl?.expenses ?? 0;
+  const thisMonthCashExpenses = thisMonthPnl?.cash_expenses ?? 0;
+  const thisMonthMaterialCost = thisMonthPnl?.material_cost ?? 0;
+  const thisMonthProfit = thisMonthPnl?.profit ?? 0;
   const thisMonthCakes = revByMonth.find((r) => r.month === currentMonth)?.cakes ?? 0;
   const split = paymentSplit.find((p) => p.month === currentMonth);
   const thisMonthCash = split?.cash ?? 0;
@@ -347,6 +428,8 @@ export async function getDashboardSummary() {
     currentMonth,
     thisMonthRevenue,
     thisMonthExpenses,
+    thisMonthCashExpenses,
+    thisMonthMaterialCost,
     thisMonthProfit,
     thisMonthCakes,
     thisMonthCash,

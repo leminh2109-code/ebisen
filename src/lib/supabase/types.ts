@@ -156,6 +156,34 @@ export type Database = {
         };
         Relationships: Rel;
       };
+      material_purchases: {
+        Row: {
+          id: string;
+          material: string;
+          purchase_date: string;
+          quantity: number;
+          total_cost: number;
+          note: string | null;
+          created_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          material: string;
+          purchase_date: string;
+          quantity: number;
+          total_cost: number;
+          note?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          material?: string;
+          purchase_date?: string;
+          quantity?: number;
+          total_cost?: number;
+          note?: string | null;
+        };
+        Relationships: Rel;
+      };
       shrimp_purchases: {
         Row: {
           id: string;
@@ -369,7 +397,45 @@ export type Database = {
         Relationships: Rel;
       };
       pnl_by_month: {
-        Row: { month: string; revenue: number; expenses: number; profit: number };
+        Row: {
+          month: string;
+          revenue: number;
+          cash_expenses: number;
+          material_cost: number;
+          expenses: number;
+          profit: number;
+        };
+        Relationships: Rel;
+      };
+      banh_out_by_month: {
+        Row: { month: string; banh_out: number };
+        Relationships: Rel;
+      };
+      material_summary: {
+        Row: {
+          material: string;
+          total_in: number;
+          total_cost_in: number;
+          unit_cost: number;
+          start_date: string | null;
+        };
+        Relationships: Rel;
+      };
+      material_inventory: {
+        Row: {
+          material: string;
+          total_in: number;
+          total_cost_in: number;
+          unit_cost: number;
+          start_date: string | null;
+          used: number;
+          on_hand: number;
+          inventory_value: number;
+        };
+        Relationships: Rel;
+      };
+      material_cost_by_month: {
+        Row: { month: string; tui_cost: number; tem_cost: number; material_cost: number };
         Relationships: Rel;
       };
       sales_payment_by_month: {

@@ -24,6 +24,7 @@ export default async function PnlPage() {
   const totalRevenue = rows.reduce((s, r) => s + Number(r.revenue), 0);
   const totalExpenses = rows.reduce((s, r) => s + Number(r.expenses), 0);
   const totalProfit = totalRevenue - totalExpenses;
+  const hasMaterial = rows.some((r) => Number(r.material_cost) > 0);
 
   return (
     <div>
@@ -47,12 +48,15 @@ export default async function PnlPage() {
           <EmptyState message="Chưa có dữ liệu doanh thu hoặc chi phí." />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[520px]">
+            <table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="border-b border-border text-left text-muted">
                   <th className="px-4 py-2 font-medium">Tháng</th>
                   <th className="px-4 py-2 font-medium text-right">Doanh thu</th>
                   <th className="px-4 py-2 font-medium text-right">Chi phí</th>
+                  {hasMaterial && (
+                    <th className="px-4 py-2 font-medium text-right">CP túi/tem</th>
+                  )}
                   <th className="px-4 py-2 font-medium text-right">Lãi/Lỗ</th>
                 </tr>
               </thead>
@@ -66,8 +70,13 @@ export default async function PnlPage() {
                         {formatCurrency(r.revenue)}
                       </td>
                       <td className="px-4 py-2.5 text-right tabular">
-                        {formatCurrency(r.expenses)}
+                        {formatCurrency(r.cash_expenses)}
                       </td>
+                      {hasMaterial && (
+                        <td className="px-4 py-2.5 text-right tabular text-muted">
+                          {formatCurrency(r.material_cost)}
+                        </td>
+                      )}
                       <td
                         className={`px-4 py-2.5 text-right tabular font-medium ${
                           profit >= 0 ? 'text-positive' : 'text-negative'
@@ -83,6 +92,14 @@ export default async function PnlPage() {
           </div>
         )}
       </Card>
+
+      {hasMaterial && (
+        <p className="mt-4 text-xs text-muted">
+          Cột &quot;Chi phí&quot; là chi phí tiền mặt (bảng Chi phí). &quot;CP túi/tem&quot;
+          là chi phí vật tư đóng gói phân bổ dần theo số bánh dùng mỗi tháng (xem Tồn
+          kho vật tư). Lãi/Lỗ = Doanh thu − Chi phí − CP túi/tem.
+        </p>
+      )}
     </div>
   );
 }
