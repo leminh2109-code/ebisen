@@ -55,6 +55,15 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+        <StatCard label="Tiền mặt tháng này (TM)" amount={summary.thisMonthCash} />
+        <StatCard label="Chuyển khoản tháng này (CK)" amount={summary.thisMonthTransfer} />
+      </div>
+      <p className="mt-2 text-xs text-muted">
+        TM/CK tính từ từng lần bán trong tháng. Tháng lịch sử (nạp từ Airtable) có
+        thể lệch so với doanh thu chính thức — dùng để xem tỷ lệ thanh toán.
+      </p>
+
       {isOwner && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
           <StatCard label="Doanh thu năm nay (YTD)" amount={summary.ytdRevenue} />

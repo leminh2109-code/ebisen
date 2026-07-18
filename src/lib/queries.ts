@@ -14,6 +14,14 @@ export type DailyRevenue = {
   weather: string | null;
 };
 export type MonthlyExpense = { month: string; expense_count: number; expenses: number };
+/** Doanh thu sales tách theo hình thức thanh toán (TM/CK) trong 1 tháng. */
+export type MonthlyPaymentSplit = {
+  month: string;
+  cash: number;
+  transfer: number;
+  other: number;
+  total: number;
+};
 export type MonthlyPnl = { month: string; revenue: number; expenses: number; profit: number };
 /** Một nhóm chi phí (theo danh mục / loại / trung tâm chi phí) trong 1 tháng. */
 export type ExpenseGroupRow = {
@@ -125,6 +133,16 @@ export async function getExpensesDetail(): Promise<ExpenseRow[]> {
   return all;
 }
 
+export async function getPaymentSplitByMonth(): Promise<MonthlyPaymentSplit[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('sales_payment_by_month')
+    .select('*')
+    .order('month', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function getPnlByMonth(): Promise<MonthlyPnl[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -163,10 +181,11 @@ export async function getSales(): Promise<SaleRow[]> {
 
 /** Tổng quan tháng hiện tại cho Dashboard. */
 export async function getDashboardSummary() {
-  const [revByMonth, expByMonth, pnl] = await Promise.all([
+  const [revByMonth, expByMonth, pnl, paymentSplit] = await Promise.all([
     getRevenueByMonth(),
     getExpensesByMonth(),
     getPnlByMonth(),
+    getPaymentSplitByMonth(),
   ]);
 
   const now = new Date();
@@ -176,6 +195,9 @@ export async function getDashboardSummary() {
   const thisMonthExpenses = expByMonth.find((e) => e.month === currentMonth)?.expenses ?? 0;
   const thisMonthProfit = pnl.find((p) => p.month === currentMonth)?.profit ?? 0;
   const thisMonthCakes = revByMonth.find((r) => r.month === currentMonth)?.cakes ?? 0;
+  const split = paymentSplit.find((p) => p.month === currentMonth);
+  const thisMonthCash = split?.cash ?? 0;
+  const thisMonthTransfer = split?.transfer ?? 0;
 
   const ytdRevenue = revByMonth
     .filter((r) => r.month.startsWith(String(now.getFullYear())))
@@ -190,6 +212,8 @@ export async function getDashboardSummary() {
     thisMonthExpenses,
     thisMonthProfit,
     thisMonthCakes,
+    thisMonthCash,
+    thisMonthTransfer,
     ytdRevenue,
     ytdProfit,
     pnlTrend: pnl.slice(0, 6).reverse(),

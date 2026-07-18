@@ -239,6 +239,16 @@ export type Database = {
         Row: { month: string; revenue: number; expenses: number; profit: number };
         Relationships: Rel;
       };
+      sales_payment_by_month: {
+        Row: {
+          month: string;
+          cash: number;
+          transfer: number;
+          other: number;
+          total: number;
+        };
+        Relationships: Rel;
+      };
     };
     Functions: {
       is_owner: { Args: Record<string, never>; Returns: boolean };
