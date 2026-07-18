@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ebisen — Quản lý kinh doanh",
+  title: "EBISEN — Quản lý kinh doanh",
   description: "Kiểm soát doanh thu, chi phí và lãi/lỗ",
+  icons: { icon: "/logo.png" },
 };
 
 export default function RootLayout({

@@ -85,10 +85,9 @@ export default function Sidebar({
       {/* Topbar mobile */}
       <div className="md:hidden flex items-center justify-between border-b border-border bg-surface px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-accent-fg text-sm font-bold">
-            e
-          </span>
-          <span className="font-semibold">ebisen</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="EBISEN" className="h-7 w-7 rounded-lg object-contain" />
+          <span className="font-semibold">EBISEN</span>
         </div>
         <button
           onClick={() => setOpen((v) => !v)}
@@ -105,10 +104,9 @@ export default function Sidebar({
         } md:block md:w-64 md:shrink-0 border-r border-border bg-surface`}
       >
         <div className="hidden md:flex items-center gap-2 px-5 py-5">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-accent-fg font-bold">
-            e
-          </span>
-          <span className="font-semibold text-lg">ebisen</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="EBISEN" className="h-8 w-8 rounded-lg object-contain" />
+          <span className="font-semibold text-lg">EBISEN</span>
         </div>
 
         <nav className="px-3 pb-4 space-y-5">
