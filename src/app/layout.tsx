@@ -15,7 +15,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "EBISEN — Quản lý kinh doanh",
   description: "Kiểm soát doanh thu, chi phí và lãi/lỗ",
-  icons: { icon: "/logo.png" },
+  icons: {
+    icon: "/logo.png",
+    apple: "/apple-touch-icon.png",
+  },
+  // Tên rút gọn khi thêm vào Màn hình chính iOS + hiển thị dạng app.
+  appleWebApp: { capable: true, title: "EBISEN" },
 };
 
 export default function RootLayout({
