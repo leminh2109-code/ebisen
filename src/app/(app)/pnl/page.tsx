@@ -48,7 +48,7 @@ export default async function PnlPage() {
           <EmptyState message="Chưa có dữ liệu doanh thu hoặc chi phí." />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[600px]">
+            <table className="w-full text-sm min-w-[720px]">
               <thead>
                 <tr className="border-b border-border text-left text-muted">
                   <th className="px-4 py-2 font-medium">Tháng</th>
@@ -57,6 +57,7 @@ export default async function PnlPage() {
                   {hasMaterial && (
                     <th className="px-4 py-2 font-medium text-right">CP túi/tem</th>
                   )}
+                  <th className="px-4 py-2 font-medium text-right">Chia sẻ trạm 30%</th>
                   <th className="px-4 py-2 font-medium text-right">Lãi/Lỗ</th>
                 </tr>
               </thead>
@@ -77,6 +78,9 @@ export default async function PnlPage() {
                           {formatCurrency(r.material_cost)}
                         </td>
                       )}
+                      <td className="px-4 py-2.5 text-right tabular text-muted">
+                        {formatCurrency(r.station_share)}
+                      </td>
                       <td
                         className={`px-4 py-2.5 text-right tabular font-medium ${
                           profit >= 0 ? 'text-positive' : 'text-negative'
@@ -93,13 +97,12 @@ export default async function PnlPage() {
         )}
       </Card>
 
-      {hasMaterial && (
-        <p className="mt-4 text-xs text-muted">
-          Cột &quot;Chi phí&quot; là chi phí tiền mặt (bảng Chi phí). &quot;CP túi/tem&quot;
-          là chi phí vật tư đóng gói phân bổ dần theo số bánh dùng mỗi tháng (xem Tồn
-          kho vật tư). Lãi/Lỗ = Doanh thu − Chi phí − CP túi/tem.
-        </p>
-      )}
+      <p className="mt-4 text-xs text-muted">
+        &quot;Chi phí&quot; là chi phí tiền mặt (bảng Chi phí).
+        {hasMaterial && ' "CP túi/tem" là vật tư đóng gói phân bổ dần theo số bánh dùng (xem Tồn kho vật tư).'}{' '}
+        &quot;Chia sẻ trạm 30%&quot; = 30% tổng doanh thu trả cho trạm dừng nghỉ (cố
+        định theo doanh thu). Lãi/Lỗ = Doanh thu − Chi phí{hasMaterial ? ' − CP túi/tem' : ''} − Chia sẻ trạm.
+      </p>
     </div>
   );
 }

@@ -31,7 +31,8 @@ export type MonthlyPnl = {
   revenue: number;
   cash_expenses: number;
   material_cost: number;
-  expenses: number; // = cash_expenses + material_cost
+  station_share: number; // chia sẻ 30% doanh thu với trạm
+  expenses: number; // = cash_expenses + material_cost + station_share
   profit: number;
 };
 /** Một nhóm chi phí (theo danh mục / loại / trung tâm chi phí) trong 1 tháng. */
@@ -411,6 +412,7 @@ export async function getDashboardSummary() {
   const thisMonthExpenses = thisMonthPnl?.expenses ?? 0;
   const thisMonthCashExpenses = thisMonthPnl?.cash_expenses ?? 0;
   const thisMonthMaterialCost = thisMonthPnl?.material_cost ?? 0;
+  const thisMonthStationShare = thisMonthPnl?.station_share ?? 0;
   const thisMonthProfit = thisMonthPnl?.profit ?? 0;
   const thisMonthCakes = revByMonth.find((r) => r.month === currentMonth)?.cakes ?? 0;
   const split = paymentSplit.find((p) => p.month === currentMonth);
@@ -430,6 +432,7 @@ export async function getDashboardSummary() {
     thisMonthExpenses,
     thisMonthCashExpenses,
     thisMonthMaterialCost,
+    thisMonthStationShare,
     thisMonthProfit,
     thisMonthCakes,
     thisMonthCash,

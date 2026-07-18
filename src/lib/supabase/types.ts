@@ -402,6 +402,7 @@ export type Database = {
           revenue: number;
           cash_expenses: number;
           material_cost: number;
+          station_share: number;
           expenses: number;
           profit: number;
         };

@@ -42,9 +42,16 @@ export default async function DashboardPage() {
           label="Chi phí tháng này"
           amount={summary.thisMonthExpenses}
           hint={
-            summary.thisMonthMaterialCost > 0
-              ? `gồm túi/tem ${Number(summary.thisMonthMaterialCost).toLocaleString('vi-VN')} đ`
-              : undefined
+            [
+              summary.thisMonthStationShare > 0
+                ? `chia sẻ trạm ${Number(summary.thisMonthStationShare).toLocaleString('vi-VN')}đ`
+                : null,
+              summary.thisMonthMaterialCost > 0
+                ? `túi/tem ${Number(summary.thisMonthMaterialCost).toLocaleString('vi-VN')}đ`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' · ') || undefined
           }
         />
         {isOwner ? (
