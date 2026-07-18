@@ -70,3 +70,36 @@ export async function setViewSlug(slug: string): Promise<RegenState> {
   revalidatePath('/share');
   return { token: data as string, error: null };
 }
+
+/** Tạo lại token link nhập KHÁCH công khai (vô hiệu link cũ). Owner-only. */
+export async function regenerateCustomerLink(): Promise<RegenState> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('regenerate_public_customer_token');
+  if (error) {
+    if (error.message.includes('not_owner'))
+      return { token: null, error: 'Chỉ chủ DN được tạo lại link.' };
+    return { token: null, error: 'Không tạo lại được. Thử lại.' };
+  }
+  revalidatePath('/share');
+  return { token: data as string, error: null };
+}
+
+/** Đặt slug tùy chỉnh cho link nhập KHÁCH (vô hiệu link cũ). Owner-only. */
+export async function setCustomerSlug(slug: string): Promise<RegenState> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('set_public_customer_slug', {
+    p_slug: slug,
+  });
+  if (error) {
+    if (error.message.includes('not_owner'))
+      return { token: null, error: 'Chỉ chủ DN được đổi link.' };
+    if (error.message.includes('invalid_slug'))
+      return {
+        token: null,
+        error: 'Chỉ dùng chữ thường, số, gạch ngang (3–40 ký tự).',
+      };
+    return { token: null, error: 'Không đổi được. Thử lại.' };
+  }
+  revalidatePath('/share');
+  return { token: data as string, error: null };
+}

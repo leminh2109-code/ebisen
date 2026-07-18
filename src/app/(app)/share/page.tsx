@@ -4,6 +4,7 @@ import {
   getCurrentRole,
   getPublicFormToken,
   getPublicViewToken,
+  getPublicCustomerToken,
 } from '@/lib/queries';
 import { PageHeader, Card } from '@/components/ui';
 import { SharePanel } from './share-panel';
@@ -12,6 +13,8 @@ import {
   setSlug,
   regenerateViewLink,
   setViewSlug,
+  regenerateCustomerLink,
+  setCustomerSlug,
 } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -20,9 +23,10 @@ export default async function SharePage() {
   const role = await getCurrentRole();
   if (role !== 'owner') redirect('/dashboard');
 
-  const [formToken, viewToken, h] = await Promise.all([
+  const [formToken, viewToken, customerToken, h] = await Promise.all([
     getPublicFormToken(),
     getPublicViewToken(),
+    getPublicCustomerToken(),
     headers(),
   ]);
   const host = h.get('x-forwarded-host') ?? h.get('host') ?? '';
@@ -53,7 +57,7 @@ export default async function SharePage() {
         </div>
       </Card>
 
-      <Card title="Link xem bán hàng chi tiết">
+      <Card title="Link xem bán hàng chi tiết" className="mb-6">
         <div className="p-4">
           <SharePanel
             initialToken={viewToken}
@@ -70,8 +74,25 @@ export default async function SharePage() {
         </div>
       </Card>
 
+      <Card title="Link nhập khách hàng">
+        <div className="p-4">
+          <SharePanel
+            initialToken={customerToken}
+            baseUrl={baseUrl}
+            basePath="/nhap-khach"
+            regenerateAction={regenerateCustomerLink}
+            setSlugAction={setCustomerSlug}
+            texts={{
+              linkLabel: 'Link nhập khách hàng',
+              help: 'Gửi link này để nhân viên nhập SĐT/địa chỉ + lần mua của khách (không cần đăng nhập). Chỉ ghi vào sổ khách — KHÔNG tính doanh thu, không xem báo cáo.',
+              slugPlaceholder: 'ebisen-khach',
+            }}
+          />
+        </div>
+      </Card>
+
       <p className="mt-4 text-xs text-muted">
-        Cả hai link đều gated bằng chuỗi bí mật trong đường dẫn. Lỡ gửi nhầm hoặc
+        Các link đều gated bằng chuỗi bí mật trong đường dẫn. Lỡ gửi nhầm hoặc
         nhân viên nghỉ, bấm &quot;tạo link ngẫu nhiên&quot; để vô hiệu link cũ và
         gửi link mới.
       </p>

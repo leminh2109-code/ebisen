@@ -7,8 +7,20 @@ import type { MenuItem } from '@/lib/queries';
 
 const initial: CustomerState = { ok: false, error: null };
 
-export default function CustomerForm({ menu }: { menu: MenuItem[] }) {
-  const [state, action, pending] = useActionState(createCustomerOrder, initial);
+type CustomerAction = (state: CustomerState, formData: FormData) => Promise<CustomerState>;
+
+export default function CustomerForm({
+  menu,
+  action: actionProp = createCustomerOrder,
+  token,
+}: {
+  menu: MenuItem[];
+  /** Server action (state, formData). Mặc định createCustomerOrder (bản đăng nhập). */
+  action?: CustomerAction;
+  /** Token của link công khai — chèn vào formData để server xác thực. */
+  token?: string;
+}) {
+  const [state, action, pending] = useActionState(actionProp, initial);
   const formRef = useRef<HTMLFormElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
 
@@ -21,6 +33,7 @@ export default function CustomerForm({ menu }: { menu: MenuItem[] }) {
 
   return (
     <form ref={formRef} action={action} className="space-y-4">
+      {token && <input type="hidden" name="token" value={token} />}
       <Field label="Số điện thoại" required>
         <input
           ref={phoneRef}

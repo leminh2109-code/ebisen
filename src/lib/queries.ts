@@ -2,7 +2,11 @@
 // Toàn bộ số liệu tính ở DB (xem supabase/migrations/0002_redesign.sql), không tính ở đây.
 // Nguồn doanh thu chính thức = daily_revenue.
 import { createClient } from '@/lib/supabase/server';
-import type { PublicFormBootstrap, PublicSalesView } from '@/lib/supabase/types';
+import type {
+  PublicFormBootstrap,
+  PublicSalesView,
+  PublicCustomerBootstrap,
+} from '@/lib/supabase/types';
 
 export type MonthlyRevenue = { month: string; days: number; revenue: number; cakes: number };
 export type DailyRevenue = {
@@ -538,6 +542,27 @@ export async function getCustomerOrders(customerId: string): Promise<CustomerOrd
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data ?? [];
+}
+
+/** Dữ liệu form khách công khai (menu) theo token. Gọi RPC security definer. */
+export async function getPublicCustomerFormData(token: string): Promise<PublicCustomerBootstrap> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('public_customer_bootstrap', { p_token: token });
+  if (error) throw error;
+  return data as PublicCustomerBootstrap;
+}
+
+/** Token link nhập khách công khai đang active (owner đọc để hiển thị/copy). */
+export async function getPublicCustomerToken(): Promise<string | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('public_customer_tokens')
+    .select('token')
+    .eq('active', true)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data?.token ?? null;
 }
 
 /** Role của user hiện tại — dùng để gate trang P&L. */

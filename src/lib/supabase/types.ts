@@ -12,6 +12,11 @@ export type PublicFormBootstrap =
       employees: { id: string; name: string }[];
     };
 
+/** Kết quả public_customer_bootstrap: menu (loại bánh) cho form khách công khai. */
+export type PublicCustomerBootstrap =
+  | { valid: false }
+  | { valid: true; menu: { id: string; name: string; price: number }[] };
+
 /** Một dòng bán hàng cho link XEM công khai (chỉ các cột bảng chi tiết hiển thị). */
 export type PublicSaleRow = {
   id: string;
@@ -286,6 +291,12 @@ export type Database = {
         Update: { active?: boolean };
         Relationships: Rel;
       };
+      public_customer_tokens: {
+        Row: { id: string; token: string; active: boolean; created_at: string };
+        Insert: { token: string; active?: boolean };
+        Update: { active?: boolean };
+        Relationships: Rel;
+      };
       expenses: {
         Row: {
           id: string;
@@ -456,6 +467,31 @@ export type Database = {
         Returns: string;
       };
       set_public_view_slug: {
+        Args: { p_slug: string };
+        Returns: string;
+      };
+      public_customer_bootstrap: {
+        Args: { p_token: string };
+        Returns: PublicCustomerBootstrap;
+      };
+      public_submit_customer: {
+        Args: {
+          p_token: string;
+          p_phone: string;
+          p_name: string | null;
+          p_address: string | null;
+          p_menu_item_id: string | null;
+          p_quantity: number | null;
+          p_order_date: string | null;
+          p_note: string | null;
+        };
+        Returns: string;
+      };
+      regenerate_public_customer_token: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
+      set_public_customer_slug: {
         Args: { p_slug: string };
         Returns: string;
       };
