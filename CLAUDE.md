@@ -70,11 +70,34 @@ npm run airtable:reconcile   # đối chiếu — fidelity lịch sử phải kh
 `auto` (dữ liệu mới hợp lệ, báo riêng — không false-alarm). **Chưa hủy Airtable** cho
 tới khi đủ 1 tháng khớp liên tục.
 
-## Đổi schema
+## Đổi schema (dùng Supabase CLI)
 
-Không dùng Supabase CLI (tài khoản gh/supabase trên máy khác tài khoản chứa project của
-bạn bạn). **Áp migration bằng cách dán SQL vào Supabase SQL Editor.** File ở
-`supabase/migrations/000X_*.sql`. DML (seed/backfill) có thể chạy qua service_role script.
+Dùng **Supabase CLI** (đã là devDependency, gọi qua `npx supabase` / các script `db:*`).
+Không dán tay vào SQL Editor nữa.
+
+**Thiết lập một lần** (mỗi máy mới):
+```
+npx supabase login                          # mở trình duyệt lấy access token
+npx supabase link --project-ref <ref>       # <ref> = phần đầu NEXT_PUBLIC_SUPABASE_URL
+npx supabase migration list                 # xem migration nào remote đã có
+```
+⚠️ **Cạm bẫy lịch sử:** migration `0001`–`0008` được áp bằng cách DÁN TAY vào SQL Editor,
+nên bảng lịch sử của CLI KHÔNG biết chúng đã chạy. Nếu `migration list` báo remote còn
+trống các version đó, **đánh dấu đã-áp (KHÔNG chạy lại)** trước khi push:
+```
+npx supabase migration repair --status applied 0001 0002 0003 0004 0005 0006 0007 0008
+```
+Sau bước này `migration list` phải hiện đủ cả LOCAL và REMOTE cho 0001–0008.
+
+**Vòng đời thường ngày:**
+```
+npx supabase migration new <ten_mo_ta>   # tạo file <timestamp>_<ten>.sql trong supabase/migrations
+# ... viết SQL (view/bảng/RLS) vào file mới ...
+npm run db:push                          # = supabase db push, áp migration MỚI lên remote
+```
+Migration mới có tên timestamp 14 chữ số (tự sinh) → sắp sau 0001–0008, đúng thứ tự.
+Thêm số liệu/báo cáo: tạo view trong migration mới, đọc ở `src/lib/queries.ts` (đừng tính ở React).
+DML (seed/backfill) vẫn có thể chạy qua service_role script như trước.
 
 ## Lệnh
 
@@ -83,6 +106,8 @@ npm run dev -- -p 3100   # dev (CỔNG 3100 — TUYỆT ĐỐI KHÔNG dùng 3000
 npm run build            # production build
 npm run typecheck        # tsc --noEmit
 npm run lint             # eslint (chú ý rule react-hooks/set-state-in-effect)
+npm run db:push          # supabase db push — áp migration mới lên remote
+npm run db:reset         # reset DB LOCAL (cần Docker) — KHÔNG đụng remote
 ```
 
 **Cổng dev = 3100, KHÔNG BAO GIỜ dùng 3000.** Cổng 3000 dành cho việc khác trên máy
