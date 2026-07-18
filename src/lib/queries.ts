@@ -179,6 +179,86 @@ export async function getSales(): Promise<SaleRow[]> {
   return all;
 }
 
+/** Tồn kho tôm hiện tại (số con + kg đã nhập, đã dùng, còn lại). */
+export type ShrimpInventory = {
+  total_in: number;
+  total_kg: number;
+  total_used: number;
+  on_hand: number;
+  start_date: string | null;
+};
+export type MonthlyShrimpPurchased = {
+  month: string;
+  purchase_count: number;
+  kg: number;
+  shrimp_in: number;
+};
+export type MonthlyShrimpUsed = { month: string; shrimp_used: number };
+/** Một lần nhập tôm (cho bảng lịch sử). */
+export type ShrimpPurchaseRow = {
+  id: string;
+  purchase_date: string;
+  kg: number;
+  size_per_kg: number;
+  shrimp_count: number;
+  note: string | null;
+};
+
+export async function getShrimpInventory(): Promise<ShrimpInventory> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('shrimp_inventory').select('*').single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getShrimpPurchasedByMonth(): Promise<MonthlyShrimpPurchased[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('shrimp_purchased_by_month')
+    .select('*')
+    .order('month', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getShrimpUsedByMonth(): Promise<MonthlyShrimpUsed[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('shrimp_used_by_month')
+    .select('*')
+    .order('month', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Lịch sử nhập tôm (mới → cũ). */
+export async function getShrimpPurchases(): Promise<ShrimpPurchaseRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('shrimp_purchases')
+    .select('id, purchase_date, kg, size_per_kg, shrimp_count, note')
+    .order('purchase_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Tổng quan tồn kho tôm cho trang Tồn kho + thẻ dashboard. */
+export async function getShrimpSummary() {
+  const [inventory, purchasedByMonth, usedByMonth] = await Promise.all([
+    getShrimpInventory(),
+    getShrimpPurchasedByMonth(),
+    getShrimpUsedByMonth(),
+  ]);
+
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const thisMonthIn = purchasedByMonth.find((p) => p.month === currentMonth)?.shrimp_in ?? 0;
+  const thisMonthUsed = usedByMonth.find((u) => u.month === currentMonth)?.shrimp_used ?? 0;
+
+  return { inventory, thisMonthIn, thisMonthUsed, currentMonth };
+}
+
 /** Tổng quan tháng hiện tại cho Dashboard. */
 export async function getDashboardSummary() {
   const [revByMonth, expByMonth, pnl, paymentSplit] = await Promise.all([
@@ -239,6 +319,7 @@ export type MenuItem = {
   price: number;
   active: boolean;
   sort_order: number;
+  shrimp_per_unit: number;
 };
 
 /** Thực đơn — mọi món (cho trang quản lý). */
@@ -246,7 +327,7 @@ export async function getMenu(): Promise<MenuItem[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('menu')
-    .select('id, name, price, active, sort_order')
+    .select('id, name, price, active, sort_order, shrimp_per_unit')
     .order('sort_order', { ascending: true })
     .order('name', { ascending: true });
   if (error) throw error;

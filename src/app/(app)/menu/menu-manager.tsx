@@ -54,6 +54,17 @@ export function MenuRow({ item }: { item: MenuItem }) {
         className={`${inputCls} w-32 tabular`}
       />
       <span className="text-xs text-muted">{formatCurrency(item.price)}</span>
+      <label className="flex items-center gap-1.5 text-sm text-muted">
+        Tôm/bánh
+        <input
+          name="shrimp_per_unit"
+          inputMode="numeric"
+          defaultValue={String(item.shrimp_per_unit)}
+          className={`${inputCls} w-16 tabular`}
+          title="Số con tôm mỗi bánh (để tính tồn kho)"
+        />
+        con
+      </label>
       <label className="flex items-center gap-1.5 text-sm">
         <input type="checkbox" name="active" defaultChecked={item.active} />
         Còn bán

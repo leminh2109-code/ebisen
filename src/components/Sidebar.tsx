@@ -30,10 +30,15 @@ const NAV: { section: string; items: NavItem[] }[] = [
     items: [{ href: '/pnl', label: 'P&L', icon: '±' }],
   },
   {
+    section: 'Tồn kho',
+    items: [{ href: '/inventory', label: 'Tồn kho tôm', icon: '🦐' }],
+  },
+  {
     section: 'Nhập liệu',
     items: [
       { href: '/entry/sale', label: 'Nhập bán hàng', icon: '＋' },
       { href: '/entry/expense', label: 'Nhập chi phí', icon: '＋' },
+      { href: '/entry/shrimp', label: 'Nhập tôm', icon: '＋' },
     ],
   },
   {

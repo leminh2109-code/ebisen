@@ -1,14 +1,17 @@
 import Link from 'next/link';
-import { getDashboardSummary, getCurrentRole } from '@/lib/queries';
+import { getDashboardSummary, getShrimpSummary, getCurrentRole } from '@/lib/queries';
 import { formatMonth } from '@/lib/format';
 import { PageHeader, StatCard, Card } from '@/components/ui';
 import { BarChart } from '@/components/BarChart';
 
 export const dynamic = 'force-dynamic';
 
+const n = (v: number) => Number(v).toLocaleString('vi-VN');
+
 export default async function DashboardPage() {
-  const [summary, role] = await Promise.all([
+  const [summary, shrimp, role] = await Promise.all([
     getDashboardSummary(),
+    getShrimpSummary(),
     getCurrentRole(),
   ]);
   const isOwner = role === 'owner';
@@ -53,6 +56,22 @@ export default async function DashboardPage() {
             {Number(summary.thisMonthCakes).toLocaleString('vi-VN')} bánh
           </p>
         </div>
+        <Link
+          href="/inventory"
+          className="rounded-xl border border-border bg-surface p-4 hover:border-accent transition block"
+        >
+          <p className="text-sm text-muted">Tồn kho tôm</p>
+          <p
+            className={`mt-1 text-2xl font-semibold tabular ${
+              shrimp.inventory.on_hand <= 0 ? 'text-negative' : 'text-positive'
+            }`}
+          >
+            {n(shrimp.inventory.on_hand)} con
+          </p>
+          <p className="mt-1 text-xs text-muted tabular">
+            Nhập {n(shrimp.thisMonthIn)} · Dùng {n(shrimp.thisMonthUsed)} con tháng này
+          </p>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">

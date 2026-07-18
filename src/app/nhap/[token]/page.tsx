@@ -34,6 +34,7 @@ export default async function PublicSalePage({
     ...m,
     active: true,
     sort_order: 0,
+    shrimp_per_unit: 0,
   }));
   const employees: Employee[] = data.employees.map((e) => ({
     ...e,

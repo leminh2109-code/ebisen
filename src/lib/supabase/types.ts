@@ -47,11 +47,50 @@ export type Database = {
           price: number;
           active: boolean;
           sort_order: number;
+          shrimp_per_unit: number;
           created_at: string;
           updated_at: string;
         };
-        Insert: { name: string; price?: number; active?: boolean; sort_order?: number };
-        Update: { name?: string; price?: number; active?: boolean; sort_order?: number };
+        Insert: {
+          name: string;
+          price?: number;
+          active?: boolean;
+          sort_order?: number;
+          shrimp_per_unit?: number;
+        };
+        Update: {
+          name?: string;
+          price?: number;
+          active?: boolean;
+          sort_order?: number;
+          shrimp_per_unit?: number;
+        };
+        Relationships: Rel;
+      };
+      shrimp_purchases: {
+        Row: {
+          id: string;
+          purchase_date: string;
+          kg: number;
+          size_per_kg: number;
+          shrimp_count: number;
+          note: string | null;
+          created_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          purchase_date: string;
+          kg: number;
+          size_per_kg: number;
+          note?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          purchase_date?: string;
+          kg?: number;
+          size_per_kg?: number;
+          note?: string | null;
+        };
         Relationships: Rel;
       };
       employees: {
@@ -246,6 +285,24 @@ export type Database = {
           transfer: number;
           other: number;
           total: number;
+        };
+        Relationships: Rel;
+      };
+      shrimp_purchased_by_month: {
+        Row: { month: string; purchase_count: number; kg: number; shrimp_in: number };
+        Relationships: Rel;
+      };
+      shrimp_used_by_month: {
+        Row: { month: string; shrimp_used: number };
+        Relationships: Rel;
+      };
+      shrimp_inventory: {
+        Row: {
+          total_in: number;
+          total_kg: number;
+          total_used: number;
+          on_hand: number;
+          start_date: string | null;
         };
         Relationships: Rel;
       };

@@ -56,13 +56,19 @@ export async function updateMenuItem(
   const id = String(formData.get('id') ?? '');
   const price = parsePrice(String(formData.get('price') ?? ''));
   const active = formData.get('active') === 'on';
+  const shrimpRaw = parsePrice(String(formData.get('shrimp_per_unit') ?? ''));
+  const shrimp_per_unit = shrimpRaw === null ? 0 : Math.round(shrimpRaw);
   if (!id) return { ok: false, error: 'Thiếu id món.' };
   if (price === null) return { ok: false, error: 'Giá không hợp lệ.' };
 
-  const { error: err } = await supabase.from('menu').update({ price, active }).eq('id', id);
+  const { error: err } = await supabase
+    .from('menu')
+    .update({ price, active, shrimp_per_unit })
+    .eq('id', id);
   if (err) return { ok: false, error: err.message };
 
   revalidatePath('/menu');
   revalidatePath('/entry/sale');
+  revalidatePath('/inventory');
   return { ok: true, error: null };
 }
