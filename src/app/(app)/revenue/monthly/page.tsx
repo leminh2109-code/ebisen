@@ -1,12 +1,15 @@
-import { getRevenueByMonth } from '@/lib/queries';
+import { getRevenueByMonth, getSalesQtyByMonth } from '@/lib/queries';
 import { formatCurrency, formatMonth } from '@/lib/format';
 import { PageHeader, Card, EmptyState } from '@/components/ui';
 import { BarChart } from '@/components/BarChart';
 
 export const dynamic = 'force-dynamic';
 
+const n = (v: number) => Number(v).toLocaleString('vi-VN');
+
 export default async function RevenueMonthlyPage() {
-  const rows = await getRevenueByMonth();
+  const [rows, qtyRows] = await Promise.all([getRevenueByMonth(), getSalesQtyByMonth()]);
+  const qtyByMonth = new Map(qtyRows.map((q) => [q.month, q]));
 
   const chart = rows
     .slice(0, 12)
@@ -33,32 +36,44 @@ export default async function RevenueMonthlyPage() {
         {rows.length === 0 ? (
           <EmptyState message="Chưa có doanh thu nào." />
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-muted">
-                <th className="px-4 py-2 font-medium">Tháng</th>
-                <th className="px-4 py-2 font-medium text-right">Số ngày</th>
-                <th className="px-4 py-2 font-medium text-right">Số bánh</th>
-                <th className="px-4 py-2 font-medium text-right">Doanh thu</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.month} className="border-b border-border last:border-0">
-                  <td className="px-4 py-2.5">{formatMonth(r.month)}</td>
-                  <td className="px-4 py-2.5 text-right tabular">{r.days}</td>
-                  <td className="px-4 py-2.5 text-right tabular">
-                    {Number(r.cakes).toLocaleString('vi-VN')}
-                  </td>
-                  <td className="px-4 py-2.5 text-right tabular font-medium">
-                    {formatCurrency(r.revenue)}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-muted">
+                  <th className="px-4 py-2 font-medium">Tháng</th>
+                  <th className="px-4 py-2 font-medium text-right">Số ngày</th>
+                  <th className="px-4 py-2 font-medium text-right">Số bánh</th>
+                  <th className="px-4 py-2 font-medium text-right">SL 1 tôm</th>
+                  <th className="px-4 py-2 font-medium text-right">SL 2 tôm</th>
+                  <th className="px-4 py-2 font-medium text-right">Doanh thu</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((r) => {
+                  const q = qtyByMonth.get(r.month);
+                  return (
+                    <tr key={r.month} className="border-b border-border last:border-0">
+                      <td className="px-4 py-2.5">{formatMonth(r.month)}</td>
+                      <td className="px-4 py-2.5 text-right tabular">{r.days}</td>
+                      <td className="px-4 py-2.5 text-right tabular">{n(Number(r.cakes))}</td>
+                      <td className="px-4 py-2.5 text-right tabular">{q ? n(q.qty_1tom) : '—'}</td>
+                      <td className="px-4 py-2.5 text-right tabular">{q ? n(q.qty_2tom) : '—'}</td>
+                      <td className="px-4 py-2.5 text-right tabular font-medium">
+                        {formatCurrency(r.revenue)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </Card>
+
+      <p className="mt-4 text-xs text-muted">
+        SL 1 tôm / 2 tôm lấy từ từng lần bán. Tháng lịch sử (nạp từ Airtable) có một
+        số bản ghi trống loại bánh nên tổng SL 1 tôm + 2 tôm có thể nhỏ hơn “Số bánh”.
+      </p>
     </div>
   );
 }

@@ -55,6 +55,25 @@ export type SaleRow = {
   note: string | null;
 };
 
+/** Số lượng bánh bán theo tháng, tách 1 tôm / 2 tôm / khác (từ sales). */
+export type MonthlySalesQty = {
+  month: string;
+  qty_1tom: number;
+  qty_2tom: number;
+  qty_other: number;
+  qty_total: number;
+};
+
+export async function getSalesQtyByMonth(): Promise<MonthlySalesQty[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('sales_qty_by_month')
+    .select('*')
+    .order('month', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function getRevenueByMonth(): Promise<MonthlyRevenue[]> {
   const supabase = await createClient();
   const { data, error } = await supabase

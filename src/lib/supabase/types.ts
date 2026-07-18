@@ -287,6 +287,16 @@ export type Database = {
         };
         Relationships: Rel;
       };
+      sales_qty_by_month: {
+        Row: {
+          month: string;
+          qty_1tom: number;
+          qty_2tom: number;
+          qty_other: number;
+          qty_total: number;
+        };
+        Relationships: Rel;
+      };
       shrimp_purchased_by_month: {
         Row: { month: string; purchase_count: number; kg: number; shrimp_in: number };
         Relationships: Rel;
