@@ -67,6 +67,34 @@ export type Database = {
         };
         Relationships: Rel;
       };
+      shrimp_gifts: {
+        Row: {
+          id: string;
+          gift_date: string;
+          menu_item_id: string | null;
+          cake_type: string | null;
+          quantity: number;
+          note: string | null;
+          created_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          gift_date: string;
+          quantity: number;
+          menu_item_id?: string | null;
+          cake_type?: string | null;
+          note?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          gift_date?: string;
+          quantity?: number;
+          menu_item_id?: string | null;
+          cake_type?: string | null;
+          note?: string | null;
+        };
+        Relationships: Rel;
+      };
       shrimp_purchases: {
         Row: {
           id: string;
@@ -303,6 +331,10 @@ export type Database = {
       };
       shrimp_used_by_month: {
         Row: { month: string; shrimp_used: number };
+        Relationships: Rel;
+      };
+      shrimp_gift_by_month: {
+        Row: { month: string; gift_qty: number; gift_shrimp: number };
         Relationships: Rel;
       };
       shrimp_inventory: {

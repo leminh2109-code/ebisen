@@ -166,3 +166,52 @@ export async function deleteShrimpPurchase(formData: FormData): Promise<void> {
   revalidatePath('/inventory');
   revalidatePath('/dashboard');
 }
+
+export async function createShrimpGift(
+  _prev: EntryState,
+  formData: FormData,
+): Promise<EntryState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Phiên đăng nhập hết hạn.' };
+
+  const gift_date = String(formData.get('gift_date') ?? '').trim();
+  const menu_item_id = String(formData.get('menu_item_id') ?? '').trim() || null;
+  const quantity = parseNumber(String(formData.get('quantity') ?? ''));
+  const note = String(formData.get('note') ?? '').trim() || null;
+
+  if (!gift_date) return { ok: false, error: 'Thiếu ngày tặng.' };
+  if (!menu_item_id) return { ok: false, error: 'Chọn loại bánh.' };
+  if (quantity === null || quantity <= 0) return { ok: false, error: 'Số lượng không hợp lệ.' };
+
+  // Snapshot tên loại bánh (giữ nguyên nếu sau này đổi/xóa món).
+  const { data: item } = await supabase.from('menu').select('name').eq('id', menu_item_id).single();
+  if (!item) return { ok: false, error: 'Loại bánh không tồn tại.' };
+
+  const { error } = await supabase.from('shrimp_gifts').insert({
+    gift_date,
+    menu_item_id,
+    cake_type: item.name,
+    quantity,
+    note,
+    created_by: user.id,
+  });
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath('/inventory');
+  revalidatePath('/dashboard');
+  return { ok: true, error: null };
+}
+
+/** Xóa một lần nhập bánh tặng (RLS chỉ cho owner xóa). */
+export async function deleteShrimpGift(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const id = String(formData.get('id') ?? '').trim();
+  if (!id) return;
+  await supabase.from('shrimp_gifts').delete().eq('id', id);
+  revalidatePath('/inventory');
+  revalidatePath('/dashboard');
+}

@@ -213,6 +213,15 @@ export type MonthlyShrimpPurchased = {
   shrimp_in: number;
 };
 export type MonthlyShrimpUsed = { month: string; shrimp_used: number };
+export type MonthlyShrimpGift = { month: string; gift_qty: number; gift_shrimp: number };
+/** Một lần nhập bánh tặng (cho bảng lịch sử). */
+export type ShrimpGiftRow = {
+  id: string;
+  gift_date: string;
+  cake_type: string | null;
+  quantity: number;
+  note: string | null;
+};
 /** Một lần nhập tôm (cho bảng lịch sử). */
 export type ShrimpPurchaseRow = {
   id: string;
@@ -249,6 +258,28 @@ export async function getShrimpUsedByMonth(): Promise<MonthlyShrimpUsed[]> {
   return data ?? [];
 }
 
+export async function getShrimpGiftByMonth(): Promise<MonthlyShrimpGift[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('shrimp_gift_by_month')
+    .select('*')
+    .order('month', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Lịch sử bánh tặng (mới → cũ). */
+export async function getShrimpGifts(): Promise<ShrimpGiftRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('shrimp_gifts')
+    .select('id, gift_date, cake_type, quantity, note')
+    .order('gift_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
 /** Lịch sử nhập tôm (mới → cũ). */
 export async function getShrimpPurchases(): Promise<ShrimpPurchaseRow[]> {
   const supabase = await createClient();
@@ -263,18 +294,22 @@ export async function getShrimpPurchases(): Promise<ShrimpPurchaseRow[]> {
 
 /** Tổng quan tồn kho tôm cho trang Tồn kho + thẻ dashboard. */
 export async function getShrimpSummary() {
-  const [inventory, purchasedByMonth, usedByMonth] = await Promise.all([
+  const [inventory, purchasedByMonth, usedByMonth, giftByMonth] = await Promise.all([
     getShrimpInventory(),
     getShrimpPurchasedByMonth(),
     getShrimpUsedByMonth(),
+    getShrimpGiftByMonth(),
   ]);
 
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   const thisMonthIn = purchasedByMonth.find((p) => p.month === currentMonth)?.shrimp_in ?? 0;
-  const thisMonthUsed = usedByMonth.find((u) => u.month === currentMonth)?.shrimp_used ?? 0;
+  const thisMonthSold = usedByMonth.find((u) => u.month === currentMonth)?.shrimp_used ?? 0;
+  const thisMonthGift = giftByMonth.find((g) => g.month === currentMonth)?.gift_shrimp ?? 0;
+  // Tôm dùng = bán + tặng (khớp cách tính tồn kho).
+  const thisMonthUsed = Number(thisMonthSold) + Number(thisMonthGift);
 
-  return { inventory, thisMonthIn, thisMonthUsed, currentMonth };
+  return { inventory, thisMonthIn, thisMonthSold, thisMonthGift, thisMonthUsed, currentMonth };
 }
 
 /** Tổng quan tháng hiện tại cho Dashboard. */

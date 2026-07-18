@@ -39,6 +39,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { href: '/entry/sale', label: 'Nhập bán hàng', icon: '＋' },
       { href: '/entry/expense', label: 'Nhập chi phí', icon: '＋' },
       { href: '/entry/shrimp', label: 'Nhập tôm', icon: '＋' },
+      { href: '/entry/gift', label: 'Nhập bánh tặng', icon: '＋' },
     ],
   },
   {
