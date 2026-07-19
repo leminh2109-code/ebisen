@@ -26,43 +26,52 @@ export async function createCustomerOrder(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: 'Phiên đăng nhập hết hạn.' };
 
-  const phone = normalizePhone(String(formData.get('phone') ?? ''));
-  const name = String(formData.get('name') ?? '').trim() || null;
-  const address = String(formData.get('address') ?? '').trim() || null;
+  const customerSel = String(formData.get('customer_id') ?? '').trim();
   const order_date = String(formData.get('order_date') ?? '').trim();
   const menu_item_id = String(formData.get('menu_item_id') ?? '').trim() || null;
   const quantity = parseQty(String(formData.get('quantity') ?? ''));
   const note = String(formData.get('note') ?? '').trim() || null;
 
-  if (phone.replace(/\D/g, '').length < 8)
-    return { ok: false, error: 'Số điện thoại không hợp lệ.' };
   if (!order_date) return { ok: false, error: 'Thiếu ngày mua.' };
   if (!menu_item_id) return { ok: false, error: 'Chọn loại bánh.' };
   if (quantity === null) return { ok: false, error: 'Số lượng không hợp lệ.' };
 
-  // Gộp khách theo SĐT.
-  const { data: existing } = await supabase
-    .from('customers')
-    .select('id')
-    .eq('phone', phone)
-    .maybeSingle();
-
   let customerId: string;
-  if (existing) {
-    customerId = existing.id;
-    // Chỉ cập nhật tên/địa chỉ khi có nhập (không ghi đè bằng rỗng).
-    const upd: { name?: string; address?: string } = {};
-    if (name) upd.name = name;
-    if (address) upd.address = address;
-    if (Object.keys(upd).length) await supabase.from('customers').update(upd).eq('id', customerId);
+  if (customerSel) {
+    // Chọn khách cũ từ danh sách → dùng thẳng, không cần nhập lại SĐT.
+    const { data: c } = await supabase.from('customers').select('id').eq('id', customerSel).maybeSingle();
+    if (!c) return { ok: false, error: 'Khách không tồn tại.' };
+    customerId = c.id;
   } else {
-    const { data: created, error: cErr } = await supabase
+    // Khách mới / nhập tay: gộp theo SĐT.
+    const phone = normalizePhone(String(formData.get('phone') ?? ''));
+    const name = String(formData.get('name') ?? '').trim() || null;
+    const address = String(formData.get('address') ?? '').trim() || null;
+    if (phone.replace(/\D/g, '').length < 8)
+      return { ok: false, error: 'Số điện thoại không hợp lệ.' };
+
+    const { data: existing } = await supabase
       .from('customers')
-      .insert({ phone, name, address, created_by: user.id })
       .select('id')
-      .single();
-    if (cErr || !created) return { ok: false, error: cErr?.message ?? 'Không tạo được khách.' };
-    customerId = created.id;
+      .eq('phone', phone)
+      .maybeSingle();
+
+    if (existing) {
+      customerId = existing.id;
+      // Chỉ cập nhật tên/địa chỉ khi có nhập (không ghi đè bằng rỗng).
+      const upd: { name?: string; address?: string } = {};
+      if (name) upd.name = name;
+      if (address) upd.address = address;
+      if (Object.keys(upd).length) await supabase.from('customers').update(upd).eq('id', customerId);
+    } else {
+      const { data: created, error: cErr } = await supabase
+        .from('customers')
+        .insert({ phone, name, address, created_by: user.id })
+        .select('id')
+        .single();
+      if (cErr || !created) return { ok: false, error: cErr?.message ?? 'Không tạo được khách.' };
+      customerId = created.id;
+    }
   }
 
   // Snapshot tên loại bánh.

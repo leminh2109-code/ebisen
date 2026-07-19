@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import { getActiveMenu } from '@/lib/queries';
+import { getActiveMenu, getCustomerOptions } from '@/lib/queries';
 import { PageHeader, Card } from '@/components/ui';
 import CustomerForm from './customer-form';
 
 export const dynamic = 'force-dynamic';
 
 export default async function CustomerEntryPage() {
-  const menu = await getActiveMenu();
+  const [menu, customers] = await Promise.all([getActiveMenu(), getCustomerOptions()]);
 
   return (
     <div className="max-w-lg">
@@ -20,7 +20,7 @@ export default async function CustomerEntryPage() {
         }
       />
       <Card className="p-6">
-        <CustomerForm menu={menu} />
+        <CustomerForm menu={menu} customers={customers} />
       </Card>
       <p className="mt-4 text-xs text-muted">
         Dữ liệu khách hàng chỉ dùng để phân tích & chăm sóc — KHÔNG tính vào doanh
