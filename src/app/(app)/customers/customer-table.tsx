@@ -127,18 +127,21 @@ export function CustomerTable({
                   <td className="px-4 py-2">{c.top_cake ?? '—'}</td>
                   <td className="px-4 py-2 tabular">{c.last_order ? formatDate(c.last_order) : '—'}</td>
                   <td className="px-4 py-2">
-                    <div className="flex items-center justify-end gap-3">
+                    <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
                         onClick={() => setEditing(c)}
-                        className="text-accent hover:underline text-xs"
+                        className="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:border-accent hover:text-accent"
                       >
                         Sửa
                       </button>
                       {isOwner && (
                         <form action={deleteCustomer}>
                           <input type="hidden" name="id" value={c.id} />
-                          <button type="submit" className="text-negative hover:underline text-xs">
+                          <button
+                            type="submit"
+                            className="rounded-md border border-negative/40 px-2.5 py-1 text-xs font-medium text-negative hover:bg-negative/10"
+                          >
                             Xóa
                           </button>
                         </form>
