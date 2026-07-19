@@ -32,14 +32,17 @@ export function StatCard({
   tone?: 'neutral' | 'positive' | 'negative' | 'auto';
   hint?: string;
 }) {
-  const resolvedTone =
-    tone === 'auto' ? (amount >= 0 ? 'positive' : 'negative') : tone;
+  // 'auto' dành cho Lãi/Lỗ: lãi (>=0) xanh dương, lỗ đỏ.
   const color =
-    resolvedTone === 'positive'
-      ? 'text-positive'
-      : resolvedTone === 'negative'
-        ? 'text-negative'
-        : 'text-foreground';
+    tone === 'auto'
+      ? amount >= 0
+        ? 'text-blue-600'
+        : 'text-negative'
+      : tone === 'positive'
+        ? 'text-positive'
+        : tone === 'negative'
+          ? 'text-negative'
+          : 'text-foreground';
   return (
     <div className="rounded-xl border border-border bg-surface p-4">
       <p className="text-sm text-muted">{label}</p>

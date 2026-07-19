@@ -56,7 +56,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
         <div className="rounded-xl border border-border bg-surface p-4">
           <p className="text-sm text-muted">Số bánh bán tháng này</p>
-          <p className="mt-1 text-2xl font-semibold tabular text-blue-600">
+          <p className="mt-1 text-2xl font-semibold tabular text-positive">
             {Number(summary.thisMonthCakes).toLocaleString('vi-VN')} bánh
           </p>
         </div>
@@ -99,7 +99,7 @@ export default async function DashboardPage() {
 
       {isOwner && (
         <Card title="Lãi/Lỗ 6 tháng gần nhất" className="mt-6">
-          <BarChart data={trend} />
+          <BarChart data={trend} positiveClass="bg-blue-600/80" />
         </Card>
       )}
 

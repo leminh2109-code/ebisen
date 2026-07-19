@@ -3,7 +3,16 @@ import { formatCurrencyCompact } from '@/lib/format';
 
 export type Bar = { label: string; value: number };
 
-export function BarChart({ data, height = 200 }: { data: Bar[]; height?: number }) {
+export function BarChart({
+  data,
+  height = 200,
+  positiveClass = 'bg-accent/80',
+}: {
+  data: Bar[];
+  height?: number;
+  /** Màu cột giá trị dương. Mặc định accent; biểu đồ Lãi/Lỗ dùng xanh dương. */
+  positiveClass?: string;
+}) {
   if (data.length === 0) {
     return (
       <div className="px-4 py-12 text-center text-sm text-muted">
@@ -33,7 +42,7 @@ export function BarChart({ data, height = 200 }: { data: Bar[]; height?: number 
               </span>
               <div
                 className={`w-full rounded-t ${
-                  hasNegative && !positive ? 'bg-negative/70' : 'bg-accent/80'
+                  hasNegative && !positive ? 'bg-negative/70' : positiveClass
                 }`}
                 style={{ height: `${Math.max(pct, 1)}%` }}
                 title={`${d.label}: ${formatCurrencyCompact(d.value)}`}

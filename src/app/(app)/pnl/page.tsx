@@ -40,7 +40,7 @@ export default async function PnlPage() {
       </div>
 
       <Card title="Lãi/Lỗ 12 tháng gần nhất" className="mb-6">
-        <BarChart data={chart} />
+        <BarChart data={chart} positiveClass="bg-blue-600/80" />
       </Card>
 
       <Card>
@@ -83,7 +83,7 @@ export default async function PnlPage() {
                       </td>
                       <td
                         className={`px-4 py-2.5 text-right tabular font-medium ${
-                          profit >= 0 ? 'text-positive' : 'text-negative'
+                          profit >= 0 ? 'text-blue-600' : 'text-negative'
                         }`}
                       >
                         {formatCurrency(profit)}
