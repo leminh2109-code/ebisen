@@ -108,6 +108,7 @@ export type WeatherRevenue = {
   avg_cakes: number;
   avg_temp: number | null;
   avg_rain: number | null;
+  avg_feels: number | null;
 };
 export async function getRevenueByWeather(): Promise<WeatherRevenue[]> {
   const supabase = await createClient();

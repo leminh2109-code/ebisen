@@ -12,15 +12,21 @@ export const runtime = 'nodejs';
 const LAT = 20.87;
 const LON = 106.32;
 
-function condEmoji(code: number): [string, string] {
-  if (code === 0 || code === 1) return ['Nắng', '☀️'];
-  if (code === 2) return ['Ít mây', '⛅'];
-  if (code === 3) return ['Nhiều mây', '☁️'];
-  if (code === 45 || code === 48) return ['Sương mù', '🌫️'];
-  if (code === 95 || code === 96 || code === 99) return ['Giông', '⛈️'];
-  if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 85, 86].includes(code))
-    return ['Mưa', '🌧️'];
-  return ['Khác', '🌡️'];
+const EMOJI: Record<string, string> = {
+  Nắng: '☀️',
+  'Ít mây': '⛅',
+  'Nhiều mây': '☁️',
+  Mưa: '🌧️',
+  Giông: '⛈️',
+};
+
+// Phân loại theo GIỜ NẮNG + MƯA (weathercode chỉ để nhận diện giông).
+// weathercode = "thời tiết xấu nhất trong ngày" nên KHÔNG dùng làm điều kiện chính.
+function classify(sunH: number, rainMm: number, code: number): string {
+  if (rainMm >= 3 && sunH < 9) return code === 95 || code === 96 || code === 99 ? 'Giông' : 'Mưa';
+  if (sunH >= 9) return 'Nắng';
+  if (sunH >= 5) return 'Ít mây';
+  return 'Nhiều mây';
 }
 
 export async function GET(req: Request) {
@@ -31,7 +37,7 @@ export async function GET(req: Request) {
 
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
-    `&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum` +
+    `&daily=weathercode,temperature_2m_max,apparent_temperature_max,sunshine_duration,precipitation_sum` +
     `&past_days=7&forecast_days=1&timezone=Asia%2FBangkok`;
   const w = await fetch(url, { cache: 'no-store' }).then((r) => r.json());
   const d = w.daily;
@@ -40,11 +46,22 @@ export async function GET(req: Request) {
   }
 
   const rows = d.time.map((day: string, i: number) => {
-    const [cond, emo] = condEmoji(d.weathercode[i]);
     const tmax = d.temperature_2m_max[i];
+    const feels = d.apparent_temperature_max[i];
+    const sunH = (d.sunshine_duration[i] ?? 0) / 3600;
     const rain = d.precipitation_sum[i] ?? 0;
-    const disp = `${emo} ${cond} · ${Math.round(tmax)}°` + (rain > 0 ? ` · ${rain}mm` : '');
-    return { date: day, weather: disp, weather_cond: cond, temp_max: tmax, rain_mm: rain };
+    const cond = classify(sunH, rain, d.weathercode[i]);
+    const disp =
+      `${EMOJI[cond] ?? '🌡️'} ${cond} · ${Math.round(feels)}°` + (rain >= 1 ? ` · ${rain}mm` : '');
+    return {
+      date: day,
+      weather: disp,
+      weather_cond: cond,
+      temp_max: tmax,
+      feels_max: feels,
+      sunshine_hours: Math.round(sunH * 10) / 10,
+      rain_mm: rain,
+    };
   });
 
   const supabase = createClient(

@@ -24,7 +24,7 @@ export function WeatherAnalysis({ stats }: { stats: WeatherRevenue[] }) {
               <th className="px-4 py-2 font-medium text-right">Số ngày</th>
               <th className="px-4 py-2 font-medium text-right">Doanh thu TB/ngày</th>
               <th className="px-4 py-2 font-medium text-right">Bánh TB/ngày</th>
-              <th className="px-4 py-2 font-medium text-right">Nhiệt độ TB</th>
+              <th className="px-4 py-2 font-medium text-right">Cảm nhận TB</th>
             </tr>
           </thead>
           <tbody>
@@ -40,7 +40,7 @@ export function WeatherAnalysis({ stats }: { stats: WeatherRevenue[] }) {
                 </td>
                 <td className="px-4 py-2.5 text-right tabular">{n(w.avg_cakes)} bánh</td>
                 <td className="px-4 py-2.5 text-right tabular text-muted">
-                  {w.avg_temp === null ? '—' : `${w.avg_temp}°`}
+                  {w.avg_feels === null ? '—' : `${w.avg_feels}°`}
                 </td>
               </tr>
             ))}
@@ -48,8 +48,10 @@ export function WeatherAnalysis({ stats }: { stats: WeatherRevenue[] }) {
         </table>
       </div>
       <p className="px-4 py-3 text-xs text-muted">
-        Trung bình mỗi ngày theo điều kiện thời tiết. Thời tiết lấy tự động từ
-        Open-Meteo cho khu vực Trạm V52 (Km52 cao tốc Hà Nội – Hải Phòng).
+        Trung bình mỗi ngày theo điều kiện thời tiết. &quot;Cảm nhận&quot; = nhiệt độ
+        cảm nhận (tính cả độ ẩm, sát cảm giác thực tế). Phân loại theo số giờ nắng +
+        lượng mưa trong ngày (không theo mã thời tiết). Nguồn: Open-Meteo, khu vực Trạm
+        V52 (Km52 cao tốc Hà Nội – Hải Phòng).
       </p>
     </Card>
   );

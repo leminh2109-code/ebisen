@@ -285,6 +285,8 @@ export type Database = {
           weather: string | null;
           weather_cond: string | null;
           temp_max: number | null;
+          feels_max: number | null;
+          sunshine_hours: number | null;
           rain_mm: number | null;
           station_traffic: number | null;
           note: string | null;
@@ -474,6 +476,7 @@ export type Database = {
           avg_cakes: number;
           avg_temp: number | null;
           avg_rain: number | null;
+          avg_feels: number | null;
         };
         Relationships: Rel;
       };
