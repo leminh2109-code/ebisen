@@ -1,17 +1,23 @@
 import Link from 'next/link';
-import { getSales, getCurrentRole } from '@/lib/queries';
+import { getSales, getCurrentRole, getWeatherByDay, getRevenueByWeather } from '@/lib/queries';
 import { formatCurrency, today } from '@/lib/format';
 import { PageHeader, Card, EmptyState } from '@/components/ui';
 import { SalesDetailTable } from './sales-detail-table';
+import { WeatherAnalysis } from './weather-analysis';
 import { groupByMonthDay } from './group';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SalesDetailPage() {
-  const [sales, role] = await Promise.all([getSales(), getCurrentRole()]);
+  const [sales, role, weatherByDay, weatherStats] = await Promise.all([
+    getSales(),
+    getCurrentRole(),
+    getWeatherByDay(),
+    getRevenueByWeather(),
+  ]);
   const total = sales.reduce((s, i) => s + Number(i.amount), 0);
   const qty = sales.reduce((s, i) => s + Number(i.quantity), 0);
-  const months = groupByMonthDay(sales);
+  const months = groupByMonthDay(sales, weatherByDay);
 
   return (
     <div>
@@ -37,6 +43,8 @@ export default async function SalesDetailPage() {
           </div>
         }
       />
+
+      {weatherStats.length > 0 && <WeatherAnalysis stats={weatherStats} />}
 
       {sales.length === 0 ? (
         <Card>

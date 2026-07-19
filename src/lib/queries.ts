@@ -86,6 +86,36 @@ export async function getSalesQtyByMonth(): Promise<MonthlySalesQty[]> {
   return data ?? [];
 }
 
+/** Thời tiết mỗi ngày (chuỗi hiển thị), map theo ngày "YYYY-MM-DD". */
+export async function getWeatherByDay(): Promise<Record<string, string>> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('daily_revenue')
+    .select('revenue_date, weather')
+    .not('weather', 'is', null);
+  const map: Record<string, string> = {};
+  for (const r of data ?? []) if (r.weather) map[r.revenue_date] = r.weather;
+  return map;
+}
+
+/** Doanh thu trung bình mỗi ngày theo điều kiện thời tiết. */
+export type WeatherRevenue = {
+  weather_cond: string;
+  days: number;
+  revenue: number;
+  avg_revenue: number;
+  cakes: number;
+  avg_cakes: number;
+  avg_temp: number | null;
+  avg_rain: number | null;
+};
+export async function getRevenueByWeather(): Promise<WeatherRevenue[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('revenue_by_weather').select('*');
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function getRevenueByMonth(): Promise<MonthlyRevenue[]> {
   const supabase = await createClient();
   const { data, error } = await supabase

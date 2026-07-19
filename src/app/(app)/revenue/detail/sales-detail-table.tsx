@@ -75,6 +75,9 @@ export function SalesDetailTable({
                                 ▶
                               </span>
                               <span>{formatDate(d.key)}</span>
+                              {d.weather && (
+                                <span className="font-normal text-muted">· {d.weather}</span>
+                              )}
                               {!isOpen && (
                                 <span className="font-normal text-muted">
                                   ({d.rows.length} lần bán)

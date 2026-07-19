@@ -7,6 +7,7 @@ export type DayGroup = {
   key: string;
   qty: number;
   total: number;
+  weather: string | null;
   rows: SaleRow[];
 };
 
@@ -17,8 +18,14 @@ export type MonthGroup = {
   days: DayGroup[];
 };
 
-/** Nhóm sales (đã sắp xếp sale_date/sold_at giảm dần) theo tháng, rồi theo ngày. */
-export function groupByMonthDay(sales: SaleRow[]): MonthGroup[] {
+/**
+ * Nhóm sales (đã sắp xếp sale_date/sold_at giảm dần) theo tháng, rồi theo ngày.
+ * `weatherByDay` (tùy chọn): map "YYYY-MM-DD" → chuỗi thời tiết để gắn vào mỗi ngày.
+ */
+export function groupByMonthDay(
+  sales: SaleRow[],
+  weatherByDay?: Record<string, string>,
+): MonthGroup[] {
   const months: MonthGroup[] = [];
   let month: MonthGroup | undefined;
   let day: DayGroup | undefined;
@@ -35,7 +42,7 @@ export function groupByMonthDay(sales: SaleRow[]): MonthGroup[] {
       day = undefined;
     }
     if (!day || day.key !== dayKey) {
-      day = { key: dayKey, qty: 0, total: 0, rows: [] };
+      day = { key: dayKey, qty: 0, total: 0, weather: weatherByDay?.[dayKey] ?? null, rows: [] };
       month.days.push(day);
     }
 

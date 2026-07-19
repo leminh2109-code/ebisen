@@ -283,6 +283,9 @@ export type Database = {
           cakes: number | null;
           shrimp_used: number | null;
           weather: string | null;
+          weather_cond: string | null;
+          temp_max: number | null;
+          rain_mm: number | null;
           station_traffic: number | null;
           note: string | null;
           source: string;
@@ -458,6 +461,19 @@ export type Database = {
           qty_2tom: number;
           qty_other: number;
           qty_total: number;
+        };
+        Relationships: Rel;
+      };
+      revenue_by_weather: {
+        Row: {
+          weather_cond: string;
+          days: number;
+          revenue: number;
+          avg_revenue: number;
+          cakes: number;
+          avg_cakes: number;
+          avg_temp: number | null;
+          avg_rain: number | null;
         };
         Relationships: Rel;
       };
