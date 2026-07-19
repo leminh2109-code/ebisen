@@ -100,15 +100,34 @@ export async function updateCustomer(
   const name = String(formData.get('name') ?? '').trim() || null;
   const address = String(formData.get('address') ?? '').trim() || null;
   const note = String(formData.get('note') ?? '').trim() || null;
+  // "Số lần mua" mong muốn (owner nhập). Lưu dưới dạng ĐIỀU CHỈNH = mong muốn −
+  // số đơn thực tế, để đơn nhập mới sau này vẫn tự cộng đúng.
+  const wantOrderCountRaw = String(formData.get('order_count') ?? '').trim();
 
   if (!id) return { ok: false, error: 'Thiếu khách cần sửa.' };
   if (phone.replace(/\D/g, '').length < 8)
     return { ok: false, error: 'Số điện thoại không hợp lệ.' };
 
-  const { error } = await supabase
-    .from('customers')
-    .update({ phone, name, address, note })
-    .eq('id', id);
+  const update: {
+    phone: string;
+    name: string | null;
+    address: string | null;
+    note: string | null;
+    order_count_adj?: number;
+  } = { phone, name, address, note };
+
+  if (wantOrderCountRaw !== '') {
+    const want = Number(wantOrderCountRaw.replace(/[.\s,]/g, ''));
+    if (!Number.isInteger(want) || want < 0)
+      return { ok: false, error: 'Số lần mua không hợp lệ.' };
+    const { count: realCount } = await supabase
+      .from('customer_orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('customer_id', id);
+    update.order_count_adj = want - (realCount ?? 0);
+  }
+
+  const { error } = await supabase.from('customers').update(update).eq('id', id);
   if (error) {
     if (error.code === '23505' || /duplicate|unique/i.test(error.message))
       return { ok: false, error: 'Số điện thoại này đã có khách khác dùng.' };

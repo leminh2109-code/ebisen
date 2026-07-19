@@ -207,6 +207,18 @@ function EditCustomerModal({
           <Field label="Địa chỉ">
             <input name="address" defaultValue={customer.address ?? ''} className={inputCls} />
           </Field>
+          <Field label="Số lần mua">
+            <input
+              name="order_count"
+              inputMode="numeric"
+              defaultValue={String(customer.order_count)}
+              className={`${inputCls} tabular`}
+            />
+            <p className="mt-1 text-xs text-muted">
+              Chỉnh khi lịch sử ghi thiếu số lần mua. Không đổi Tổng bánh; đơn nhập
+              mới sau này vẫn tự cộng.
+            </p>
+          </Field>
           <Field label="Ghi chú">
             <textarea name="note" defaultValue={customer.note ?? ''} rows={2} className={inputCls} />
           </Field>

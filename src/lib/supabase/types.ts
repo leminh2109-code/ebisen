@@ -79,6 +79,7 @@ export type Database = {
           name: string | null;
           address: string | null;
           note: string | null;
+          order_count_adj: number;
           created_at: string;
           created_by: string | null;
           updated_at: string;
@@ -88,6 +89,7 @@ export type Database = {
           name?: string | null;
           address?: string | null;
           note?: string | null;
+          order_count_adj?: number;
           created_by?: string | null;
         };
         Update: {
@@ -95,6 +97,7 @@ export type Database = {
           name?: string | null;
           address?: string | null;
           note?: string | null;
+          order_count_adj?: number;
         };
         Relationships: Rel;
       };
