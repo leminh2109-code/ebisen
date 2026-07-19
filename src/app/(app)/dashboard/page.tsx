@@ -39,22 +39,7 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Doanh thu tháng này" amount={summary.thisMonthRevenue} />
-        <StatCard
-          label="Chi phí tháng này"
-          amount={summary.thisMonthExpenses}
-          hint={
-            [
-              summary.thisMonthStationShare > 0
-                ? `chia sẻ trạm ${Number(summary.thisMonthStationShare).toLocaleString('vi-VN')}đ`
-                : null,
-              summary.thisMonthMaterialCost > 0
-                ? `túi/tem ${Number(summary.thisMonthMaterialCost).toLocaleString('vi-VN')}đ`
-                : null,
-            ]
-              .filter(Boolean)
-              .join(' · ') || undefined
-          }
-        />
+        <StatCard label="Chi phí tháng này" amount={summary.thisMonthExpenses} />
         {isOwner ? (
           <StatCard
             label="Lãi/Lỗ tháng này"
