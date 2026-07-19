@@ -26,11 +26,9 @@ export default function SaleForm({
 }) {
   const [state, formAction, pending] = useActionState(action, initial);
   const formRef = useRef<HTMLFormElement>(null);
-  const menuRef = useRef<HTMLSelectElement>(null);
-  const qtyRef = useRef<HTMLInputElement>(null);
-  const priceRef = useRef<HTMLInputElement>(null);
   const totalRef = useRef<HTMLSpanElement>(null);
   const sourceRef = useRef<HTMLSelectElement>(null);
+  const firstQtyRef = useRef<HTMLInputElement>(null);
 
   // Tô màu ô Nguồn theo giá trị: TM = đỏ, CK = xanh dương (tương phản).
   const paintSource = () => {
@@ -41,85 +39,80 @@ export default function SaleForm({
     else if (el.value === 'CK') el.classList.add('text-blue-600', 'font-medium');
   };
 
+  // Thành tiền = tổng (SL × đơn giá) của mọi món trong form.
   const recompute = () => {
-    if (totalRef.current) {
-      const amount = parse(qtyRef.current?.value ?? '') * parse(priceRef.current?.value ?? '');
-      totalRef.current.textContent = formatCurrency(amount);
+    const form = formRef.current;
+    if (!form || !totalRef.current) return;
+    let total = 0;
+    for (const m of menu) {
+      const qty = parse((form.elements.namedItem(`qty_${m.id}`) as HTMLInputElement)?.value ?? '');
+      const price = parse((form.elements.namedItem(`price_${m.id}`) as HTMLInputElement)?.value ?? '');
+      total += qty * price;
     }
+    totalRef.current.textContent = formatCurrency(total);
   };
 
-  // Chọn món -> tự điền giá từ thực đơn (nhân viên vẫn sửa được để giảm giá).
-  const onMenuChange = () => {
-    const id = menuRef.current?.value;
-    const item = menu.find((m) => m.id === id);
-    if (item && priceRef.current) priceRef.current.value = groupDigits(String(item.price));
-    recompute();
-  };
-
-  const onPriceInput = () => {
-    if (priceRef.current) formatMoneyInput(priceRef.current);
+  const onPriceInput = (e: React.FormEvent<HTMLInputElement>) => {
+    formatMoneyInput(e.currentTarget);
     recompute();
   };
 
   useEffect(() => {
     if (state.ok) {
-      formRef.current?.reset();
+      formRef.current?.reset(); // khôi phục đơn giá mặc định (defaultValue) + xóa SL
       if (totalRef.current) totalRef.current.textContent = formatCurrency(0);
       paintSource();
-      menuRef.current?.focus();
+      firstQtyRef.current?.focus();
     }
   }, [state]);
 
   return (
     <form ref={formRef} action={formAction} className="space-y-4">
       {token && <input type="hidden" name="token" value={token} />}
-      <Field label="Món" required>
-        <select
-          ref={menuRef}
-          name="menu_item_id"
-          required
-          defaultValue=""
-          onChange={onMenuChange}
-          className={inputCls}
-        >
-          <option value="" disabled>
-            — Chọn món —
-          </option>
-          {menu.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name} ({formatCurrency(m.price)})
-            </option>
+
+      <div>
+        <label className="block text-sm font-medium mb-1">
+          Món &amp; số lượng<span className="text-negative"> *</span>
+        </label>
+        <p className="mb-2 text-xs text-muted">
+          Điền số lượng cho từng loại bánh trong cùng đơn (bỏ trống loại không bán).
+        </p>
+
+        <div className="rounded-lg border border-border overflow-hidden">
+          <div className="grid grid-cols-[1fr_5rem_7.5rem] gap-2 bg-background px-3 py-2 text-xs font-medium text-muted">
+            <span>Loại bánh</span>
+            <span className="text-right">SL</span>
+            <span className="text-right">Đơn giá (₫)</span>
+          </div>
+          {menu.map((m, i) => (
+            <div
+              key={m.id}
+              className="grid grid-cols-[1fr_5rem_7.5rem] items-center gap-2 border-t border-border px-3 py-2"
+            >
+              <span className="text-sm font-medium">{m.name}</span>
+              <input
+                ref={i === 0 ? firstQtyRef : undefined}
+                name={`qty_${m.id}`}
+                inputMode="numeric"
+                onInput={recompute}
+                className={`${inputCls} tabular text-right`}
+                placeholder="0"
+              />
+              <input
+                name={`price_${m.id}`}
+                inputMode="numeric"
+                defaultValue={groupDigits(String(m.price))}
+                onInput={onPriceInput}
+                className={`${inputCls} tabular text-right`}
+              />
+            </div>
           ))}
-        </select>
+        </div>
         {menu.length === 0 && (
           <p className="mt-1 text-xs text-negative">
             Chưa có món nào. Chủ DN vào trang Thực đơn để thêm.
           </p>
         )}
-      </Field>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Số lượng" required>
-          <input
-            ref={qtyRef}
-            name="quantity"
-            inputMode="numeric"
-            required
-            onInput={recompute}
-            className={`${inputCls} tabular`}
-            placeholder="Nhập số lượng"
-          />
-        </Field>
-        <Field label="Đơn giá (₫)">
-          <input
-            ref={priceRef}
-            name="unit_price"
-            inputMode="numeric"
-            onInput={onPriceInput}
-            className={`${inputCls} tabular`}
-            placeholder="Tự điền theo món"
-          />
-        </Field>
       </div>
 
       <div className="rounded-lg bg-background px-3 py-2 text-sm flex justify-between">

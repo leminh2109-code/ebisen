@@ -3,16 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { todayVN } from '@/lib/format';
+import { parseNumber, parseSaleLines } from './sale-lines';
 
 export type EntryState = { ok: boolean; error: string | null };
-
-/** Chuẩn hóa tiền/số: bỏ dấu chấm/phẩy ngăn cách. "1.500.000" hoặc "1500000". */
-function parseNumber(raw: string): number | null {
-  const cleaned = raw.replace(/[.\s,₫đ]/gi, '').trim();
-  if (cleaned === '') return null;
-  const n = Number(cleaned);
-  return Number.isFinite(n) && n >= 0 ? n : null;
-}
 
 export async function createSale(
   _prev: EntryState,
@@ -26,27 +19,21 @@ export async function createSale(
 
   // Ngày bán = ngày hôm nay (giờ VN). Form không còn ô chọn ngày.
   const sale_date = todayVN();
-  const menu_item_id = String(formData.get('menu_item_id') ?? '').trim() || null;
-  const quantity = parseNumber(String(formData.get('quantity') ?? ''));
-  let unit_price = parseNumber(String(formData.get('unit_price') ?? ''));
+  const lines = parseSaleLines(formData);
   const source = String(formData.get('source') ?? '').trim() || null;
   const staff_id = String(formData.get('staff_id') ?? '').trim() || null;
   const note = String(formData.get('note') ?? '').trim() || null;
 
-  if (!menu_item_id) return { ok: false, error: 'Chọn món trong thực đơn.' };
-  if (quantity === null || quantity <= 0) return { ok: false, error: 'Số lượng không hợp lệ.' };
+  if (lines.length === 0) return { ok: false, error: 'Nhập số lượng ít nhất 1 loại bánh.' };
 
   // Snapshot tên món + giá từ thực đơn tại thời điểm bán. Nếu nhân viên sửa đơn
   // giá (giảm giá), dùng giá đã sửa; nếu không, lấy giá menu hiện tại.
-  const { data: item } = await supabase
+  const { data: items } = await supabase
     .from('menu')
-    .select('name, price')
-    .eq('id', menu_item_id)
-    .single();
-  if (!item) return { ok: false, error: 'Món không tồn tại.' };
-  if (unit_price === null) unit_price = Number(item.price);
-
-  const amount = quantity * unit_price;
+    .select('id, name, price')
+    .in('id', lines.map((l) => l.menu_item_id));
+  const byId = new Map((items ?? []).map((it) => [it.id, it]));
+  for (const l of lines) if (!byId.has(l.menu_item_id)) return { ok: false, error: 'Món không tồn tại.' };
 
   // Snapshot tên nhân viên từ bảng employees (giữ nguyên nếu sau này sửa/xóa NV).
   let staff: string | null = null;
@@ -60,20 +47,27 @@ export async function createSale(
     staff = emp.name;
   }
 
-  const { error } = await supabase.from('sales').insert({
-    sale_date,
-    // sold_at để trống → mặc định now() (đúng thời điểm gửi form).
-    menu_item_id,
-    cake_type: item.name, // snapshot tên món
-    quantity,
-    unit_price,
-    amount,
-    source,
-    staff, // snapshot tên NV
-    staff_id,
-    note,
-    created_by: user.id,
+  // Mỗi loại bánh → 1 dòng sales riêng (bảng chi tiết vẫn tách 1 tôm / 2 tôm).
+  const rows = lines.map((l) => {
+    const item = byId.get(l.menu_item_id)!;
+    const unit_price = l.unit_price ?? Number(item.price);
+    return {
+      sale_date,
+      // sold_at để trống → mặc định now() (đúng thời điểm gửi form).
+      menu_item_id: l.menu_item_id,
+      cake_type: item.name, // snapshot tên món
+      quantity: l.quantity,
+      unit_price,
+      amount: l.quantity * unit_price,
+      source,
+      staff, // snapshot tên NV
+      staff_id,
+      note,
+      created_by: user.id,
+    };
   });
+
+  const { error } = await supabase.from('sales').insert(rows);
 
   if (error) return { ok: false, error: error.message };
 
