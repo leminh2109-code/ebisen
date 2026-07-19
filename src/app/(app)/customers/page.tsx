@@ -44,9 +44,9 @@ export default async function CustomersPage() {
       </Card>
 
       <p className="mt-4 text-xs text-muted">
-        Bấm SĐT để xem chi tiết & lịch sử mua của khách. VIP = 5 khách mua nhiều
-        nhất (theo tổng bánh). Dữ liệu này chỉ để chăm sóc/phân tích, KHÔNG tính
-        vào doanh thu hay tồn kho.
+        Bấm tên khách để xem chi tiết & lịch sử mua. VIP = tối đa 5 khách mua nhiều
+        nhất (theo tổng bánh) và đạt từ 50 bánh trở lên. Dữ liệu này chỉ để chăm
+        sóc/phân tích, KHÔNG tính vào doanh thu hay tồn kho.
       </p>
     </div>
   );

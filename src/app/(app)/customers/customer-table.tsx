@@ -1,15 +1,17 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useActionState, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { formatDate } from '@/lib/format';
 import type { CustomerStats } from '@/lib/queries';
-import { deleteCustomer } from './actions';
+import { deleteCustomer, updateCustomer } from './actions';
 
 const n = (v: number | null) => Number(v ?? 0).toLocaleString('vi-VN');
 
 /** Số khách được đánh dấu VIP (mua nhiều nhất). */
 const VIP_COUNT = 5;
+/** Điều kiện tối thiểu để thành VIP: tổng bánh phải đạt từ mức này trở lên. */
+const VIP_MIN_QTY = 50;
 
 type SortKey = 'qty' | 'date';
 type Dir = 'asc' | 'desc';
@@ -33,12 +35,13 @@ export function CustomerTable({
 }) {
   const [sortKey, setSortKey] = useState<SortKey>('qty');
   const [dir, setDir] = useState<Dir>('desc');
+  const [editing, setEditing] = useState<CustomerStats | null>(null);
 
   // Tập VIP = 5 khách mua nhiều nhất (chỉ tính khách đã có lượt mua), cố định
   // bất kể đang sắp xếp kiểu nào.
   const vipIds = useMemo(() => {
     const ranked = [...customers]
-      .filter((c) => Number(c.order_count) > 0)
+      .filter((c) => Number(c.total_qty) >= VIP_MIN_QTY)
       .sort((a, b) => rankValue(b) - rankValue(a))
       .slice(0, VIP_COUNT);
     return new Set(ranked.map((c) => c.id));
@@ -82,14 +85,14 @@ export function CustomerTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-muted">
-              <th className="px-4 py-2 font-medium">SĐT</th>
               <th className="px-4 py-2 font-medium">Tên</th>
               <th className="px-4 py-2 font-medium">Địa chỉ</th>
+              <th className="px-4 py-2 font-medium">SĐT</th>
               <th className="px-4 py-2 font-medium text-right">Lượt mua</th>
               <th className="px-4 py-2 font-medium text-right">Tổng bánh</th>
               <th className="px-4 py-2 font-medium">Hay mua</th>
               <th className="px-4 py-2 font-medium">Mua gần nhất</th>
-              {isOwner && <th className="px-4 py-2 font-medium text-right">Xóa</th>}
+              <th className="px-4 py-2 font-medium text-right">Sửa{isOwner ? ' / Xóa' : ''}</th>
             </tr>
           </thead>
           <tbody>
@@ -102,14 +105,6 @@ export function CustomerTable({
                     vip ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-background'
                   }`}
                 >
-                  <td className="px-4 py-2 tabular">
-                    <Link
-                      href={`/customers/${c.id}`}
-                      className="text-accent hover:underline font-medium"
-                    >
-                      {c.phone}
-                    </Link>
-                  </td>
                   <td className="px-4 py-2">
                     <span className="inline-flex items-center gap-1.5">
                       {vip && (
@@ -117,30 +112,145 @@ export function CustomerTable({
                           ★ VIP
                         </span>
                       )}
-                      {c.name ?? '—'}
+                      <Link
+                        href={`/customers/${c.id}`}
+                        className="text-accent hover:underline font-medium"
+                      >
+                        {c.name ?? '—'}
+                      </Link>
                     </span>
                   </td>
                   <td className="px-4 py-2 text-muted max-w-[220px] truncate">{c.address ?? '—'}</td>
+                  <td className="px-4 py-2 tabular text-muted">{c.phone}</td>
                   <td className="px-4 py-2 text-right tabular">{n(c.order_count)}</td>
                   <td className="px-4 py-2 text-right tabular">{n(c.total_qty)}</td>
                   <td className="px-4 py-2">{c.top_cake ?? '—'}</td>
                   <td className="px-4 py-2 tabular">{c.last_order ? formatDate(c.last_order) : '—'}</td>
-                  {isOwner && (
-                    <td className="px-4 py-2 text-right">
-                      <form action={deleteCustomer}>
-                        <input type="hidden" name="id" value={c.id} />
-                        <button type="submit" className="text-negative hover:underline text-xs">
-                          Xóa
-                        </button>
-                      </form>
-                    </td>
-                  )}
+                  <td className="px-4 py-2">
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setEditing(c)}
+                        className="text-accent hover:underline text-xs"
+                      >
+                        Sửa
+                      </button>
+                      {isOwner && (
+                        <form action={deleteCustomer}>
+                          <input type="hidden" name="id" value={c.id} />
+                          <button type="submit" className="text-negative hover:underline text-xs">
+                            Xóa
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+
+      {editing && <EditCustomerModal customer={editing} onClose={() => setEditing(null)} />}
+    </div>
+  );
+}
+
+const inputCls =
+  'w-full rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent';
+
+function EditCustomerModal({
+  customer,
+  onClose,
+}: {
+  customer: CustomerStats;
+  onClose: () => void;
+}) {
+  const [state, formAction, pending] = useActionState(updateCustomer, {
+    ok: false,
+    error: null,
+  });
+
+  // Lưu xong → đóng modal (dữ liệu tự làm mới nhờ revalidatePath ở server action).
+  useEffect(() => {
+    if (state.ok) onClose();
+  }, [state.ok, onClose]);
+
+  // Esc để đóng.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="mb-4 text-lg font-semibold">Sửa thông tin khách</h3>
+        <form action={formAction} className="space-y-3">
+          <input type="hidden" name="id" value={customer.id} />
+          <Field label="Số điện thoại" required>
+            <input name="phone" defaultValue={customer.phone} required className={inputCls} />
+          </Field>
+          <Field label="Tên">
+            <input name="name" defaultValue={customer.name ?? ''} className={inputCls} />
+          </Field>
+          <Field label="Địa chỉ">
+            <input name="address" defaultValue={customer.address ?? ''} className={inputCls} />
+          </Field>
+          <Field label="Ghi chú">
+            <textarea name="note" defaultValue={customer.note ?? ''} rows={2} className={inputCls} />
+          </Field>
+
+          {state.error && <p className="text-sm text-negative">{state.error}</p>}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:border-accent"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={pending}
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-50"
+            >
+              {pending ? 'Đang lưu…' : 'Lưu'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-medium">
+        {label}
+        {required && <span className="text-negative"> *</span>}
+      </label>
+      {children}
     </div>
   );
 }

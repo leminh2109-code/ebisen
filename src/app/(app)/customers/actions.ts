@@ -84,6 +84,42 @@ export async function createCustomerOrder(
   return { ok: true, error: null };
 }
 
+/** Sửa thông tin liên hệ của khách (SĐT, tên, địa chỉ, ghi chú). */
+export async function updateCustomer(
+  _prev: CustomerState,
+  formData: FormData,
+): Promise<CustomerState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Phiên đăng nhập hết hạn.' };
+
+  const id = String(formData.get('id') ?? '').trim();
+  const phone = normalizePhone(String(formData.get('phone') ?? ''));
+  const name = String(formData.get('name') ?? '').trim() || null;
+  const address = String(formData.get('address') ?? '').trim() || null;
+  const note = String(formData.get('note') ?? '').trim() || null;
+
+  if (!id) return { ok: false, error: 'Thiếu khách cần sửa.' };
+  if (phone.replace(/\D/g, '').length < 8)
+    return { ok: false, error: 'Số điện thoại không hợp lệ.' };
+
+  const { error } = await supabase
+    .from('customers')
+    .update({ phone, name, address, note })
+    .eq('id', id);
+  if (error) {
+    if (error.code === '23505' || /duplicate|unique/i.test(error.message))
+      return { ok: false, error: 'Số điện thoại này đã có khách khác dùng.' };
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath('/customers');
+  revalidatePath(`/customers/${id}`);
+  return { ok: true, error: null };
+}
+
 /** Xóa một lần mua của khách (RLS chỉ owner xóa). */
 export async function deleteCustomerOrder(formData: FormData): Promise<void> {
   const supabase = await createClient();
