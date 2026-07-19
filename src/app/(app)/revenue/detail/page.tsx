@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getSales, getCurrentRole, getWeatherByDay, getRevenueByWeather } from '@/lib/queries';
+import { getSales, getCurrentRole, getWeatherByDay, getRevenueByWeather, getMenu } from '@/lib/queries';
 import { formatCurrency, today } from '@/lib/format';
 import { PageHeader, Card, EmptyState } from '@/components/ui';
 import { SalesDetailTable } from './sales-detail-table';
@@ -9,11 +9,12 @@ import { groupByMonthDay } from './group';
 export const dynamic = 'force-dynamic';
 
 export default async function SalesDetailPage() {
-  const [sales, role, weatherByDay, weatherStats] = await Promise.all([
+  const [sales, role, weatherByDay, weatherStats, menu] = await Promise.all([
     getSales(),
     getCurrentRole(),
     getWeatherByDay(),
     getRevenueByWeather(),
+    getMenu(),
   ]);
   const total = sales.reduce((s, i) => s + Number(i.amount), 0);
   const qty = sales.reduce((s, i) => s + Number(i.quantity), 0);
@@ -49,7 +50,13 @@ export default async function SalesDetailPage() {
           <EmptyState message="Chưa có lần bán nào." />
         </Card>
       ) : (
-        <SalesDetailTable months={months} todayKey={today()} />
+        <SalesDetailTable
+          months={months}
+          todayKey={today()}
+          editable
+          isOwner={role === 'owner'}
+          menu={menu}
+        />
       )}
 
       {weatherStats.length > 0 && (

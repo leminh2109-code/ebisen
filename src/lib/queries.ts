@@ -58,6 +58,7 @@ export type SaleRow = {
   id: string;
   sale_date: string;
   sold_at: string;
+  menu_item_id: string | null;
   cake_type: string | null;
   quantity: number;
   unit_price: number;
@@ -228,7 +229,7 @@ export async function getSales(): Promise<SaleRow[]> {
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await supabase
       .from('sales')
-      .select('id, sale_date, sold_at, cake_type, quantity, unit_price, amount, source, staff, note')
+      .select('id, sale_date, sold_at, menu_item_id, cake_type, quantity, unit_price, amount, source, staff, note')
       .order('sale_date', { ascending: false })
       .order('sold_at', { ascending: false })
       .range(from, from + PAGE - 1);

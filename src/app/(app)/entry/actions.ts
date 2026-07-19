@@ -79,6 +79,67 @@ export async function createSale(
   return { ok: true, error: null };
 }
 
+/** Sửa một lần bán (loại bánh, SL, đơn giá, nguồn, ghi chú). RLS: authenticated sửa. */
+export async function updateSale(
+  _prev: EntryState,
+  formData: FormData,
+): Promise<EntryState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Phiên đăng nhập hết hạn.' };
+
+  const id = String(formData.get('id') ?? '').trim();
+  const menu_item_id = String(formData.get('menu_item_id') ?? '').trim() || null;
+  const quantity = parseNumber(String(formData.get('quantity') ?? ''));
+  const unit_price = parseNumber(String(formData.get('unit_price') ?? ''));
+  const source = String(formData.get('source') ?? '').trim() || null;
+  const note = String(formData.get('note') ?? '').trim() || null;
+
+  if (!id) return { ok: false, error: 'Thiếu lần bán cần sửa.' };
+  if (!menu_item_id) return { ok: false, error: 'Chọn loại bánh.' };
+  if (quantity === null || quantity <= 0) return { ok: false, error: 'Số lượng không hợp lệ.' };
+  if (unit_price === null) return { ok: false, error: 'Đơn giá không hợp lệ.' };
+
+  // Cập nhật snapshot tên loại bánh theo món đang chọn.
+  const { data: item } = await supabase.from('menu').select('name').eq('id', menu_item_id).single();
+  if (!item) return { ok: false, error: 'Món không tồn tại.' };
+
+  const { error } = await supabase
+    .from('sales')
+    .update({
+      menu_item_id,
+      cake_type: item.name,
+      quantity,
+      unit_price,
+      amount: quantity * unit_price,
+      source,
+      note,
+    })
+    .eq('id', id);
+  if (error) return { ok: false, error: error.message };
+
+  // Trigger tự cập nhật doanh thu ngày (trừ ngày airtable/manual được bảo vệ).
+  revalidatePath('/revenue/detail');
+  revalidatePath('/revenue/monthly');
+  revalidatePath('/dashboard');
+  revalidatePath('/pnl');
+  return { ok: true, error: null };
+}
+
+/** Xóa một lần bán (RLS chỉ owner xóa). */
+export async function deleteSale(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const id = String(formData.get('id') ?? '').trim();
+  if (!id) return;
+  await supabase.from('sales').delete().eq('id', id);
+  revalidatePath('/revenue/detail');
+  revalidatePath('/revenue/monthly');
+  revalidatePath('/dashboard');
+  revalidatePath('/pnl');
+}
+
 export async function createExpense(
   _prev: EntryState,
   formData: FormData,

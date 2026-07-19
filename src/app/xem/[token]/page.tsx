@@ -30,9 +30,10 @@ export default async function PublicSalesViewPage({
     );
   }
 
-  // RPC trả cột gọn — bù staff/note (bảng chi tiết không hiển thị) cho khớp kiểu.
+  // RPC trả cột gọn — bù menu_item_id/staff/note (bảng chi tiết không hiển thị) cho khớp kiểu.
   const sales: SaleRow[] = data.sales.map((s) => ({
     ...s,
+    menu_item_id: null,
     staff: null,
     note: null,
   }));
