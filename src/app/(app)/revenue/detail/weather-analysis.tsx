@@ -25,7 +25,6 @@ export function WeatherAnalysis({ stats }: { stats: WeatherRevenue[] }) {
               <th className="px-4 py-2 font-medium text-right">Doanh thu TB/ngày</th>
               <th className="px-4 py-2 font-medium text-right">Bánh TB/ngày</th>
               <th className="px-4 py-2 font-medium text-right">Nhiệt độ TB</th>
-              <th className="px-4 py-2 font-medium text-right">Mưa TB</th>
             </tr>
           </thead>
           <tbody>
@@ -42,9 +41,6 @@ export function WeatherAnalysis({ stats }: { stats: WeatherRevenue[] }) {
                 <td className="px-4 py-2.5 text-right tabular">{n(w.avg_cakes)} bánh</td>
                 <td className="px-4 py-2.5 text-right tabular text-muted">
                   {w.avg_temp === null ? '—' : `${w.avg_temp}°`}
-                </td>
-                <td className="px-4 py-2.5 text-right tabular text-muted">
-                  {w.avg_rain === null ? '—' : `${w.avg_rain}mm`}
                 </td>
               </tr>
             ))}

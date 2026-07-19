@@ -44,14 +44,18 @@ export default async function SalesDetailPage() {
         }
       />
 
-      {weatherStats.length > 0 && <WeatherAnalysis stats={weatherStats} />}
-
       {sales.length === 0 ? (
         <Card>
           <EmptyState message="Chưa có lần bán nào." />
         </Card>
       ) : (
         <SalesDetailTable months={months} todayKey={today()} />
+      )}
+
+      {weatherStats.length > 0 && (
+        <div className="mt-6">
+          <WeatherAnalysis stats={weatherStats} />
+        </div>
       )}
     </div>
   );
