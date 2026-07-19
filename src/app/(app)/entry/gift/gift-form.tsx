@@ -3,21 +3,39 @@
 import { useActionState, useEffect, useRef } from 'react';
 import { createShrimpGift, type EntryState } from '../actions';
 import { today } from '@/lib/format';
-import type { MenuItem } from '@/lib/queries';
+import type { MenuItem, CustomerOption } from '@/lib/queries';
 
 const initial: EntryState = { ok: false, error: null };
 
-export default function GiftForm({ menu }: { menu: MenuItem[] }) {
+export default function GiftForm({
+  menu,
+  customers,
+}: {
+  menu: MenuItem[];
+  customers: CustomerOption[];
+}) {
   const [state, action, pending] = useActionState(createShrimpGift, initial);
   const formRef = useRef<HTMLFormElement>(null);
   const qtyRef = useRef<HTMLInputElement>(null);
+  const custRef = useRef<HTMLSelectElement>(null);
+  const newBoxRef = useRef<HTMLDivElement>(null);
+  const newPhoneRef = useRef<HTMLInputElement>(null);
 
   // Ưu tiên chọn sẵn bánh 1 tôm (loại hay tặng nhất).
   const defaultItem = menu.find((m) => m.name.includes('1 tôm')) ?? menu[0];
 
+  // Hiện/ẩn ô "khách mới" theo lựa chọn — dùng DOM để tránh setState trong effect.
+  const syncNewBox = () => {
+    const isNew = custRef.current?.value === '__new__';
+    if (newBoxRef.current) newBoxRef.current.hidden = !isNew;
+    if (newPhoneRef.current) newPhoneRef.current.required = !!isNew;
+  };
+
   useEffect(() => {
     if (state.ok) {
       formRef.current?.reset();
+      if (newBoxRef.current) newBoxRef.current.hidden = true;
+      if (newPhoneRef.current) newPhoneRef.current.required = false;
       qtyRef.current?.focus();
     }
   }, [state]);
@@ -56,6 +74,52 @@ export default function GiftForm({ menu }: { menu: MenuItem[] }) {
           placeholder="VD: 10"
         />
       </Field>
+
+      <Field label="Khách nhận">
+        <select
+          ref={custRef}
+          name="customer_id"
+          defaultValue=""
+          onChange={syncNewBox}
+          className={inputCls}
+        >
+          <option value="">— Không gắn khách —</option>
+          <option value="__new__">+ Thêm khách hàng mới</option>
+          {customers.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name ? `${c.name} · ${c.phone}` : c.phone}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <div
+        ref={newBoxRef}
+        hidden
+        className="space-y-4 rounded-lg border border-dashed border-border bg-background p-3"
+      >
+        <p className="text-xs font-medium text-muted">Thông tin khách hàng mới</p>
+        <Field label="Số điện thoại" required>
+          <input
+            ref={newPhoneRef}
+            name="new_phone"
+            inputMode="tel"
+            className={inputCls}
+            placeholder="VD: 0909 123 456"
+          />
+          <p className="mt-1 text-xs text-muted">
+            SĐT đã có sẵn sẽ tự gộp vào khách cũ (không tạo trùng).
+          </p>
+        </Field>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Tên khách">
+            <input name="new_name" className={inputCls} placeholder="VD: Chị Lan" />
+          </Field>
+          <Field label="Địa chỉ">
+            <input name="new_address" className={inputCls} placeholder="VD: 12 Nguyễn Trãi" />
+          </Field>
+        </div>
+      </div>
 
       <Field label="Ghi chú">
         <textarea name="note" rows={2} className={inputCls} placeholder="VD: tặng khách quen, đối tác…" />

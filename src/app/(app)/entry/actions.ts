@@ -177,10 +177,44 @@ export async function createShrimpGift(
   const menu_item_id = String(formData.get('menu_item_id') ?? '').trim() || null;
   const quantity = parseNumber(String(formData.get('quantity') ?? ''));
   const note = String(formData.get('note') ?? '').trim() || null;
+  const customerSel = String(formData.get('customer_id') ?? '').trim();
 
   if (!gift_date) return { ok: false, error: 'Thiếu ngày tặng.' };
   if (!menu_item_id) return { ok: false, error: 'Chọn loại bánh.' };
   if (quantity === null || quantity <= 0) return { ok: false, error: 'Số lượng không hợp lệ.' };
+
+  // Khách nhận (tùy chọn): chọn khách cũ, thêm khách mới (gộp theo SĐT), hoặc bỏ trống.
+  let customer_id: string | null = null;
+  if (customerSel === '__new__') {
+    const phone = String(formData.get('new_phone') ?? '').replace(/[^\d+]/g, '');
+    const cname = String(formData.get('new_name') ?? '').trim() || null;
+    const address = String(formData.get('new_address') ?? '').trim() || null;
+    if (phone.replace(/\D/g, '').length < 8)
+      return { ok: false, error: 'Số điện thoại khách mới không hợp lệ.' };
+    const { data: existing } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('phone', phone)
+      .maybeSingle();
+    if (existing) {
+      // SĐT đã có → dùng khách cũ, cập nhật tên/địa chỉ nếu vừa nhập (không ghi đè rỗng).
+      customer_id = existing.id;
+      const upd: { name?: string; address?: string } = {};
+      if (cname) upd.name = cname;
+      if (address) upd.address = address;
+      if (Object.keys(upd).length) await supabase.from('customers').update(upd).eq('id', customer_id);
+    } else {
+      const { data: created, error: cErr } = await supabase
+        .from('customers')
+        .insert({ phone, name: cname, address, created_by: user.id })
+        .select('id')
+        .single();
+      if (cErr || !created) return { ok: false, error: cErr?.message ?? 'Không tạo được khách.' };
+      customer_id = created.id;
+    }
+  } else if (customerSel) {
+    customer_id = customerSel;
+  }
 
   // Snapshot tên loại bánh (giữ nguyên nếu sau này đổi/xóa món).
   const { data: item } = await supabase.from('menu').select('name').eq('id', menu_item_id).single();
@@ -192,6 +226,7 @@ export async function createShrimpGift(
     cake_type: item.name,
     quantity,
     note,
+    customer_id,
     created_by: user.id,
   });
 
@@ -199,6 +234,7 @@ export async function createShrimpGift(
 
   revalidatePath('/inventory');
   revalidatePath('/dashboard');
+  revalidatePath('/customers');
   return { ok: true, error: null };
 }
 

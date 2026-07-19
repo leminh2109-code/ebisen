@@ -267,6 +267,9 @@ export type ShrimpGiftRow = {
   cake_type: string | null;
   quantity: number;
   note: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
 };
 /** Một lần nhập tôm (cho bảng lịch sử). */
 export type ShrimpPurchaseRow = {
@@ -315,14 +318,44 @@ export async function getShrimpGiftByMonth(): Promise<MonthlyShrimpGift[]> {
   return data ?? [];
 }
 
-/** Lịch sử bánh tặng (mới → cũ). */
+/** Lịch sử bánh tặng (mới → cũ), kèm khách nhận (nếu có). */
 export async function getShrimpGifts(): Promise<ShrimpGiftRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('shrimp_gifts')
-    .select('id, gift_date, cake_type, quantity, note')
+    .select('id, gift_date, cake_type, quantity, note, customer_id, customers(name, phone)')
     .order('gift_date', { ascending: false })
     .order('created_at', { ascending: false });
+  if (error) throw error;
+  type GiftJoin = {
+    id: string;
+    gift_date: string;
+    cake_type: string | null;
+    quantity: number;
+    note: string | null;
+    customer_id: string | null;
+    customers: { name: string | null; phone: string | null } | null;
+  };
+  return ((data ?? []) as unknown as GiftJoin[]).map((g) => ({
+    id: g.id,
+    gift_date: g.gift_date,
+    cake_type: g.cake_type,
+    quantity: g.quantity,
+    note: g.note,
+    customer_id: g.customer_id,
+    customer_name: g.customers?.name ?? null,
+    customer_phone: g.customers?.phone ?? null,
+  }));
+}
+
+/** Danh sách khách gọn (cho dropdown), theo tên. */
+export type CustomerOption = { id: string; name: string | null; phone: string };
+export async function getCustomerOptions(): Promise<CustomerOption[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('customers')
+    .select('id, name, phone')
+    .order('name', { ascending: true, nullsFirst: false });
   if (error) throw error;
   return data ?? [];
 }

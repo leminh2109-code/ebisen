@@ -138,6 +138,7 @@ export default async function InventoryPage() {
                   <th className="px-4 py-2 font-medium">Ngày</th>
                   <th className="px-4 py-2 font-medium">Loại bánh</th>
                   <th className="px-4 py-2 font-medium text-right">Số bánh</th>
+                  <th className="px-4 py-2 font-medium">Khách nhận</th>
                   <th className="px-4 py-2 font-medium">Ghi chú</th>
                   {isOwner && <th className="px-4 py-2 font-medium text-right">Xóa</th>}
                 </tr>
@@ -148,6 +149,15 @@ export default async function InventoryPage() {
                     <td className="px-4 py-2 tabular">{formatDate(g.gift_date)}</td>
                     <td className="px-4 py-2">{g.cake_type ?? '—'}</td>
                     <td className="px-4 py-2 text-right tabular font-medium">{n(g.quantity)}</td>
+                    <td className="px-4 py-2">
+                      {g.customer_id ? (
+                        <Link href={`/customers/${g.customer_id}`} className="text-accent hover:underline">
+                          {g.customer_name ?? g.customer_phone}
+                        </Link>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-2 text-muted">{g.note ?? ''}</td>
                     {isOwner && (
                       <td className="px-4 py-2 text-right">

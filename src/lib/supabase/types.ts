@@ -139,6 +139,7 @@ export type Database = {
           cake_type: string | null;
           quantity: number;
           note: string | null;
+          customer_id: string | null;
           created_at: string;
           created_by: string | null;
         };
@@ -148,6 +149,7 @@ export type Database = {
           menu_item_id?: string | null;
           cake_type?: string | null;
           note?: string | null;
+          customer_id?: string | null;
           created_by?: string | null;
         };
         Update: {
@@ -156,6 +158,7 @@ export type Database = {
           menu_item_id?: string | null;
           cake_type?: string | null;
           note?: string | null;
+          customer_id?: string | null;
         };
         Relationships: Rel;
       };
