@@ -3,6 +3,7 @@ import { getMaterialSummary, getMaterialPurchases, getCurrentRole } from '@/lib/
 import { PageHeader, Card, EmptyState } from '@/components/ui';
 import { formatCurrency, formatDate, formatMonth } from '@/lib/format';
 import { deleteMaterialPurchase } from '../entry/actions';
+import { MATERIAL_LOW_STOCK, isMaterialLow } from '@/lib/inventory-thresholds';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,16 +45,22 @@ export default async function MaterialsPage() {
               </div>
             );
           }
-          const low = Number(m.on_hand) <= 0;
+          const low = isMaterialLow(m.material, Number(m.on_hand));
+          const unit = m.material === 'tui' ? 'túi' : 'tem';
           return (
             <div key={key} className="rounded-xl border border-border bg-surface p-4">
               <div className="flex items-baseline justify-between">
                 <p className="text-sm text-muted">{LABEL[m.material]} — còn lại</p>
-                <p className="text-xs text-muted">đơn giá {formatCurrency(m.unit_cost)}/{m.material === 'tui' ? 'túi' : 'tem'}</p>
+                <p className="text-xs text-muted">đơn giá {formatCurrency(m.unit_cost)}/{unit}</p>
               </div>
               <p className={`mt-1 text-2xl font-semibold tabular ${low ? 'text-negative' : 'text-positive'}`}>
-                {n(m.on_hand)} {m.material === 'tui' ? 'túi' : 'tem'}
+                {n(m.on_hand)} {unit}
               </p>
+              {low && (
+                <p className="mt-1 text-xs font-medium text-negative">
+                  ⚠ Dưới {n(MATERIAL_LOW_STOCK[m.material])} {unit} — cần nhập thêm
+                </p>
+              )}
               <p className="mt-1 text-xs text-muted tabular">
                 Giá trị tồn: {formatCurrency(m.inventory_value)}
               </p>

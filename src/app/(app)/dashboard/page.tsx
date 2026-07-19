@@ -3,6 +3,7 @@ import { getDashboardSummary, getShrimpSummary, getCurrentRole } from '@/lib/que
 import { formatMonth } from '@/lib/format';
 import { PageHeader, StatCard, Card } from '@/components/ui';
 import { BarChart } from '@/components/BarChart';
+import { isShrimpLow } from '@/lib/inventory-thresholds';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,11 +79,14 @@ export default async function DashboardPage() {
           <p className="text-sm text-muted">Tồn kho tôm</p>
           <p
             className={`mt-1 text-2xl font-semibold tabular ${
-              shrimp.inventory.on_hand <= 0 ? 'text-negative' : 'text-positive'
+              isShrimpLow(shrimp.inventory.on_hand) ? 'text-negative' : 'text-positive'
             }`}
           >
             {n(shrimp.inventory.on_hand)} con
           </p>
+          {isShrimpLow(shrimp.inventory.on_hand) && (
+            <p className="mt-1 text-xs font-medium text-negative">⚠ Sắp hết — cần nhập thêm tôm</p>
+          )}
           <p className="mt-1 text-xs text-muted tabular">
             Nhập {n(shrimp.thisMonthIn)} · Dùng {n(shrimp.thisMonthUsed)} con tháng này
           </p>

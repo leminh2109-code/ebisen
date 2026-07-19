@@ -8,6 +8,7 @@ import {
 import { PageHeader, Card, EmptyState } from '@/components/ui';
 import { formatDate, formatCurrency } from '@/lib/format';
 import { deleteShrimpPurchase, deleteShrimpGift } from '../entry/actions';
+import { SHRIMP_LOW_STOCK, isShrimpLow } from '@/lib/inventory-thresholds';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +23,7 @@ export default async function InventoryPage() {
   ]);
   const { inventory, thisMonthIn, thisMonthUsed, thisMonthSold, thisMonthGift } = summary;
   const isOwner = role === 'owner';
-  const low = inventory.on_hand <= 0;
+  const low = isShrimpLow(inventory.on_hand);
 
   return (
     <div>
@@ -52,6 +53,7 @@ export default async function InventoryPage() {
           label="Tồn kho hiện tại"
           value={`${n(inventory.on_hand)} con`}
           tone={low ? 'negative' : 'positive'}
+          alert={low ? `⚠ Dưới ${n(SHRIMP_LOW_STOCK)} con — cần nhập thêm tôm` : undefined}
         />
         <NumberCard label="Đã nhập tháng này" value={`${n(thisMonthIn)} con`} />
         <NumberCard
@@ -180,11 +182,14 @@ function NumberCard({
   label,
   value,
   sub,
+  alert,
   tone = 'neutral',
 }: {
   label: string;
   value: string;
   sub?: string;
+  /** Dòng cảnh báo đỏ (vd tồn kho thấp). */
+  alert?: string;
   tone?: 'neutral' | 'positive' | 'negative';
 }) {
   const color =
@@ -193,6 +198,7 @@ function NumberCard({
     <div className="rounded-xl border border-border bg-surface p-4">
       <p className="text-sm text-muted">{label}</p>
       <p className={`mt-1 text-2xl font-semibold tabular ${color}`}>{value}</p>
+      {alert && <p className="mt-1 text-xs font-medium text-negative">{alert}</p>}
       {sub && <p className="mt-1 text-xs text-muted tabular">{sub}</p>}
     </div>
   );
