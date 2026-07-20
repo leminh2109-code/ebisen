@@ -18,6 +18,7 @@ export default async function RevenueMonthlyPage() {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   const split = paymentSplit.find((p) => p.month === currentMonth);
+  const thisMonth = rows.find((r) => r.month === currentMonth);
 
   const chart = rows
     .slice(0, 12)
@@ -36,7 +37,8 @@ export default async function RevenueMonthlyPage() {
         subtitle={`Tổng cộng: ${formatCurrency(total)}`}
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
+        <StatCard label="Doanh thu tháng này" amount={Number(thisMonth?.revenue ?? 0)} />
         <StatCard label="Tiền mặt tháng này (TM)" amount={split?.cash ?? 0} />
         <StatCard label="Chuyển khoản tháng này (CK)" amount={split?.transfer ?? 0} />
       </div>
