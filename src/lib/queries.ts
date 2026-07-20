@@ -618,9 +618,14 @@ export async function getExpenseCategories(): Promise<string[]> {
     .select('category')
     .not('category', 'is', null)
     .limit(1000);
+  // Trim + gộp trùng: dữ liệu cũ từ Airtable có mục thừa dấu cách ("Tôm " vs "Tôm")
+  // làm dropdown hiện 2 lựa chọn giống hệt nhau.
   const set = new Set<string>();
-  for (const r of data ?? []) if (r.category) set.add(r.category);
-  return [...set].sort();
+  for (const r of data ?? []) {
+    const c = r.category?.trim();
+    if (c) set.add(c);
+  }
+  return [...set].sort((a, b) => a.localeCompare(b, 'vi'));
 }
 
 export type MenuItem = {
