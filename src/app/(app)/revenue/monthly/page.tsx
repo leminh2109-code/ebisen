@@ -1,6 +1,6 @@
-import { getRevenueByMonth, getSalesQtyByMonth } from '@/lib/queries';
+import { getRevenueByMonth, getSalesQtyByMonth, getPaymentSplitByMonth } from '@/lib/queries';
 import { formatCurrency, formatMonth } from '@/lib/format';
-import { PageHeader, Card, EmptyState } from '@/components/ui';
+import { PageHeader, Card, EmptyState, StatCard } from '@/components/ui';
 import { BarChart } from '@/components/BarChart';
 
 export const dynamic = 'force-dynamic';
@@ -8,8 +8,16 @@ export const dynamic = 'force-dynamic';
 const n = (v: number) => Number(v).toLocaleString('vi-VN');
 
 export default async function RevenueMonthlyPage() {
-  const [rows, qtyRows] = await Promise.all([getRevenueByMonth(), getSalesQtyByMonth()]);
+  const [rows, qtyRows, paymentSplit] = await Promise.all([
+    getRevenueByMonth(),
+    getSalesQtyByMonth(),
+    getPaymentSplitByMonth(),
+  ]);
   const qtyByMonth = new Map(qtyRows.map((q) => [q.month, q]));
+
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const split = paymentSplit.find((p) => p.month === currentMonth);
 
   const chart = rows
     .slice(0, 12)
@@ -27,6 +35,15 @@ export default async function RevenueMonthlyPage() {
         title="Doanh thu theo tháng"
         subtitle={`Tổng cộng: ${formatCurrency(total)}`}
       />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
+        <StatCard label="Tiền mặt tháng này (TM)" amount={split?.cash ?? 0} />
+        <StatCard label="Chuyển khoản tháng này (CK)" amount={split?.transfer ?? 0} />
+      </div>
+      <p className="mb-6 text-xs text-muted">
+        TM/CK tính từ từng lần bán trong tháng. Tháng lịch sử (nạp từ Airtable) có
+        thể lệch so với doanh thu chính thức — dùng để xem tỷ lệ thanh toán.
+      </p>
 
       <Card title="12 tháng gần nhất" className="mb-6">
         <BarChart data={chart} />
