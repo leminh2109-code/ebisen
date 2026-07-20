@@ -47,7 +47,8 @@ export default async function DashboardPage() {
         }
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Hàng 1 — vận hành hằng ngày: doanh thu hôm nay · bánh · tôm còn lại */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Link
           href="/revenue/daily"
           className="rounded-xl border border-border bg-surface p-4 hover:border-accent transition block"
@@ -64,22 +65,6 @@ export default async function DashboardPage() {
             </p>
           )}
         </Link>
-        <StatCard label="Doanh thu tháng này" amount={summary.thisMonthRevenue} />
-        <StatCard label="Chi phí tháng này" amount={summary.thisMonthExpenses} />
-        {isOwner ? (
-          <StatCard
-            label="Lãi/Lỗ tháng này"
-            amount={summary.thisMonthProfit}
-            tone="auto"
-          />
-        ) : (
-          <div className="rounded-xl border border-dashed border-border bg-surface p-4 flex items-center justify-center text-sm text-muted">
-            Lãi/Lỗ chỉ chủ DN xem
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
         <div className="rounded-xl border border-border bg-surface p-4">
           <p className="text-sm text-muted">Số bánh bán tháng này</p>
           <p className="mt-1 text-2xl font-semibold tabular text-positive">
@@ -105,6 +90,19 @@ export default async function DashboardPage() {
             Nhập {n(shrimp.thisMonthIn)} · Dùng {n(shrimp.thisMonthUsed)} con tháng này
           </p>
         </Link>
+      </div>
+
+      {/* Hàng 2 — tài chính tháng: doanh thu · chi phí · lãi/lỗ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        <StatCard label="Doanh thu tháng này" amount={summary.thisMonthRevenue} />
+        <StatCard label="Chi phí tháng này" amount={summary.thisMonthExpenses} />
+        {isOwner ? (
+          <StatCard label="Lãi/Lỗ tháng này" amount={summary.thisMonthProfit} tone="auto" />
+        ) : (
+          <div className="rounded-xl border border-dashed border-border bg-surface p-4 flex items-center justify-center text-sm text-muted">
+            Lãi/Lỗ chỉ chủ DN xem
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
