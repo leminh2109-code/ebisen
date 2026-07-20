@@ -7,6 +7,8 @@ export type DayGroup = {
   key: string;
   qty: number;
   total: number;
+  tm: number;
+  ck: number;
   weather: string | null;
   rows: SaleRow[];
 };
@@ -42,13 +44,15 @@ export function groupByMonthDay(
       day = undefined;
     }
     if (!day || day.key !== dayKey) {
-      day = { key: dayKey, qty: 0, total: 0, weather: weatherByDay?.[dayKey] ?? null, rows: [] };
+      day = { key: dayKey, qty: 0, total: 0, tm: 0, ck: 0, weather: weatherByDay?.[dayKey] ?? null, rows: [] };
       month.days.push(day);
     }
 
     day.rows.push(s);
     day.qty += quantity;
     day.total += amount;
+    if (s.source === 'TM') day.tm += amount;
+    else if (s.source === 'CK') day.ck += amount;
     month.qty += quantity;
     month.total += amount;
   }
