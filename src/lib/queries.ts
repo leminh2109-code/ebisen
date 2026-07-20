@@ -414,6 +414,63 @@ export async function getShrimpPurchases(): Promise<ShrimpPurchaseRow[]> {
   return data ?? [];
 }
 
+// ─── Bột & gia vị (bột mì, bột năng, muối, đường) ────────────────────────────
+/** Tồn kho một nguyên liệu (kg). Mọi phép tính ở view ingredient_inventory. */
+export type IngredientInventory = {
+  ingredient: string;
+  label: string;
+  grams_per_cake: number;
+  total_kg: number;
+  total_cost: number;
+  start_date: string | null;
+  cakes_used: number;
+  kg_used: number;
+  kg_on_hand: number;
+  cost_per_kg: number | null;
+  inventory_value: number | null;
+  cakes_left: number | null;
+};
+/** Một lần nhập nguyên liệu (cho bảng lịch sử). */
+export type IngredientPurchaseRow = {
+  id: string;
+  ingredient: string;
+  purchase_date: string;
+  kg: number;
+  total_cost: number | null;
+  note: string | null;
+};
+
+export async function getIngredientInventory(): Promise<IngredientInventory[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('ingredient_inventory').select('*');
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Định mức công thức (gram/bánh) — cho dropdown form nhập. */
+export type Ingredient = { key: string; label: string; grams_per_cake: number };
+export async function getIngredients(): Promise<Ingredient[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('ingredients')
+    .select('key, label, grams_per_cake')
+    .order('sort_order', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Lịch sử nhập bột/gia vị (mới → cũ). */
+export async function getIngredientPurchases(): Promise<IngredientPurchaseRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('ingredient_purchases')
+    .select('id, ingredient, purchase_date, kg, total_cost, note')
+    .order('purchase_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
 // ─── Vật tư (túi, tem) ───────────────────────────────────────────────────────
 /** Tồn kho một vật tư (túi/tem). */
 export type MaterialInventory = {

@@ -309,6 +309,55 @@ export async function deleteShrimpGift(formData: FormData): Promise<void> {
   revalidatePath('/dashboard');
 }
 
+/** Nhập bột/gia vị (kg). Tiền chỉ để định giá tồn — KHÔNG cộng vào P&L. */
+export async function createIngredientPurchase(
+  _prev: EntryState,
+  formData: FormData,
+): Promise<EntryState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Phiên đăng nhập hết hạn.' };
+
+  const ingredient = String(formData.get('ingredient') ?? '').trim();
+  const purchase_date = String(formData.get('purchase_date') ?? '').trim();
+  // Cho nhập theo kg hoặc gram (gia vị ít như muối tiện hơn khi nhập gram).
+  const unit = String(formData.get('unit') ?? 'kg').trim();
+  const qty = parseNumber(String(formData.get('quantity') ?? ''));
+  const total_cost = parseNumber(String(formData.get('total_cost') ?? ''));
+  const note = String(formData.get('note') ?? '').trim() || null;
+
+  if (!ingredient) return { ok: false, error: 'Chọn loại nguyên liệu.' };
+  if (!purchase_date) return { ok: false, error: 'Thiếu ngày nhập.' };
+  if (qty === null || qty <= 0) return { ok: false, error: 'Số lượng không hợp lệ.' };
+
+  const kg = unit === 'g' ? qty / 1000 : qty;
+
+  const { error } = await supabase.from('ingredient_purchases').insert({
+    ingredient,
+    purchase_date,
+    kg,
+    total_cost: total_cost === null || total_cost < 0 ? null : total_cost,
+    note,
+    created_by: user.id,
+  });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath('/ingredients');
+  revalidatePath('/dashboard');
+  return { ok: true, error: null };
+}
+
+/** Xóa một lần nhập bột/gia vị (RLS chỉ owner xóa). */
+export async function deleteIngredientPurchase(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const id = String(formData.get('id') ?? '').trim();
+  if (!id) return;
+  await supabase.from('ingredient_purchases').delete().eq('id', id);
+  revalidatePath('/ingredients');
+}
+
 export async function createMaterialPurchase(
   _prev: EntryState,
   formData: FormData,

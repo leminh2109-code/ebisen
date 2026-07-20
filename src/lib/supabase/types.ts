@@ -162,6 +162,40 @@ export type Database = {
         };
         Relationships: Rel;
       };
+      ingredients: {
+        Row: { key: string; label: string; grams_per_cake: number; sort_order: number };
+        Insert: { key: string; label: string; grams_per_cake: number; sort_order?: number };
+        Update: { label?: string; grams_per_cake?: number; sort_order?: number };
+        Relationships: Rel;
+      };
+      ingredient_purchases: {
+        Row: {
+          id: string;
+          ingredient: string;
+          purchase_date: string;
+          kg: number;
+          total_cost: number | null;
+          note: string | null;
+          created_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          ingredient: string;
+          purchase_date: string;
+          kg: number;
+          total_cost?: number | null;
+          note?: string | null;
+          created_by?: string | null;
+        };
+        Update: {
+          ingredient?: string;
+          purchase_date?: string;
+          kg?: number;
+          total_cost?: number | null;
+          note?: string | null;
+        };
+        Relationships: Rel;
+      };
       material_purchases: {
         Row: {
           id: string;
@@ -382,6 +416,23 @@ export type Database = {
           shrimp_used: number | null;
           station_traffic: number | null;
           weather: string | null;
+        };
+        Relationships: Rel;
+      };
+      ingredient_inventory: {
+        Row: {
+          ingredient: string;
+          label: string;
+          grams_per_cake: number;
+          total_kg: number;
+          total_cost: number;
+          start_date: string | null;
+          cakes_used: number;
+          kg_used: number;
+          kg_on_hand: number;
+          cost_per_kg: number | null;
+          inventory_value: number | null;
+          cakes_left: number | null;
         };
         Relationships: Rel;
       };
