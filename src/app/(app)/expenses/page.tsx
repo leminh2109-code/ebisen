@@ -3,8 +3,7 @@ import { getExpensesByMonth, getExpensesGrouped } from '@/lib/queries';
 import { formatCurrency, formatMonth } from '@/lib/format';
 import { PageHeader, Card, EmptyState } from '@/components/ui';
 import { BarChart } from '@/components/BarChart';
-import { PieChart } from '@/components/PieChart';
-import { ExpenseGroups } from './expense-groups';
+import { ExpenseAnalysis } from './expense-analysis';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +13,7 @@ export default async function ExpensesPage() {
     getExpensesGrouped('category'),
     getExpensesGrouped('expense_type'),
   ]);
-  const months = rows.map((r) => r.month); // đã sắp mới → cũ
+  const months = rows.map((r) => r.month);
 
   const chart = rows
     .slice(0, 12)
@@ -25,12 +24,6 @@ export default async function ExpensesPage() {
     }));
 
   const total = rows.reduce((s, r) => s + Number(r.expenses), 0);
-
-  // Cơ cấu chi phí theo danh mục của tháng gần nhất (cho biểu đồ tròn).
-  const latestMonth = months[0] ?? '';
-  const pieData = byCategory
-    .filter((g) => g.month === latestMonth)
-    .map((g) => ({ label: g.key, value: Number(g.expenses) }));
 
   return (
     <div>
@@ -59,52 +52,42 @@ export default async function ExpensesPage() {
         <BarChart data={chart} />
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        <div className="space-y-6">
-          <Card title="Chi phí theo tháng">
-            {rows.length === 0 ? (
-              <EmptyState message="Chưa có khoản chi nào." />
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left text-muted">
-                    <th className="px-4 py-2 font-medium">Tháng</th>
-                    <th className="px-4 py-2 font-medium text-right">Số khoản</th>
-                    <th className="px-4 py-2 font-medium text-right">Chi phí</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => (
-                    <tr key={r.month} className="border-b border-border last:border-0">
-                      <td className="px-4 py-2.5">{formatMonth(r.month)}</td>
-                      <td className="px-4 py-2.5 text-right tabular">
-                        {r.expense_count}
-                      </td>
-                      <td className="px-4 py-2.5 text-right tabular font-medium">
-                        {formatCurrency(r.expenses)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </Card>
+      <Card title="Chi phí theo tháng" className="mb-6">
+        {rows.length === 0 ? (
+          <EmptyState message="Chưa có khoản chi nào." />
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-muted">
+                <th className="px-4 py-2 font-medium">Tháng</th>
+                <th className="px-4 py-2 font-medium text-right">Số khoản</th>
+                <th className="px-4 py-2 font-medium text-right">Chi phí</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.month} className="border-b border-border last:border-0">
+                  <td className="px-4 py-2.5">{formatMonth(r.month)}</td>
+                  <td className="px-4 py-2.5 text-right tabular">
+                    {r.expense_count}
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular font-medium">
+                    {formatCurrency(r.expenses)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Card>
 
-          {latestMonth && (
-            <Card title={`Cơ cấu chi phí ${formatMonth(latestMonth)}`}>
-              <PieChart data={pieData} />
-            </Card>
-          )}
-        </div>
-
-        <ExpenseGroups
-          groups={{
-            category: byCategory,
-            expense_type: byType,
-          }}
-          months={months}
-        />
-      </div>
+      <ExpenseAnalysis
+        groups={{
+          category: byCategory,
+          expense_type: byType,
+        }}
+        months={months}
+      />
     </div>
   );
 }
