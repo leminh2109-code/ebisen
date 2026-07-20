@@ -8,7 +8,15 @@ import type {
   PublicCustomerBootstrap,
 } from '@/lib/supabase/types';
 
-export type MonthlyRevenue = { month: string; days: number; revenue: number; cakes: number };
+export type MonthlyRevenue = {
+  month: string;
+  days: number;
+  revenue: number;
+  cakes: number;
+  revenue_prev: number | null;
+  /** MoM: % so với tháng liền trước (tính trong view). */
+  diff_pct: number | null;
+};
 export type DailyRevenue = {
   day: string;
   revenue: number;

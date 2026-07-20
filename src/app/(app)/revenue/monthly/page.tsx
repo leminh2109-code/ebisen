@@ -2,6 +2,7 @@ import { getRevenueByMonth, getSalesQtyByMonth, getPaymentSplitByMonth } from '@
 import { formatCurrency, formatMonth } from '@/lib/format';
 import { PageHeader, Card, EmptyState, StatCard } from '@/components/ui';
 import { BarChart } from '@/components/BarChart';
+import { DiffCell } from '../compare-cells';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,6 +66,7 @@ export default async function RevenueMonthlyPage() {
                   <th className="px-4 py-2 font-medium text-right">SL 1 tôm</th>
                   <th className="px-4 py-2 font-medium text-right">SL 2 tôm</th>
                   <th className="px-4 py-2 font-medium text-right">Doanh thu</th>
+                  <th className="px-4 py-2 font-medium text-right">MoM</th>
                 </tr>
               </thead>
               <tbody>
@@ -80,6 +82,7 @@ export default async function RevenueMonthlyPage() {
                       <td className="px-4 py-2.5 text-right tabular font-medium">
                         {formatCurrency(r.revenue)}
                       </td>
+                      <DiffCell pct={r.diff_pct} />
                     </tr>
                   );
                 })}
@@ -90,8 +93,9 @@ export default async function RevenueMonthlyPage() {
       </Card>
 
       <p className="mt-4 text-xs text-muted">
-        SL 1 tôm / 2 tôm lấy từ từng lần bán. Tháng lịch sử (nạp từ Airtable) có một
-        số bản ghi trống loại bánh nên tổng SL 1 tôm + 2 tôm có thể nhỏ hơn “Số bánh”.
+        <strong>MoM</strong> = % tháng này so với tháng liền trước. SL 1 tôm / 2 tôm
+        lấy từ từng lần bán. Tháng lịch sử (nạp từ Airtable) có một số bản ghi trống
+        loại bánh nên tổng SL 1 tôm + 2 tôm có thể nhỏ hơn “Số bánh”.
       </p>
     </div>
   );

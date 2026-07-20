@@ -46,7 +46,7 @@ export default async function RevenueWeeklyPage() {
                   <th className="px-4 py-2 font-medium text-right">Tuần trước</th>
                   <th className="px-4 py-2 font-medium text-right">2 tuần trước</th>
                   <th className="px-4 py-2 font-medium text-right">3 tuần trước</th>
-                  <th className="px-4 py-2 font-medium text-right">Chênh</th>
+                  <th className="px-4 py-2 font-medium text-right">WoW</th>
                 </tr>
               </thead>
               <tbody>
@@ -87,9 +87,9 @@ export default async function RevenueWeeklyPage() {
       </Card>
 
       <p className="mt-4 text-xs text-muted">
-        Tuần bắt đầu Thứ 2. &quot;Chênh&quot; = tuần này so với tuần liền trước — tuần
-        đang chạy (chưa đủ 7 ngày) để trống vì so sánh chưa có ý nghĩa. Nguồn: doanh
-        thu ngày chính thức; mọi con số tính trong Postgres.
+        Tuần bắt đầu Thứ 2. <strong>WoW</strong> = % tuần này so với tuần liền trước
+        — tuần đang chạy (chưa đủ 7 ngày) để trống vì so sánh chưa có ý nghĩa. Nguồn:
+        doanh thu ngày chính thức; mọi con số tính trong Postgres.
       </p>
     </div>
   );

@@ -467,7 +467,14 @@ export type Database = {
         Relationships: Rel;
       };
       revenue_by_month: {
-        Row: { month: string; days: number; revenue: number; cakes: number };
+        Row: {
+          month: string;
+          days: number;
+          revenue: number;
+          cakes: number;
+          revenue_prev: number | null;
+          diff_pct: number | null;
+        };
         Relationships: Rel;
       };
       sales_by_month: {
