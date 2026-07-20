@@ -35,9 +35,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
+  // Quầy mở 9h–17h, đông nhất 12h–16h → nhiệt độ lấy TRONG KHUNG GIỜ ĐỈNH (12–16h)
+  // để sát cái nóng khách thực sự trải qua, thay vì đỉnh cả ngày (có thể rơi vào lúc
+  // quầy đóng). Điều kiện (Nắng/Mưa) vẫn theo giờ nắng + mưa CẢ NGÀY.
+  const PEAK_FROM = 12;
+  const PEAK_TO = 16;
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
     `&daily=weathercode,temperature_2m_max,apparent_temperature_max,sunshine_duration,precipitation_sum` +
+    `&hourly=temperature_2m,apparent_temperature` +
     `&past_days=7&forecast_days=1&timezone=Asia%2FBangkok`;
   const w = await fetch(url, { cache: 'no-store' }).then((r) => r.json());
   const d = w.daily;
@@ -45,9 +51,25 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'weather_fetch_failed' }, { status: 502 });
   }
 
+  // Gom nhiệt độ theo ngày cho khung giờ đỉnh 12–16h (từ dữ liệu hourly).
+  const peak: Record<string, { temp: number[]; feels: number[] }> = {};
+  const H = w.hourly;
+  if (H?.time) {
+    for (let i = 0; i < H.time.length; i++) {
+      const hr = Number(H.time[i].slice(11, 13));
+      if (hr < PEAK_FROM || hr > PEAK_TO) continue;
+      const day = H.time[i].slice(0, 10);
+      (peak[day] ??= { temp: [], feels: [] });
+      if (H.temperature_2m?.[i] != null) peak[day].temp.push(H.temperature_2m[i]);
+      if (H.apparent_temperature?.[i] != null) peak[day].feels.push(H.apparent_temperature[i]);
+    }
+  }
+
   const rows = d.time.map((day: string, i: number) => {
-    const tmax = d.temperature_2m_max[i];
-    const feels = d.apparent_temperature_max[i];
+    const pk = peak[day];
+    // Nhiệt độ khung giờ đỉnh (max trong 12–16h); thiếu hourly thì lùi về đỉnh cả ngày.
+    const tmax = pk?.temp.length ? Math.max(...pk.temp) : d.temperature_2m_max[i];
+    const feels = pk?.feels.length ? Math.max(...pk.feels) : d.apparent_temperature_max[i];
     const sunH = (d.sunshine_duration[i] ?? 0) / 3600;
     const rain = d.precipitation_sum[i] ?? 0;
     const cond = classify(sunH, rain, d.weathercode[i]);
@@ -57,8 +79,8 @@ export async function GET(req: Request) {
       date: day,
       weather: disp,
       weather_cond: cond,
-      temp_max: tmax,
-      feels_max: feels,
+      temp_max: Math.round(tmax * 10) / 10,
+      feels_max: Math.round(feels * 10) / 10,
       sunshine_hours: Math.round(sunH * 10) / 10,
       rain_mm: rain,
     };

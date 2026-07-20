@@ -49,9 +49,10 @@ export function WeatherAnalysis({ stats }: { stats: WeatherRevenue[] }) {
       </div>
       <p className="px-4 py-3 text-xs text-muted">
         Trung bình mỗi ngày theo điều kiện thời tiết. &quot;Cảm nhận&quot; = nhiệt độ
-        cảm nhận (tính cả độ ẩm, sát cảm giác thực tế). Phân loại theo số giờ nắng +
-        lượng mưa trong ngày (không theo mã thời tiết). Nguồn: Open-Meteo, khu vực Trạm
-        V52 (Km52 cao tốc Hà Nội – Hải Phòng).
+        cảm nhận (tính cả độ ẩm, sát cảm giác thực tế), lấy trong KHUNG GIỜ ĐÔNG KHÁCH
+        12h–16h (không phải đỉnh cả ngày). Phân loại theo số giờ nắng + lượng mưa trong
+        ngày (không theo mã thời tiết). Nguồn: Open-Meteo, khu vực Trạm V52 (Km52 cao
+        tốc Hà Nội – Hải Phòng).
       </p>
     </Card>
   );
