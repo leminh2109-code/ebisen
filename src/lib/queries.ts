@@ -625,6 +625,10 @@ export async function getExpenseCategories(): Promise<string[]> {
     const c = r.category?.trim();
     if (c) set.add(c);
   }
+  // Luôn gợi ý đủ 4 nguyên liệu (bột mì, bột năng, muối, đường) kể cả khi chưa có
+  // khoản chi nào dùng — để mỗi loại là một danh mục riêng, khớp với tồn kho.
+  const { data: ings } = await supabase.from('ingredients').select('label');
+  for (const i of ings ?? []) if (i.label) set.add(i.label);
   return [...set].sort((a, b) => a.localeCompare(b, 'vi'));
 }
 
