@@ -65,6 +65,7 @@ export default async function RevenueMonthlyPage() {
                   <th className="px-4 py-2 font-medium text-right">Số bánh</th>
                   <th className="px-4 py-2 font-medium text-right">SL 1 tôm</th>
                   <th className="px-4 py-2 font-medium text-right">SL 2 tôm</th>
+                  <th className="px-4 py-2 font-medium text-right">Tỷ lệ 1T/2T</th>
                   <th className="px-4 py-2 font-medium text-right">Doanh thu</th>
                   <th className="px-4 py-2 font-medium text-right">MoM</th>
                 </tr>
@@ -79,6 +80,11 @@ export default async function RevenueMonthlyPage() {
                       <td className="px-4 py-2.5 text-right tabular">{n(Number(r.cakes))}</td>
                       <td className="px-4 py-2.5 text-right tabular">{q ? n(q.qty_1tom) : '—'}</td>
                       <td className="px-4 py-2.5 text-right tabular">{q ? n(q.qty_2tom) : '—'}</td>
+                      <td className="px-4 py-2.5 text-right tabular text-muted">
+                        {q && (q.qty_1tom + q.qty_2tom) > 0
+                          ? `${Math.round((q.qty_1tom / (q.qty_1tom + q.qty_2tom)) * 100)}% / ${Math.round((q.qty_2tom / (q.qty_1tom + q.qty_2tom)) * 100)}%`
+                          : '—'}
+                      </td>
                       <td className="px-4 py-2.5 text-right tabular font-medium">
                         {formatCurrency(r.revenue)}
                       </td>
