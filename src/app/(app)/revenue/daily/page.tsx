@@ -46,7 +46,6 @@ export default async function RevenueDailyPage() {
                   <th className="px-4 py-2 font-medium text-right">1 tuần trước</th>
                   <th className="px-4 py-2 font-medium text-right">2 tuần trước</th>
                   <th className="px-4 py-2 font-medium text-right">3 tuần trước</th>
-                  <th className="px-4 py-2 font-medium text-right">TB 3 tuần</th>
                   <th className="px-4 py-2 font-medium text-right">Chênh</th>
                 </tr>
               </thead>
@@ -62,9 +61,6 @@ export default async function RevenueDailyPage() {
                     <PrevCell value={r.revenue_1w} />
                     <PrevCell value={r.revenue_2w} />
                     <PrevCell value={r.revenue_3w} />
-                    <td className="px-4 py-2.5 text-right tabular text-muted whitespace-nowrap">
-                      {r.avg_prev === null ? '—' : formatCurrency(r.avg_prev)}
-                    </td>
                     <DiffCell pct={r.diff_pct} />
                   </tr>
                 ))}
@@ -76,8 +72,8 @@ export default async function RevenueDailyPage() {
 
       <p className="mt-4 text-xs text-muted">
         &quot;1/2/3 tuần trước&quot; = doanh thu ĐÚNG THỨ đó của các tuần liền trước
-        (lùi 7 / 14 / 21 ngày). &quot;TB 3 tuần&quot; chỉ chia cho số tuần thực sự có
-        dữ liệu. &quot;Chênh&quot; = ngày này so với TB 3 tuần. Nguồn: doanh thu ngày
+        (lùi 7 / 14 / 21 ngày). &quot;Chênh&quot; = ngày này so với TRUNG BÌNH các tuần
+        trước đó (chỉ tính những tuần thực sự có dữ liệu). Nguồn: doanh thu ngày
         chính thức; mọi con số tính trong Postgres.
       </p>
     </div>
