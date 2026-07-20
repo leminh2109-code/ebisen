@@ -17,10 +17,31 @@ export default function ExpenseForm({
   const [state, action, pending] = useActionState(createExpense, initial);
   const formRef = useRef<HTMLFormElement>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
+  const catRef = useRef<HTMLInputElement>(null);
+  const shrimpBoxRef = useRef<HTMLDivElement>(null);
+  const kgRef = useRef<HTMLInputElement>(null);
+  const countRef = useRef<HTMLInputElement>(null);
+
+  // Danh mục "Tôm" → hiện ô số kg / số con để cộng thẳng vào tồn kho.
+  // Dùng DOM (không setState trong effect) theo rule react-hooks/set-state-in-effect.
+  const syncShrimpBox = () => {
+    const isShrimp = catRef.current?.value.trim().toLowerCase() === 'tôm';
+    if (shrimpBoxRef.current) shrimpBoxRef.current.hidden = !isShrimp;
+  };
+
+  // Gợi ý số con từ số kg (dữ liệu thực tế: 35 con/kg) — vẫn sửa được.
+  const suggestCount = () => {
+    const kg = Number((kgRef.current?.value ?? '').replace(',', '.'));
+    if (countRef.current && Number.isFinite(kg) && kg > 0 && !countRef.current.dataset.touched) {
+      countRef.current.value = String(Math.round(kg * 35));
+    }
+  };
 
   useEffect(() => {
     if (state.ok) {
       formRef.current?.reset();
+      if (shrimpBoxRef.current) shrimpBoxRef.current.hidden = true;
+      if (countRef.current) delete countRef.current.dataset.touched;
       firstFieldRef.current?.focus();
     }
   }, [state]);
@@ -52,9 +73,12 @@ export default function ExpenseForm({
 
       <Field label="Danh mục">
         <input
+          ref={catRef}
           name="category"
           list="expense-categories"
           autoComplete="off"
+          onInput={syncShrimpBox}
+          onChange={syncShrimpBox}
           className={inputCls}
           placeholder="VD: Vận chuyển"
         />
@@ -64,6 +88,40 @@ export default function ExpenseForm({
           ))}
         </datalist>
       </Field>
+
+      <div
+        ref={shrimpBoxRef}
+        hidden
+        className="space-y-4 rounded-lg border border-dashed border-border bg-background p-3"
+      >
+        <p className="text-xs font-medium text-muted">
+          Cộng vào tồn kho tôm (bỏ trống nếu không phải nhập hàng, vd tôm ăn thử)
+        </p>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Số kg">
+            <input
+              ref={kgRef}
+              name="shrimp_kg"
+              inputMode="decimal"
+              onInput={suggestCount}
+              className={`${inputCls} tabular`}
+              placeholder="VD: 20"
+            />
+          </Field>
+          <Field label="Số con">
+            <input
+              ref={countRef}
+              name="shrimp_count"
+              inputMode="numeric"
+              onInput={(e) => {
+                e.currentTarget.dataset.touched = '1';
+              }}
+              className={`${inputCls} tabular`}
+              placeholder="Tự tính 35 con/kg"
+            />
+          </Field>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <Field label="Loại chi phí">

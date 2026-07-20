@@ -160,17 +160,44 @@ export async function createExpense(
   if (!expense_date) return { ok: false, error: 'Thiếu ngày chi.' };
   if (amount === null) return { ok: false, error: 'Số tiền không hợp lệ.' };
 
-  const { error } = await supabase.from('expenses').insert({
-    expense_date,
-    amount,
-    category,
-    expense_type,
-    cost_center,
-    description,
-    created_by: user.id,
-  });
+  // Danh mục "Tôm" + có điền số con → ghi luôn vào tồn kho tôm (xem dưới).
+  const isShrimp = category?.toLowerCase() === 'tôm';
+  const shrimpCount = parseNumber(String(formData.get('shrimp_count') ?? ''));
+  const shrimpKg = parseNumber(String(formData.get('shrimp_kg') ?? ''));
+  const linkShrimp = isShrimp && shrimpCount !== null && shrimpCount > 0;
+
+  const { data: created, error } = await supabase
+    .from('expenses')
+    .insert({
+      expense_date,
+      amount,
+      category,
+      expense_type,
+      cost_center,
+      description,
+      created_by: user.id,
+    })
+    .select('id')
+    .single();
 
   if (error) return { ok: false, error: error.message };
+
+  // Nhập 1 lần: tiền vào Chi phí (P&L) + số con vào tồn kho tôm. total_cost bên
+  // tồn kho chỉ để định giá tham khảo, KHÔNG cộng vào P&L lần nữa.
+  // Bỏ trống số con (vd "tôm ăn thử") → không đụng tồn kho.
+  if (linkShrimp && created) {
+    const { error: sErr } = await supabase.from('shrimp_purchases').insert({
+      purchase_date: expense_date,
+      shrimp_count: shrimpCount,
+      kg: shrimpKg === null || shrimpKg <= 0 ? null : shrimpKg,
+      total_cost: amount,
+      note: description,
+      expense_id: created.id,
+      created_by: user.id,
+    });
+    if (sErr) return { ok: false, error: `Đã lưu chi phí nhưng lỗi ghi tồn kho: ${sErr.message}` };
+    revalidatePath('/inventory');
+  }
 
   revalidatePath('/expenses');
   revalidatePath('/dashboard');

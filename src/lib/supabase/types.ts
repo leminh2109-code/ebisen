@@ -232,6 +232,7 @@ export type Database = {
           shrimp_count: number;
           total_cost: number | null;
           note: string | null;
+          expense_id: string | null;
           created_at: string;
           created_by: string | null;
         };
@@ -241,6 +242,7 @@ export type Database = {
           kg?: number | null;
           total_cost?: number | null;
           note?: string | null;
+          expense_id?: string | null;
           created_by?: string | null;
         };
         Update: {
