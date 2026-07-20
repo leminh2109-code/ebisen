@@ -8,6 +8,17 @@ export const SHRIMP_LOW_STOCK = 400;
 /** Vật tư: túi/tem còn <= 2000 cái thì cảnh báo đỏ. */
 export const MATERIAL_LOW_STOCK: Record<string, number> = { tui: 2000, tem: 2000 };
 
+/** Bột & gia vị: còn <= ngưỡng (kg) thì cảnh báo đỏ. Khóa theo ingredients.key. */
+export const INGREDIENT_LOW_STOCK: Record<string, number> = {
+  bot_mi: 10,
+  bot_nang: 5,
+  muoi: 0.5,
+  duong: 2,
+};
+
+export const isIngredientLow = (ingredient: string, kgOnHand: number) =>
+  ingredient in INGREDIENT_LOW_STOCK && kgOnHand <= INGREDIENT_LOW_STOCK[ingredient];
+
 export const isShrimpLow = (onHand: number) => onHand <= SHRIMP_LOW_STOCK;
 
 export const isMaterialLow = (material: string, onHand: number) =>

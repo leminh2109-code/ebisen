@@ -3,6 +3,7 @@ import { getIngredientInventory, getIngredientPurchases, getCurrentRole } from '
 import { PageHeader, Card, EmptyState } from '@/components/ui';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { deleteIngredientPurchase } from '../entry/actions';
+import { INGREDIENT_LOW_STOCK, isIngredientLow } from '@/lib/inventory-thresholds';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +39,9 @@ export default async function IngredientsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {inv.map((i) => {
           const onHand = Number(i.kg_on_hand);
-          const short = onHand < 0;
+          const negative = onHand < 0;
+          const low = isIngredientLow(i.ingredient, onHand);
+          const short = negative || low;
           return (
             <div key={i.ingredient} className="rounded-xl border border-border bg-surface p-4">
               <div className="flex items-baseline justify-between">
@@ -52,9 +55,14 @@ export default async function IngredientsPage() {
               >
                 {kg(i.kg_on_hand)}
               </p>
-              {short ? (
+              {negative ? (
                 <p className="mt-1 text-xs font-medium text-negative">
                   ⚠ Âm — thiếu tồn đầu kỳ hoặc chưa ghi lần nhập
+                </p>
+              ) : low ? (
+                <p className="mt-1 text-xs font-medium text-negative">
+                  ⚠ Dưới {INGREDIENT_LOW_STOCK[i.ingredient]} kg — cần nhập thêm
+                  <span className="font-normal"> · đủ ~{n(i.cakes_left)} bánh nữa</span>
                 </p>
               ) : (
                 <p className="mt-1 text-xs text-muted tabular">
