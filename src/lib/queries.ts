@@ -641,8 +641,16 @@ export async function getExpenseCategories(): Promise<string[]> {
   // khoản chi nào dùng — để mỗi loại là một danh mục riêng, khớp với tồn kho.
   const { data: ings } = await supabase.from('ingredients').select('label');
   for (const i of ings ?? []) if (i.label) set.add(i.label);
+  for (const c of ALWAYS_SUGGESTED_CATEGORIES) set.add(c);
   return [...set].sort((a, b) => a.localeCompare(b, 'vi'));
 }
+
+/**
+ * Danh mục luôn hiện trong gợi ý dù chưa có khoản chi nào dùng.
+ * "Tôm thử" tách khỏi "Tôm" vì tôm ăn thử KHÔNG nhập vào tồn kho bán —
+ * chọn "Tôm" mới hiện ô số kg/số con để cộng tồn kho.
+ */
+const ALWAYS_SUGGESTED_CATEGORIES = ['Tôm thử'];
 
 export type MenuItem = {
   id: string;
