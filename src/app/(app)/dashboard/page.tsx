@@ -57,22 +57,7 @@ export default async function DashboardPage() {
             {formatCurrency(today?.revenue ?? 0)}
           </p>
           {today ? (
-            <p className="mt-1 text-xs text-muted tabular">
-              {n(Number(today.cakes))} bánh
-              {today.diff_pct !== null && (
-                <>
-                  {' · '}
-                  <span
-                    className={
-                      Number(today.diff_pct) >= 0 ? 'text-blue-600' : 'text-negative'
-                    }
-                  >
-                    {Number(today.diff_pct) >= 0 ? '▲' : '▼'} {Math.abs(Number(today.diff_pct))}%
-                  </span>{' '}
-                  so cùng thứ
-                </>
-              )}
-            </p>
+            <p className="mt-1 text-xs text-muted tabular">{n(Number(today.cakes))} bánh</p>
           ) : (
             <p className="mt-1 text-xs text-muted">
               Chưa có lần bán nào hôm nay ({formatDate(todayKey)})
