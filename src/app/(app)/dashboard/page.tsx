@@ -1,6 +1,11 @@
 import Link from 'next/link';
-import { getDashboardSummary, getShrimpSummary, getCurrentRole } from '@/lib/queries';
-import { formatMonth } from '@/lib/format';
+import {
+  getDashboardSummary,
+  getShrimpSummary,
+  getCurrentRole,
+  getRevenueByDayCompare,
+} from '@/lib/queries';
+import { formatCurrency, formatDate, formatMonth, todayVN } from '@/lib/format';
 import { PageHeader, StatCard, Card } from '@/components/ui';
 import { BarChart } from '@/components/BarChart';
 import { isShrimpLow } from '@/lib/inventory-thresholds';
@@ -10,12 +15,17 @@ export const dynamic = 'force-dynamic';
 const n = (v: number) => Number(v).toLocaleString('vi-VN');
 
 export default async function DashboardPage() {
-  const [summary, shrimp, role] = await Promise.all([
+  const [summary, shrimp, role, days] = await Promise.all([
     getDashboardSummary(),
     getShrimpSummary(),
     getCurrentRole(),
+    getRevenueByDayCompare(14),
   ]);
   const isOwner = role === 'owner';
+
+  // Hôm nay (giờ VN). Chưa bán gì thì chưa có dòng trong daily_revenue.
+  const todayKey = todayVN();
+  const today = days.find((d) => d.day === todayKey) ?? null;
 
   const trend = summary.pnlTrend.map((p) => ({
     label: formatMonth(p.month).replace('Tháng ', 'T'),
@@ -38,6 +48,37 @@ export default async function DashboardPage() {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Link
+          href="/revenue/daily"
+          className="rounded-xl border border-border bg-surface p-4 hover:border-accent transition block"
+        >
+          <p className="text-sm text-muted">Doanh thu hôm nay</p>
+          <p className="mt-1 text-2xl font-semibold tabular">
+            {formatCurrency(today?.revenue ?? 0)}
+          </p>
+          {today ? (
+            <p className="mt-1 text-xs text-muted tabular">
+              {n(Number(today.cakes))} bánh
+              {today.diff_pct !== null && (
+                <>
+                  {' · '}
+                  <span
+                    className={
+                      Number(today.diff_pct) >= 0 ? 'text-blue-600' : 'text-negative'
+                    }
+                  >
+                    {Number(today.diff_pct) >= 0 ? '▲' : '▼'} {Math.abs(Number(today.diff_pct))}%
+                  </span>{' '}
+                  so cùng thứ
+                </>
+              )}
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-muted">
+              Chưa có lần bán nào hôm nay ({formatDate(todayKey)})
+            </p>
+          )}
+        </Link>
         <StatCard label="Doanh thu tháng này" amount={summary.thisMonthRevenue} />
         <StatCard label="Chi phí tháng này" amount={summary.thisMonthExpenses} />
         {isOwner ? (
