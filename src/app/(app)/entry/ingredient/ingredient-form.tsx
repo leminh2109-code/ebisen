@@ -30,7 +30,7 @@ export default function IngredientForm({ ingredients }: { ingredients: Ingredien
           </option>
           {ingredients.map((i) => (
             <option key={i.key} value={i.key}>
-              {i.label} ({i.grams_per_cake}g/bánh)
+              {i.label}
             </option>
           ))}
         </select>

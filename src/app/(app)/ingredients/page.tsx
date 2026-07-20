@@ -44,10 +44,7 @@ export default async function IngredientsPage() {
           const short = negative || low;
           return (
             <div key={i.ingredient} className="rounded-xl border border-border bg-surface p-4">
-              <div className="flex items-baseline justify-between">
-                <p className="text-sm text-muted">{i.label}</p>
-                <p className="text-xs text-muted">{i.grams_per_cake}g/bánh</p>
-              </div>
+              <p className="text-sm text-muted">{i.label}</p>
               <p
                 className={`mt-1 text-2xl font-semibold tabular ${
                   short ? 'text-negative' : 'text-positive'
@@ -130,7 +127,7 @@ export default async function IngredientsPage() {
       </Card>
 
       <p className="mt-4 text-xs text-muted">
-        Định mức mỗi bánh: bột mì 57,5g · bột năng 27,5g · muối 3,5g · đường 10g. Số
+        Tồn kho trừ dần theo định mức mỗi bánh (cấu hình riêng trong hệ thống). Số
         bánh tính cả BÁN và TẶNG, từ ngày nhập đầu tiên của từng nguyên liệu. Tiền
         mua đã ghi ở mục Chi phí — giá trị tồn ở đây chỉ để tham khảo, KHÔNG cộng
         thêm vào P&amp;L. Mọi con số tính trong Postgres.

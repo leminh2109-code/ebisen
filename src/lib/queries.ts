@@ -447,13 +447,17 @@ export async function getIngredientInventory(): Promise<IngredientInventory[]> {
   return data ?? [];
 }
 
-/** Định mức công thức (gram/bánh) — cho dropdown form nhập. */
-export type Ingredient = { key: string; label: string; grams_per_cake: number };
+/**
+ * Danh sách nguyên liệu cho dropdown form nhập. CỐ TÌNH không lấy `grams_per_cake`:
+ * dữ liệu này được truyền xuống client component nên sẽ lộ công thức trong HTML.
+ * Định mức chỉ dùng ở server (view ingredient_inventory tính trong Postgres).
+ */
+export type Ingredient = { key: string; label: string };
 export async function getIngredients(): Promise<Ingredient[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('ingredients')
-    .select('key, label, grams_per_cake')
+    .select('key, label')
     .order('sort_order', { ascending: true });
   if (error) throw error;
   return data ?? [];
