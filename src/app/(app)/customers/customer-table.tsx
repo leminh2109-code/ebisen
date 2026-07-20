@@ -29,6 +29,7 @@ const VIP_MIN_QTY = 50;
 
 type SortKey = 'qty' | 'date';
 type Dir = 'asc' | 'desc';
+type PIIField = 'name' | 'address' | 'phone';
 
 /** Xếp hạng "mua nhiều": tổng bánh giảm dần, hòa nhau thì theo lượt mua. */
 function rankValue(c: CustomerStats): number {
@@ -50,7 +51,15 @@ export function CustomerTable({
   const [sortKey, setSortKey] = useState<SortKey>('qty');
   const [dir, setDir] = useState<Dir>('desc');
   const [editing, setEditing] = useState<CustomerStats | null>(null);
-  const [hidePII, setHidePII] = useState(false);
+  const [hidden, setHidden] = useState<Set<PIIField>>(new Set());
+
+  const toggleHidden = (f: PIIField) =>
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(f)) next.delete(f);
+      else next.add(f);
+      return next;
+    });
 
   // Tập VIP = 5 khách mua nhiều nhất (chỉ tính khách đã có lượt mua), cố định
   // bất kể đang sắp xếp kiểu nào.
@@ -90,19 +99,16 @@ export function CustomerTable({
         <SortButton active={sortKey === 'date'} onClick={() => pick('date')}>
           Theo ngày mua{arrow('date')}
         </SortButton>
-        <button
-          type="button"
-          onClick={() => setHidePII((v) => !v)}
-          aria-pressed={hidePII}
-          className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
-            hidePII
-              ? 'border-accent bg-accent text-accent-fg'
-              : 'border-border text-foreground hover:border-accent'
-          }`}
-          title="Ẩn/hiện SĐT, tên, địa chỉ khách (khi chia sẻ màn hình)"
-        >
-          {hidePII ? '🙈 Đang ẩn thông tin' : '👁 Ẩn thông tin cá nhân'}
-        </button>
+        <span className="ml-2 text-xs text-muted">Ẩn:</span>
+        <PIIToggle active={hidden.has('name')} onClick={() => toggleHidden('name')}>
+          Tên
+        </PIIToggle>
+        <PIIToggle active={hidden.has('address')} onClick={() => toggleHidden('address')}>
+          Địa chỉ
+        </PIIToggle>
+        <PIIToggle active={hidden.has('phone')} onClick={() => toggleHidden('phone')}>
+          SĐT
+        </PIIToggle>
         <span className="ml-auto inline-flex items-center gap-1 text-xs text-muted">
           <span className="inline-block h-3 w-3 rounded-sm bg-amber-100 ring-1 ring-amber-400" />
           Top {VIP_COUNT} VIP
@@ -144,15 +150,15 @@ export function CustomerTable({
                         href={`/customers/${c.id}`}
                         className="text-accent hover:underline font-medium"
                       >
-                        {hidePII ? maskName(c.name) : (c.name ?? '—')}
+                        {hidden.has('name') ? maskName(c.name) : (c.name ?? '—')}
                       </Link>
                     </span>
                   </td>
                   <td className="px-4 py-2 text-muted max-w-[220px] truncate">
-                    {hidePII ? '••••••' : (c.address ?? '—')}
+                    {hidden.has('address') ? '••••••' : (c.address ?? '—')}
                   </td>
                   <td className="px-4 py-2 tabular text-muted">
-                    {hidePII ? maskPhone(c.phone) : c.phone}
+                    {hidden.has('phone') ? maskPhone(c.phone) : c.phone}
                   </td>
                   <td className="px-4 py-2 text-right tabular">{n(c.order_count)}</td>
                   <td className="px-4 py-2 text-right tabular">{n(c.total_qty)}</td>
@@ -321,6 +327,34 @@ function SortButton({
           : 'border-border text-foreground hover:border-accent'
       }`}
     >
+      {children}
+    </button>
+  );
+}
+
+/** Chip bật/tắt ẩn một cột thông tin cá nhân. Bật = đang ẩn (nền vàng + gạch). */
+function PIIToggle({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      title={active ? 'Đang ẩn — bấm để hiện' : 'Bấm để ẩn cột này'}
+      className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+        active
+          ? 'border-amber-400 bg-amber-100 text-amber-900'
+          : 'border-border text-foreground hover:border-accent'
+      }`}
+    >
+      {active ? '🙈 ' : ''}
       {children}
     </button>
   );
