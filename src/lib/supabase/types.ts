@@ -385,6 +385,34 @@ export type Database = {
         };
         Relationships: Rel;
       };
+      revenue_by_day_compare: {
+        Row: {
+          day: string;
+          weekday: number;
+          revenue: number;
+          cakes: number;
+          revenue_1w: number | null;
+          revenue_2w: number | null;
+          revenue_3w: number | null;
+          avg_prev: number | null;
+          diff_pct: number | null;
+        };
+        Relationships: Rel;
+      };
+      revenue_by_week: {
+        Row: {
+          week_start: string;
+          week_end: string;
+          days: number;
+          cakes: number;
+          revenue: number;
+          revenue_prev1: number | null;
+          revenue_prev2: number | null;
+          revenue_prev3: number | null;
+          diff_pct: number | null;
+        };
+        Relationships: Rel;
+      };
       revenue_by_month: {
         Row: { month: string; days: number; revenue: number; cakes: number };
         Relationships: Rel;

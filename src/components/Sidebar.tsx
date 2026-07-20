@@ -14,6 +14,8 @@ const NAV: { section: string; items: NavItem[] }[] = [
   {
     section: 'Doanh thu',
     items: [
+      { href: '/revenue/daily', label: 'Doanh thu ngày', icon: '☀' },
+      { href: '/revenue/weekly', label: 'Doanh thu tuần', icon: '▦' },
       { href: '/revenue/monthly', label: 'Doanh thu tháng', icon: '↗' },
       { href: '/revenue/detail', label: 'Bán hàng chi tiết', icon: '≣' },
     ],

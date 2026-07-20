@@ -128,6 +128,47 @@ export async function getRevenueByMonth(): Promise<MonthlyRevenue[]> {
   return data ?? [];
 }
 
+/** Doanh thu 1 ngày + cùng thứ của 1/2/3 tuần trước (tính sẵn trong view). */
+export type DailyRevenueCompare = {
+  day: string;
+  weekday: number; // 1 = Thứ 2 … 7 = Chủ nhật
+  revenue: number;
+  cakes: number;
+  revenue_1w: number | null;
+  revenue_2w: number | null;
+  revenue_3w: number | null;
+  avg_prev: number | null;
+  diff_pct: number | null;
+};
+export async function getRevenueByDayCompare(limit = 90): Promise<DailyRevenueCompare[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('revenue_by_day_compare')
+    .select('*')
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Doanh thu 1 tuần (T2–CN) + 1/2/3 tuần trước (tính sẵn trong view). */
+export type WeeklyRevenue = {
+  week_start: string;
+  week_end: string;
+  days: number;
+  cakes: number;
+  revenue: number;
+  revenue_prev1: number | null;
+  revenue_prev2: number | null;
+  revenue_prev3: number | null;
+  diff_pct: number | null;
+};
+export async function getRevenueByWeek(limit = 52): Promise<WeeklyRevenue[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('revenue_by_week').select('*').limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function getRevenueByDay(month?: string): Promise<DailyRevenue[]> {
   const supabase = await createClient();
   let q = supabase.from('revenue_by_day').select('*').order('day', { ascending: true });
