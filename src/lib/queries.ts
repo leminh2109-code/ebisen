@@ -847,6 +847,53 @@ export async function getPublicCustomerToken(): Promise<string | null> {
   return data?.token ?? null;
 }
 
+// ─── Link trạm (xem doanh thu + bán hàng chi tiết) ──────────────────────────
+
+export type StationRevenueRow = {
+  month: string;
+  days: number;
+  cakes: number;
+  revenue: number;
+};
+
+export type StationView = {
+  valid: boolean;
+  revenue_by_month: StationRevenueRow[];
+  sales: {
+    id: string;
+    sale_date: string;
+    sold_at: string | null;
+    cake_type: string | null;
+    quantity: number;
+    unit_price: number;
+    amount: number;
+    source: string | null;
+  }[];
+};
+
+/** Dữ liệu trang trạm công khai theo token. Gọi RPC security definer. */
+export async function getStationView(token: string): Promise<StationView> {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc('station_view', { p_token: token });
+  if (error) throw error;
+  return data as StationView;
+}
+
+/** Token link trạm đang active (owner đọc). */
+export async function getPublicStationToken(): Promise<string | null> {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase as any)
+    .from('public_station_tokens')
+    .select('token')
+    .eq('active', true)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (data as { token: string } | null)?.token ?? null;
+}
+
 /** Role của user hiện tại — dùng để gate trang P&L. */
 export async function getCurrentRole(): Promise<'owner' | 'staff' | null> {
   const supabase = await createClient();

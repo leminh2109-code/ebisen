@@ -5,6 +5,7 @@ import {
   getPublicFormToken,
   getPublicViewToken,
   getPublicCustomerToken,
+  getPublicStationToken,
 } from '@/lib/queries';
 import { PageHeader, Card } from '@/components/ui';
 import { SharePanel } from './share-panel';
@@ -15,6 +16,8 @@ import {
   setViewSlug,
   regenerateCustomerLink,
   setCustomerSlug,
+  regenerateStationLink,
+  setStationSlug,
 } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -23,10 +26,11 @@ export default async function SharePage() {
   const role = await getCurrentRole();
   if (role !== 'owner') redirect('/dashboard');
 
-  const [formToken, viewToken, customerToken, h] = await Promise.all([
+  const [formToken, viewToken, customerToken, stationToken, h] = await Promise.all([
     getPublicFormToken(),
     getPublicViewToken(),
     getPublicCustomerToken(),
+    getPublicStationToken(),
     headers(),
   ]);
   const host = h.get('x-forwarded-host') ?? h.get('host') ?? '';
@@ -74,7 +78,7 @@ export default async function SharePage() {
         </div>
       </Card>
 
-      <Card title="Link nhập khách hàng">
+      <Card title="Link nhập khách hàng" className="mb-6">
         <div className="p-4">
           <SharePanel
             initialToken={customerToken}
@@ -86,6 +90,23 @@ export default async function SharePage() {
               linkLabel: 'Link nhập khách hàng',
               help: 'Gửi link này để nhân viên nhập SĐT/địa chỉ + lần mua của khách (không cần đăng nhập). Chỉ ghi vào sổ khách — KHÔNG tính doanh thu, không xem báo cáo.',
               slugPlaceholder: 'ebisen-khach',
+            }}
+          />
+        </div>
+      </Card>
+
+      <Card title="Link xem doanh thu — dành cho trạm">
+        <div className="p-4">
+          <SharePanel
+            initialToken={stationToken}
+            baseUrl={baseUrl}
+            basePath="/tram"
+            regenerateAction={regenerateStationLink}
+            setSlugAction={setStationSlug}
+            texts={{
+              linkLabel: 'Link xem doanh thu (trạm)',
+              help: 'Gửi link này cho trạm để xem doanh thu tháng và bán hàng chi tiết (không cần đăng nhập). Chỉ đọc — không xem chi phí, P&L hay thông tin nội bộ.',
+              slugPlaceholder: 'ebisen-tram',
             }}
           />
         </div>
