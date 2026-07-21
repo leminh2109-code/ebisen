@@ -46,6 +46,7 @@ export default async function RevenueWeeklyPage() {
                   <th className="px-4 py-2 font-medium text-right">Tuần trước</th>
                   <th className="px-4 py-2 font-medium text-right">2 tuần trước</th>
                   <th className="px-4 py-2 font-medium text-right">3 tuần trước</th>
+                  <th className="px-4 py-2 font-medium text-right">4 tuần trước</th>
                   <th className="px-4 py-2 font-medium text-right">WoW</th>
                 </tr>
               </thead>
@@ -71,6 +72,7 @@ export default async function RevenueWeeklyPage() {
                       <PrevCell value={r.revenue_prev1} />
                       <PrevCell value={r.revenue_prev2} />
                       <PrevCell value={r.revenue_prev3} />
+                      <PrevCell value={r.revenue_prev4} />
                       {/* Tuần chưa đủ 7 ngày thì % chênh chưa có ý nghĩa. */}
                       {partial ? (
                         <td className="px-4 py-2.5 text-right text-xs text-muted">—</td>

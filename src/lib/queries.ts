@@ -168,13 +168,14 @@ export type WeeklyRevenue = {
   revenue_prev1: number | null;
   revenue_prev2: number | null;
   revenue_prev3: number | null;
+  revenue_prev4: number | null;
   diff_pct: number | null;
 };
 export async function getRevenueByWeek(limit = 52): Promise<WeeklyRevenue[]> {
   const supabase = await createClient();
   const { data, error } = await supabase.from('revenue_by_week').select('*').limit(limit);
   if (error) throw error;
-  return data ?? [];
+  return (data as unknown as WeeklyRevenue[]) ?? [];
 }
 
 export async function getRevenueByDay(month?: string): Promise<DailyRevenue[]> {
