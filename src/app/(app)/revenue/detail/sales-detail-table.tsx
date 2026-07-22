@@ -98,7 +98,14 @@ export function SalesDetailTable({
                               )}
                             </span>
                             <span className="tabular font-normal">
-                              {d.qty} bánh · {formatCurrency(d.total)}
+                              {d.qty} bánh{(d.qty1 > 0 || d.qty2 > 0) && (
+                                <span className="ml-1 font-normal text-muted">
+                                  ({[
+                                    d.qty1 > 0 && `${d.qty1} bánh 1t`,
+                                    d.qty2 > 0 && `${d.qty2} bánh 2t`,
+                                  ].filter(Boolean).join(', ')})
+                                </span>
+                              )} · {formatCurrency(d.total)}
                               {(d.tm > 0 || d.ck > 0) && (
                                 <span className="ml-1.5 text-[11px] font-normal text-muted">
                                   ({[

@@ -6,6 +6,8 @@ import type { SaleRow } from '@/lib/queries';
 export type DayGroup = {
   key: string;
   qty: number;
+  qty1: number;
+  qty2: number;
   total: number;
   tm: number;
   ck: number;
@@ -44,12 +46,14 @@ export function groupByMonthDay(
       day = undefined;
     }
     if (!day || day.key !== dayKey) {
-      day = { key: dayKey, qty: 0, total: 0, tm: 0, ck: 0, weather: weatherByDay?.[dayKey] ?? null, rows: [] };
+      day = { key: dayKey, qty: 0, qty1: 0, qty2: 0, total: 0, tm: 0, ck: 0, weather: weatherByDay?.[dayKey] ?? null, rows: [] };
       month.days.push(day);
     }
 
     day.rows.push(s);
     day.qty += quantity;
+    if (s.cake_type?.includes('1 tôm')) day.qty1 += quantity;
+    else if (s.cake_type?.includes('2 tôm')) day.qty2 += quantity;
     day.total += amount;
     if (s.source === 'TM') day.tm += amount;
     else if (s.source === 'CK') day.ck += amount;
