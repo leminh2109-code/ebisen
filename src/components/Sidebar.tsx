@@ -60,7 +60,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
     items: [
       { href: '/menu', label: 'Thực đơn', icon: '☰' },
       { href: '/employees', label: 'Nhân viên', icon: '☺' },
-      { href: '/share', label: 'Link nhập liệu', icon: '🔗' },
+      { href: '/share', label: 'Quản lý link', icon: '🔗' },
     ],
   },
 ];
