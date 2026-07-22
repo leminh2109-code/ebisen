@@ -6,8 +6,6 @@ import type { SaleRow } from '@/lib/queries';
 
 export const dynamic = 'force-dynamic';
 
-const STATION_SHARE = 0.3;
-
 const n = (v: number) => Number(v).toLocaleString('vi-VN');
 
 export default async function StationViewPage({
@@ -36,7 +34,6 @@ export default async function StationViewPage({
 
   const revenue: StationRevenueRow[] = data.revenue_by_month ?? [];
   const totalRevenue = revenue.reduce((s, r) => s + Number(r.revenue), 0);
-  const totalStation = totalRevenue * STATION_SHARE;
 
   const sales: SaleRow[] = (data.sales ?? []).map((s) => ({
     ...s,
@@ -67,7 +64,7 @@ export default async function StationViewPage({
           <div className="px-4 py-3 border-b border-border">
             <h2 className="font-semibold text-sm">Doanh thu theo tháng</h2>
             <p className="text-xs text-muted mt-0.5">
-              Tổng: {formatCurrency(totalRevenue)} · Phần trạm (30%): {formatCurrency(totalStation)}
+              Tổng: {formatCurrency(totalRevenue)}
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -78,7 +75,6 @@ export default async function StationViewPage({
                   <th className="px-4 py-2 font-medium text-right">Số ngày</th>
                   <th className="px-4 py-2 font-medium text-right">Số bánh</th>
                   <th className="px-4 py-2 font-medium text-right">Doanh thu</th>
-                  <th className="px-4 py-2 font-medium text-right">Phần trạm (30%)</th>
                 </tr>
               </thead>
               <tbody>
@@ -90,9 +86,6 @@ export default async function StationViewPage({
                     <td className="px-4 py-2.5 text-right tabular font-medium">
                       {formatCurrency(r.revenue)}
                     </td>
-                    <td className="px-4 py-2.5 text-right tabular font-medium text-accent">
-                      {formatCurrency(Number(r.revenue) * STATION_SHARE)}
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -100,7 +93,6 @@ export default async function StationViewPage({
                 <tr className="border-t border-border font-semibold bg-background">
                   <td className="px-4 py-2.5" colSpan={3}>Tổng cộng</td>
                   <td className="px-4 py-2.5 text-right tabular">{formatCurrency(totalRevenue)}</td>
-                  <td className="px-4 py-2.5 text-right tabular text-accent">{formatCurrency(totalStation)}</td>
                 </tr>
               </tfoot>
             </table>
