@@ -61,6 +61,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { href: '/menu', label: 'Thực đơn', icon: '☰' },
       { href: '/employees', label: 'Nhân viên', icon: '☺' },
       { href: '/share', label: 'Quản lý link', icon: '🔗' },
+      { href: '/documents', label: 'Tài liệu', icon: '📁' },
     ],
   },
 ];
@@ -81,7 +82,7 @@ export default function Sidebar({
     items: group.items.filter(
       (item) =>
         !(
-          ['/pnl', '/menu', '/employees', '/share'].includes(item.href) &&
+          ['/pnl', '/menu', '/employees', '/share', '/documents'].includes(item.href) &&
           role !== 'owner'
         ),
     ),
