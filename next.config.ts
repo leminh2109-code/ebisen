@@ -7,9 +7,10 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
-  // Trang Tài liệu upload file qua server action — mặc định Next.js chỉ 1MB.
-  serverActions: {
-    bodySizeLimit: '52mb',
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '52mb',
+    },
   },
 };
 
