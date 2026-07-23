@@ -1,14 +1,12 @@
 'use client';
 
 import { useActionState, useRef, useEffect } from 'react';
-import { uploadDocument, type ActionState } from './actions';
+
+export type ActionState = { ok: boolean; error: string | null };
+export type UploadAction = (prev: ActionState, formData: FormData) => Promise<ActionState>;
 
 const CATEGORIES = [
-  'Pháp lý',
-  'An toàn thực phẩm',
-  'Hợp đồng',
-  'Thuế & Kế toán',
-  'Khác',
+  'Pháp lý', 'An toàn thực phẩm', 'Hợp đồng', 'Thuế & Kế toán', 'Khác',
 ];
 
 const inputCls =
@@ -16,8 +14,8 @@ const inputCls =
 
 const init: ActionState = { ok: false, error: null };
 
-export function UploadForm() {
-  const [state, action, pending] = useActionState(uploadDocument, init);
+export function UploadForm({ action }: { action: UploadAction }) {
+  const [state, formAction, pending] = useActionState(action, init);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -25,7 +23,7 @@ export function UploadForm() {
   }, [state.ok]);
 
   return (
-    <form ref={formRef} action={action} className="space-y-3">
+    <form ref={formRef} action={formAction} className="space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="mb-1 block text-sm font-medium">
@@ -76,12 +74,8 @@ export function UploadForm() {
         />
       </div>
 
-      {state.error && (
-        <p className="text-sm text-negative">{state.error}</p>
-      )}
-      {state.ok && (
-        <p className="text-sm text-accent">Đã tải lên thành công.</p>
-      )}
+      {state.error && <p className="text-sm text-negative">{state.error}</p>}
+      {state.ok && <p className="text-sm text-accent">Đã tải lên thành công.</p>}
 
       <div className="flex justify-end">
         <button

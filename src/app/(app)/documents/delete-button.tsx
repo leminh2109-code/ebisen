@@ -1,12 +1,14 @@
 'use client';
 
 import { useTransition } from 'react';
-import { deleteDocument } from './actions';
 
-export function DeleteDocumentButton({ id, storagePath, name }: {
+export type DeleteAction = (formData: FormData) => Promise<void>;
+
+export function DeleteDocumentButton({ id, storagePath, name, action }: {
   id: string;
   storagePath: string;
   name: string;
+  action: DeleteAction;
 }) {
   const [pending, startTransition] = useTransition();
 
@@ -15,7 +17,7 @@ export function DeleteDocumentButton({ id, storagePath, name }: {
     const fd = new FormData();
     fd.set('id', id);
     fd.set('storage_path', storagePath);
-    startTransition(() => deleteDocument(fd));
+    startTransition(async () => { await action(fd); });
   }
 
   return (

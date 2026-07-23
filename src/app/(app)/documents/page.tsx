@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import { getCurrentRole } from '@/lib/queries';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader, Card } from '@/components/ui';
-import { UploadForm } from './upload-form';
+import { UploadForm, type ActionState } from './upload-form';
 import { DeleteDocumentButton } from './delete-button';
 
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,64 @@ const CATEGORY_ORDER = ['Pháp lý', 'An toàn thực phẩm', 'Hợp đồng', 
 export default async function DocumentsPage() {
   const role = await getCurrentRole();
   if (role !== 'owner') redirect('/dashboard');
+
+  // ── Inline server actions (passed as props — tránh client import 'use server') ──
+
+  async function uploadDocument(_prev: ActionState, formData: FormData): Promise<ActionState> {
+    'use server';
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { ok: false, error: 'Chưa đăng nhập' };
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    if (profile?.role !== 'owner') return { ok: false, error: 'Không có quyền' };
+
+    const file = formData.get('file') as File | null;
+    const name = (formData.get('name') as string)?.trim();
+    const category = (formData.get('category') as string)?.trim();
+    const notes = (formData.get('notes') as string)?.trim() || null;
+
+    if (!file || file.size === 0) return { ok: false, error: 'Chưa chọn file' };
+    if (!name) return { ok: false, error: 'Chưa nhập tên tài liệu' };
+    if (!category) return { ok: false, error: 'Chưa chọn danh mục' };
+
+    const ext = file.name.split('.').pop() ?? 'bin';
+    const path = `${crypto.randomUUID()}.${ext}`;
+
+    const { error: storageErr } = await supabase.storage
+      .from('documents')
+      .upload(path, file, { contentType: file.type });
+    if (storageErr) return { ok: false, error: storageErr.message };
+
+    const { error: dbErr } = await (supabase as any).from('documents').insert({
+      name, category, storage_path: path,
+      file_name: file.name, file_size: file.size, mime_type: file.type,
+      notes, uploaded_by: user.id,
+    });
+    if (dbErr) {
+      await supabase.storage.from('documents').remove([path]);
+      return { ok: false, error: dbErr.message };
+    }
+
+    revalidatePath('/documents');
+    return { ok: true, error: null };
+  }
+
+  async function deleteDocument(formData: FormData): Promise<void> {
+    'use server';
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    if (profile?.role !== 'owner') return;
+
+    const id = formData.get('id') as string;
+    const storagePath = formData.get('storage_path') as string;
+    await supabase.storage.from('documents').remove([storagePath]);
+    await (supabase as any).from('documents').delete().eq('id', id);
+    revalidatePath('/documents');
+  }
+
+  // ── Data ──────────────────────────────────────────────────────────────────────
 
   const supabase = await createClient();
   const { data: rawDocs } = await (supabase as any)
@@ -75,7 +134,7 @@ export default async function DocumentsPage() {
 
       <Card title="Tải lên tài liệu mới" className="mb-6">
         <div className="p-4">
-          <UploadForm />
+          <UploadForm action={uploadDocument} />
         </div>
       </Card>
 
@@ -120,6 +179,7 @@ export default async function DocumentsPage() {
                           id={doc.id}
                           storagePath={doc.storage_path}
                           name={doc.name}
+                          action={deleteDocument}
                         />
                       </div>
                     </div>
