@@ -3,8 +3,6 @@ import { revalidatePath } from 'next/cache';
 import { getCurrentRole } from '@/lib/queries';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader, Card } from '@/components/ui';
-import { UploadForm, type ActionState } from './upload-form';
-import { DeleteDocumentButton } from './delete-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +18,9 @@ type Doc = {
   created_at: string;
 };
 
+const CATEGORIES = ['Pháp lý', 'An toàn thực phẩm', 'Hợp đồng', 'Thuế & Kế toán', 'Khác'];
+const CATEGORY_ORDER = CATEGORIES;
+
 function formatBytes(bytes: number | null) {
   if (!bytes) return '';
   if (bytes < 1024) return `${bytes} B`;
@@ -33,54 +34,57 @@ function formatDate(iso: string) {
   });
 }
 
-const CATEGORY_ORDER = ['Pháp lý', 'An toàn thực phẩm', 'Hợp đồng', 'Thuế & Kế toán', 'Khác'];
+const inputCls =
+  'w-full rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:border-accent focus:ring-1 focus:ring-accent';
 
-export default async function DocumentsPage() {
+export default async function DocumentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ uploaded?: string; deleted?: string; error?: string }>;
+}) {
   const role = await getCurrentRole();
   if (role !== 'owner') redirect('/dashboard');
 
-  // ── Inline server actions (passed as props — tránh client import 'use server') ──
+  const sp = await searchParams;
 
-  async function uploadDocument(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  // ── Server actions ──────────────────────────────────────────────────────────
+
+  async function uploadDocument(formData: FormData) {
     'use server';
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { ok: false, error: 'Chưa đăng nhập' };
+    if (!user) return;
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-    if (profile?.role !== 'owner') return { ok: false, error: 'Không có quyền' };
+    if (profile?.role !== 'owner') return;
 
     const file = formData.get('file') as File | null;
     const name = (formData.get('name') as string)?.trim();
     const category = (formData.get('category') as string)?.trim();
     const notes = (formData.get('notes') as string)?.trim() || null;
 
-    if (!file || file.size === 0) return { ok: false, error: 'Chưa chọn file' };
-    if (!name) return { ok: false, error: 'Chưa nhập tên tài liệu' };
-    if (!category) return { ok: false, error: 'Chưa chọn danh mục' };
+    if (!file || file.size === 0 || !name || !category) {
+      redirect('/documents?error=missing');
+    }
 
     const ext = file.name.split('.').pop() ?? 'bin';
-    const path = `${crypto.randomUUID()}.${ext}`;
+    const storagePath = `${crypto.randomUUID()}.${ext}`;
 
     const { error: storageErr } = await supabase.storage
       .from('documents')
-      .upload(path, file, { contentType: file.type });
-    if (storageErr) return { ok: false, error: storageErr.message };
+      .upload(storagePath, file, { contentType: file.type });
+    if (storageErr) redirect('/documents?error=storage');
 
-    const { error: dbErr } = await (supabase as any).from('documents').insert({
-      name, category, storage_path: path,
+    await (supabase as any).from('documents').insert({
+      name, category, storage_path: storagePath,
       file_name: file.name, file_size: file.size, mime_type: file.type,
       notes, uploaded_by: user.id,
     });
-    if (dbErr) {
-      await supabase.storage.from('documents').remove([path]);
-      return { ok: false, error: dbErr.message };
-    }
 
     revalidatePath('/documents');
-    return { ok: true, error: null };
+    redirect('/documents?uploaded=1');
   }
 
-  async function deleteDocument(formData: FormData): Promise<void> {
+  async function deleteDocument(formData: FormData) {
     'use server';
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -92,10 +96,12 @@ export default async function DocumentsPage() {
     const storagePath = formData.get('storage_path') as string;
     await supabase.storage.from('documents').remove([storagePath]);
     await (supabase as any).from('documents').delete().eq('id', id);
+
     revalidatePath('/documents');
+    redirect('/documents?deleted=1');
   }
 
-  // ── Data ──────────────────────────────────────────────────────────────────────
+  // ── Data ───────────────────────────────────────────────────────────────────
 
   const supabase = await createClient();
   const { data: rawDocs } = await (supabase as any)
@@ -132,10 +138,64 @@ export default async function DocumentsPage() {
         subtitle="Lưu trữ giấy tờ pháp lý, an toàn thực phẩm, hợp đồng và các tài liệu kinh doanh khác."
       />
 
+      {sp.uploaded && (
+        <p className="mb-4 rounded-lg bg-accent/10 px-4 py-2 text-sm text-accent">
+          Tải lên thành công.
+        </p>
+      )}
+      {sp.deleted && (
+        <p className="mb-4 rounded-lg bg-accent/10 px-4 py-2 text-sm text-accent">
+          Đã xóa tài liệu.
+        </p>
+      )}
+      {sp.error && (
+        <p className="mb-4 rounded-lg bg-negative/10 px-4 py-2 text-sm text-negative">
+          Lỗi: {sp.error === 'missing' ? 'Thiếu thông tin bắt buộc.' : 'Không tải được file.'}
+        </p>
+      )}
+
       <Card title="Tải lên tài liệu mới" className="mb-6">
-        <div className="p-4">
-          <UploadForm action={uploadDocument} />
-        </div>
+        <form action={uploadDocument} className="space-y-3 p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium">
+                Tên tài liệu <span className="text-negative">*</span>
+              </label>
+              <input name="name" type="text" placeholder="Giấy chứng nhận ĐKKD" required className={inputCls} />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">
+                Danh mục <span className="text-negative">*</span>
+              </label>
+              <select name="category" required className={inputCls}>
+                <option value="">— Chọn danh mục —</option>
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              File <span className="text-negative">*</span>
+              <span className="ml-1 font-normal text-muted text-xs">(PDF, JPG, PNG, HEIC · tối đa 50MB)</span>
+            </label>
+            <input
+              name="file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic" required
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-accent/10 file:px-3 file:py-1 file:text-sm file:font-medium file:text-accent hover:file:bg-accent/20"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">Ghi chú</label>
+            <input name="notes" type="text" placeholder="VD: Cấp ngày 01/01/2026, hết hạn 31/12/2028" className={inputCls} />
+          </div>
+
+          <div className="flex justify-end">
+            <button type="submit" className="rounded-lg bg-accent px-5 py-2 text-sm font-medium text-accent-fg hover:opacity-90">
+              Tải lên
+            </button>
+          </div>
+        </form>
       </Card>
 
       {docs.length === 0 ? (
@@ -160,27 +220,23 @@ export default async function DocumentsPage() {
                           {doc.file_size ? ` · ${formatBytes(doc.file_size)}` : ''}
                           {' · '}Tải lên {formatDate(doc.created_at)}
                         </p>
-                        {doc.notes && (
-                          <p className="text-xs text-muted mt-0.5 italic">{doc.notes}</p>
-                        )}
+                        {doc.notes && <p className="text-xs text-muted mt-0.5 italic">{doc.notes}</p>}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {url && (
-                          <a
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:border-accent hover:text-accent"
-                          >
+                          <a href={url} target="_blank" rel="noopener noreferrer"
+                            className="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:border-accent hover:text-accent">
                             Xem
                           </a>
                         )}
-                        <DeleteDocumentButton
-                          id={doc.id}
-                          storagePath={doc.storage_path}
-                          name={doc.name}
-                          action={deleteDocument}
-                        />
+                        <form action={deleteDocument}>
+                          <input type="hidden" name="id" value={doc.id} />
+                          <input type="hidden" name="storage_path" value={doc.storage_path} />
+                          <button type="submit"
+                            className="rounded-md border border-negative/40 px-2.5 py-1 text-xs font-medium text-negative hover:bg-negative/10">
+                            Xóa
+                          </button>
+                        </form>
                       </div>
                     </div>
                   );
