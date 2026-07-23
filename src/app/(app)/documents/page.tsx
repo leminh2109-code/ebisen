@@ -3,7 +3,7 @@ import { getCurrentRole } from '@/lib/queries';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader, Card } from '@/components/ui';
 import { UploadForm } from './upload-form';
-import { deleteDocument } from './actions';
+import { DeleteDocumentButton } from './delete-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -118,19 +118,11 @@ export default async function DocumentsPage() {
                             Xem
                           </a>
                         )}
-                        <form action={deleteDocument}>
-                          <input type="hidden" name="id" value={doc.id} />
-                          <input type="hidden" name="storage_path" value={doc.storage_path} />
-                          <button
-                            type="submit"
-                            className="rounded-md border border-negative/40 px-2.5 py-1 text-xs font-medium text-negative hover:bg-negative/10"
-                            onClick={(e) => {
-                              if (!confirm(`Xóa tài liệu "${doc.name}"?`)) e.preventDefault();
-                            }}
-                          >
-                            Xóa
-                          </button>
-                        </form>
+                        <DeleteDocumentButton
+                          id={doc.id}
+                          storagePath={doc.storage_path}
+                          name={doc.name}
+                        />
                       </div>
                     </div>
                   );
