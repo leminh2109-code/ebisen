@@ -3,7 +3,6 @@ import { revalidatePath } from 'next/cache';
 import { getCurrentRole } from '@/lib/queries';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader, Card } from '@/components/ui';
-import { SubmitButton } from './submit-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -192,7 +191,13 @@ export default async function DocumentsPage({
           </div>
 
           <div className="flex justify-end">
-            <SubmitButton />
+            <button
+              id="upload-btn"
+              type="submit"
+              className="rounded-lg bg-accent px-5 py-2 text-sm font-medium text-accent-fg hover:opacity-90 disabled:opacity-50"
+            >
+              Tải lên
+            </button>
           </div>
         </form>
       </Card>
@@ -245,6 +250,8 @@ export default async function DocumentsPage({
           ))}
         </div>
       )}
+      {/* Inline script: disable button on submit to prevent double-click */}
+      <script dangerouslySetInnerHTML={{ __html: `(function(){var b=document.getElementById('upload-btn');if(b)b.closest('form').addEventListener('submit',function(){b.disabled=true;b.textContent='Đang tải lên…';});})();` }} />
     </div>
   );
 }
