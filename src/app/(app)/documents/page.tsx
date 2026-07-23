@@ -36,25 +36,34 @@ export default async function DocumentsPage() {
   const role = await getCurrentRole();
   if (role !== 'owner') redirect('/dashboard');
 
-  const supabase = await createClient();
+  let docs: Doc[] = [];
+  let signedMap: Record<string, string> = {};
+  let debugError: string | null = null;
 
-  const { data: rawDocs } = await (supabase as any)
-    .from('documents')
-    .select('*')
-    .order('created_at', { ascending: false });
+  try {
+    const supabase = await createClient();
 
-  const docs: Doc[] = rawDocs ?? [];
-
-  // Generate signed URLs (valid 1 hour)
-  const paths = docs.map((d) => d.storage_path);
-  const signedMap: Record<string, string> = {};
-  if (paths.length > 0) {
-    const { data: signed } = await supabase.storage
+    const { data: rawDocs, error: dbErr } = await (supabase as any)
       .from('documents')
-      .createSignedUrls(paths, 3600);
-    signed?.forEach((s) => {
-      if (s.signedUrl && s.path) signedMap[s.path] = s.signedUrl;
-    });
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (dbErr) debugError = `DB: ${dbErr.message}`;
+    docs = rawDocs ?? [];
+
+    // Generate signed URLs (valid 1 hour)
+    const paths = docs.map((d: Doc) => d.storage_path);
+    if (paths.length > 0) {
+      const { data: signed, error: storageErr } = await supabase.storage
+        .from('documents')
+        .createSignedUrls(paths, 3600);
+      if (storageErr) debugError = (debugError ?? '') + ` Storage: ${storageErr.message}`;
+      signed?.forEach((s) => {
+        if (s.signedUrl && s.path) signedMap[s.path] = s.signedUrl;
+      });
+    }
+  } catch (err) {
+    debugError = err instanceof Error ? err.message : String(err);
   }
 
   // Group by category
@@ -74,6 +83,12 @@ export default async function DocumentsPage() {
         title="Tài liệu"
         subtitle="Lưu trữ giấy tờ pháp lý, an toàn thực phẩm, hợp đồng và các tài liệu kinh doanh khác."
       />
+
+      {debugError && (
+        <div className="mb-4 rounded-lg border border-negative/30 bg-negative/5 px-4 py-3 text-sm font-mono text-negative">
+          Lỗi: {debugError}
+        </div>
+      )}
 
       <Card title="Tải lên tài liệu mới" className="mb-6">
         <div className="p-4">
