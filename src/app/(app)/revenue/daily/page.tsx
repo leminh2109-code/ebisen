@@ -14,7 +14,7 @@ export default async function RevenueDailyPage() {
   const rows = await getRevenueByDayCompare(90);
 
   const chart = rows
-    .slice(0, 14)
+    .slice(0, 7)
     .reverse()
     .map((r) => ({ label: formatDate(r.day).slice(0, 5), value: Number(r.revenue) }));
 
@@ -26,7 +26,7 @@ export default async function RevenueDailyPage() {
       />
 
       {rows.length > 0 && (
-        <Card title="14 ngày gần nhất" className="mb-6">
+        <Card title="7 ngày gần nhất" className="mb-6">
           <BarChart data={chart} />
         </Card>
       )}
