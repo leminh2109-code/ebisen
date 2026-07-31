@@ -151,10 +151,9 @@ export default function SaleForm({
           >
             <span className="text-base leading-none">{loyalUI ? '★' : '☆'}</span>
             <span>
-              Khách quen · 2 tôm ={' '}
-              <span className="tabular">
-                {loyalUI ? '90.000 đ' : `${(twoTomItem!.price / 1000).toFixed(0)}.000 đ`}
-              </span>
+              {loyalUI
+                ? 'Đang giảm 2 tôm → 90.000 đ (khách quen)'
+                : 'Khách quen? Bấm để giảm 2 tôm → 90.000 đ'}
             </span>
             {loyalUI && (
               <span className="ml-auto text-xs font-normal text-amber-600">
