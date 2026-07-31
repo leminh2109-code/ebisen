@@ -3,6 +3,8 @@ import {
   getShrimpSummary,
   getShrimpPurchases,
   getShrimpGifts,
+  getShrimpGiftByMonth,
+  getShrimpPurchasedByMonth,
   getCurrentRole,
 } from '@/lib/queries';
 import { PageHeader, Card, EmptyState } from '@/components/ui';
@@ -14,14 +16,22 @@ export const dynamic = 'force-dynamic';
 
 const n = (v: number | null) => Number(v ?? 0).toLocaleString('vi-VN');
 
+function fmtMonth(m: string) {
+  const d = new Date(m);
+  return `${String(d.getUTCMonth() + 1).padStart(2, '0')}/${d.getUTCFullYear()}`;
+}
+
 export default async function InventoryPage() {
-  const [summary, purchases, gifts, role] = await Promise.all([
+  const [summary, purchases, gifts, giftByMonth, purchasedByMonth, role] = await Promise.all([
     getShrimpSummary(),
     getShrimpPurchases(),
     getShrimpGifts(),
+    getShrimpGiftByMonth(),
+    getShrimpPurchasedByMonth(),
     getCurrentRole(),
   ]);
-  const { inventory, thisMonthIn, thisMonthUsed, thisMonthSold, thisMonthGift } = summary;
+  const { inventory, thisMonthIn, thisMonthUsed, thisMonthSold, thisMonthGift, currentMonth } = summary;
+  const thisMonthGiftQty = giftByMonth.find((g) => g.month === currentMonth)?.gift_qty ?? 0;
   const isOwner = role === 'owner';
   const low = isShrimpLow(inventory.on_hand);
 
@@ -60,6 +70,14 @@ export default async function InventoryPage() {
           label="Đã dùng tháng này"
           value={`${n(thisMonthUsed)} con`}
           sub={`bán ${n(thisMonthSold)} · tặng ${n(thisMonthGift)}`}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        <NumberCard
+          label="Bánh tặng tháng này"
+          value={`${n(thisMonthGiftQty)} bánh`}
+          sub={`tiêu tốn ${n(thisMonthGift)} con tôm`}
         />
       </div>
 
@@ -119,6 +137,68 @@ export default async function InventoryPage() {
                         </form>
                       </td>
                     )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      <Card title="Tôm nhập theo tháng" className="mt-6">
+        {purchasedByMonth.length === 0 ? (
+          <EmptyState message="Chưa có dữ liệu nhập tôm." />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-muted">
+                  <th className="px-4 py-2 font-medium">Tháng</th>
+                  <th className="px-4 py-2 font-medium text-right">Số lần nhập</th>
+                  <th className="px-4 py-2 font-medium text-right">Số con</th>
+                  <th className="px-4 py-2 font-medium text-right">Số kg</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...purchasedByMonth].reverse().map((p) => (
+                  <tr key={p.month} className={`border-b border-border last:border-0 ${p.month === currentMonth ? 'bg-accent/5 font-semibold' : ''}`}>
+                    <td className="px-4 py-2 tabular">
+                      {fmtMonth(p.month)}
+                      {p.month === currentMonth && <span className="ml-2 text-xs font-normal text-accent">(tháng này)</span>}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular text-muted">{n(p.purchase_count)} lần</td>
+                    <td className="px-4 py-2 text-right tabular font-medium">{n(p.shrimp_in)} con</td>
+                    <td className="px-4 py-2 text-right tabular text-muted">{n(p.kg)} kg</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      <Card title="Bánh tặng theo tháng" className="mt-6">
+        {giftByMonth.length === 0 ? (
+          <EmptyState message="Chưa có dữ liệu bánh tặng." />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-muted">
+                  <th className="px-4 py-2 font-medium">Tháng</th>
+                  <th className="px-4 py-2 font-medium text-right">Số bánh</th>
+                  <th className="px-4 py-2 font-medium text-right">Tôm tiêu tốn</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...giftByMonth].reverse().map((g) => (
+                  <tr key={g.month} className={`border-b border-border last:border-0 ${g.month === currentMonth ? 'bg-accent/5 font-semibold' : ''}`}>
+                    <td className="px-4 py-2 tabular">
+                      {fmtMonth(g.month)}
+                      {g.month === currentMonth && <span className="ml-2 text-xs font-normal text-accent">(tháng này)</span>}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular">{n(g.gift_qty)} bánh</td>
+                    <td className="px-4 py-2 text-right tabular text-muted">{n(g.gift_shrimp)} con</td>
                   </tr>
                 ))}
               </tbody>
