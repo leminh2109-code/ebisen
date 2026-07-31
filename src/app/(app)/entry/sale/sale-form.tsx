@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useRef } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { createSale, type EntryState } from '../actions';
 import { formatCurrency } from '@/lib/format';
 import { groupDigits, formatMoneyInput } from '@/lib/number-input';
@@ -8,6 +8,8 @@ import type { MenuItem, Employee } from '@/lib/queries';
 
 const initial: EntryState = { ok: false, error: null };
 const parse = (s: string) => Number(s.replace(/[.\s,]/g, '')) || 0;
+
+const LOYAL_PRICE_2TOM = 90_000;
 
 type SaleAction = (state: EntryState, formData: FormData) => Promise<EntryState>;
 
@@ -29,6 +31,27 @@ export default function SaleForm({
   const totalRef = useRef<HTMLSpanElement>(null);
   const sourceRef = useRef<HTMLSelectElement>(null);
   const firstQtyRef = useRef<HTMLInputElement>(null);
+
+  // Khách quen: giữ giá 2-tôm = 90k dù menu đã đổi lên 100k.
+  const loyalRef = useRef(false);
+  const [loyalUI, setLoyalUI] = useState(false);
+  const twoTomItem = menu.find((m) => m.name === '2 tôm');
+  const showLoyal = twoTomItem && twoTomItem.price > LOYAL_PRICE_2TOM;
+
+  // Áp giá khách quen cho ô đơn giá 2-tôm (DOM, không setState).
+  const applyLoyalDOM = (checked: boolean) => {
+    if (!twoTomItem) return;
+    const input = formRef.current?.elements.namedItem(`price_${twoTomItem.id}`) as HTMLInputElement | null;
+    if (!input) return;
+    input.value = groupDigits(String(checked ? LOYAL_PRICE_2TOM : twoTomItem.price));
+  };
+
+  const toggleLoyal = (checked: boolean) => {
+    loyalRef.current = checked;
+    setLoyalUI(checked);
+    applyLoyalDOM(checked);
+    recompute();
+  };
 
   // Tô màu ô Nguồn theo giá trị: TM = đỏ, CK = xanh dương (tương phản).
   const paintSource = () => {
@@ -63,8 +86,10 @@ export default function SaleForm({
       if (totalRef.current) totalRef.current.textContent = formatCurrency(0);
       paintSource();
       firstQtyRef.current?.focus();
+      // Nếu đang bật khách quen, re-apply giá 90k sau khi reset (reset trả về defaultValue 100k).
+      if (loyalRef.current) applyLoyalDOM(true);
     }
-  }, [state]);
+  }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <form ref={formRef} action={formAction} className="space-y-4">
@@ -112,6 +137,31 @@ export default function SaleForm({
           <p className="mt-1 text-xs text-negative">
             Chưa có món nào. Chủ DN vào trang Thực đơn để thêm.
           </p>
+        )}
+
+        {showLoyal && (
+          <button
+            type="button"
+            onClick={() => toggleLoyal(!loyalRef.current)}
+            className={`mt-2 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
+              loyalUI
+                ? 'border-amber-400 bg-amber-50 font-medium text-amber-700'
+                : 'border-border text-muted hover:border-accent'
+            }`}
+          >
+            <span className="text-base leading-none">{loyalUI ? '★' : '☆'}</span>
+            <span>
+              Khách quen · 2 tôm ={' '}
+              <span className="tabular">
+                {loyalUI ? '90.000 đ' : `${(twoTomItem!.price / 1000).toFixed(0)}.000 đ`}
+              </span>
+            </span>
+            {loyalUI && (
+              <span className="ml-auto text-xs font-normal text-amber-600">
+                Bấm để tắt
+              </span>
+            )}
+          </button>
         )}
       </div>
 
