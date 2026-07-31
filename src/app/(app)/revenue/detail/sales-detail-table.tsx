@@ -127,7 +127,16 @@ export function SalesDetailTable({
                             <td className="px-4 py-2.5 whitespace-nowrap text-muted tabular">
                               {formatTime(s.sold_at)}
                             </td>
-                            <td className="px-4 py-2.5">{s.cake_type ?? '—'}</td>
+                            <td className="px-4 py-2.5">
+                              <span className="flex items-center gap-1.5 flex-wrap">
+                                {s.cake_type ?? '—'}
+                                {s.cake_type === '2 tôm' && s.unit_price === 90_000 && (
+                                  <span className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                                    khách quen
+                                  </span>
+                                )}
+                              </span>
+                            </td>
                             <td className="px-4 py-2.5 text-right tabular">
                               {s.quantity}
                             </td>
