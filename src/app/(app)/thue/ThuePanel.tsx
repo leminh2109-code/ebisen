@@ -4,19 +4,22 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui';
 
 const DEADLINES = [
-  { id: 'q3-2026',   label: 'Thuế khoán Q3/2026', sub: 'Tháng 7–9/2026',    date: '2026-10-31', type: 'Khoán' },
-  { id: 'khai-2027', label: 'Khai DT khoán 2027',  sub: 'Khai thu nhập',     date: '2026-12-15', type: 'Khai báo' },
-  { id: 'mb-2027',   label: 'Thuế môn bài 2027',   sub: '1.000.000đ/năm',   date: '2027-01-30', type: 'Môn bài' },
-  { id: 'q4-2026',   label: 'Thuế khoán Q4/2026',  sub: 'Tháng 10–12/2026', date: '2027-01-31', type: 'Khoán' },
+  { id: 'khai-2027', label: 'Khai DT khoán 2027',   sub: 'Khai thu nhập năm 2027', date: '2026-12-15', type: 'Khai báo' },
+  { id: 'h2-2026',   label: 'Thuế khoán H2/2026',   sub: 'Tháng 7–12/2026',        date: '2027-01-10', type: 'Khoán 6 tháng' },
+  { id: 'mb-2027',   label: 'Thuế môn bài 2027',    sub: '1.000.000đ/năm',         date: '2027-01-30', type: 'Môn bài' },
+  { id: 'h1-2027',   label: 'Thuế khoán H1/2027',   sub: 'Tháng 1–6/2027',         date: '2027-07-10', type: 'Khoán 6 tháng' },
+];
+
+const COMPLETED_KY = [
+  { id: 'h1-2026', label: 'Thuế khoán H1/2026', sub: 'Tháng 1–6/2026', note: 'Đã khai xong' },
 ];
 
 const KY_OPTIONS = [
-  'Thuế khoán Q3/2026 (T7–T9)',
+  'Thuế khoán H2/2026 (T7–T12)',
   'Khai DT khoán năm 2027',
-  'Thuế khoán Q4/2026 (T10–T12)',
   'Thuế môn bài 2027',
-  'Thuế khoán Q1/2027 (T1–T3)',
-  'Thuế khoán Q2/2027 (T4–T6)',
+  'Thuế khoán H1/2027 (T1–T6)',
+  'Thuế khoán H2/2027 (T7–T12)',
 ];
 
 type TaxRecord = {
@@ -232,6 +235,27 @@ export default function ThuePanel() {
           </button>
         </div>
       )}
+
+      {/* Completed */}
+      <section className="mb-4">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+          Đã hoàn thành
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {COMPLETED_KY.map((k) => (
+            <div
+              key={k.id}
+              className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2"
+            >
+              <span className="text-sm" style={{ color: '#16a34a' }}>✓</span>
+              <div>
+                <p className="text-xs font-semibold leading-tight">{k.label}</p>
+                <p className="text-[11px] text-muted">{k.sub} · {k.note}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Deadline cards */}
       <section className="mb-6">
