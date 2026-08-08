@@ -9,7 +9,7 @@ import type { Database } from './types';
 // /nhap-khach = link nhập THÔNG TIN KHÁCH công khai (token, xem public_customer_form).
 // /tram       = link XEM doanh thu + bán hàng chi tiết dành cho trạm (token).
 // /api/cron   = Vercel Cron (tự xác thực bằng CRON_SECRET trong route).
-const PUBLIC_PATHS = ['/login', '/auth', '/nhap', '/xem', '/nhap-khach', '/tram', '/api/cron'];
+const PUBLIC_PATHS = ['/login', '/auth', '/nhap', '/xem', '/nhap-khach', '/tram', '/api/cron', '/api/push/notify'];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
