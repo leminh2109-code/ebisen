@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import PushToggle from '@/components/PushToggle';
 import { useState } from 'react';
 
 type NavItem = { href: string; label: string; icon: string };
@@ -160,9 +161,12 @@ export default function Sidebar({
 
         <div className="border-t border-border px-4 py-4">
           <p className="text-xs text-muted truncate">{email}</p>
-          <p className="text-xs text-muted mb-2">
+          <p className="text-xs text-muted mb-3">
             {role === 'owner' ? 'Chủ doanh nghiệp' : 'Nhân viên'}
           </p>
+          <div className="mb-3">
+            <PushToggle />
+          </div>
           <form action="/auth/signout" method="post">
             <button className="w-full rounded-lg border border-border px-3 py-1.5 text-sm text-foreground/80 hover:bg-background">
               Đăng xuất
