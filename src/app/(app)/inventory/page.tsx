@@ -9,8 +9,9 @@ import {
 } from '@/lib/queries';
 import { PageHeader, Card, EmptyState } from '@/components/ui';
 import { formatDate, formatCurrency } from '@/lib/format';
-import { deleteShrimpPurchase, deleteShrimpGift } from '../entry/actions';
+import { deleteShrimpGift } from '../entry/actions';
 import { SHRIMP_LOW_STOCK, isShrimpLow } from '@/lib/inventory-thresholds';
+import ShrimpPurchaseTable from './ShrimpPurchaseTable';
 
 export const dynamic = 'force-dynamic';
 
@@ -101,47 +102,9 @@ export default async function InventoryPage() {
 
       <Card title="Lịch sử nhập tôm" className="mt-6">
         {purchases.length === 0 ? (
-          <EmptyState message="Chưa có lần nhập tôm nào. Bấm “+ Nhập tôm” để thêm." />
+          <EmptyState message={'Chưa có lần nhập tôm nào. Bấm "+ Nhập tôm" để thêm.'} />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-muted">
-                  <th className="px-4 py-2 font-medium">Ngày</th>
-                  <th className="px-4 py-2 font-medium text-right">Số con</th>
-                  <th className="px-4 py-2 font-medium text-right">Số kg</th>
-                  <th className="px-4 py-2 font-medium text-right">Số tiền</th>
-                  <th className="px-4 py-2 font-medium">Ghi chú</th>
-                  {isOwner && <th className="px-4 py-2 font-medium text-right">Xóa</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {purchases.map((p) => (
-                  <tr key={p.id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-2 tabular">{formatDate(p.purchase_date)}</td>
-                    <td className="px-4 py-2 text-right tabular font-medium">{n(p.shrimp_count)}</td>
-                    <td className="px-4 py-2 text-right tabular text-muted">
-                      {p.kg === null ? '—' : n(p.kg)}
-                    </td>
-                    <td className="px-4 py-2 text-right tabular text-muted">
-                      {p.total_cost === null ? '—' : formatCurrency(p.total_cost)}
-                    </td>
-                    <td className="px-4 py-2 text-muted">{p.note ?? ''}</td>
-                    {isOwner && (
-                      <td className="px-4 py-2 text-right">
-                        <form action={deleteShrimpPurchase}>
-                          <input type="hidden" name="id" value={p.id} />
-                          <button type="submit" className="text-negative hover:underline text-xs">
-                            Xóa
-                          </button>
-                        </form>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ShrimpPurchaseTable purchases={purchases} isOwner={isOwner} />
         )}
       </Card>
 
@@ -209,7 +172,7 @@ export default async function InventoryPage() {
 
       <Card title="Lịch sử bánh tặng" className="mt-6">
         {gifts.length === 0 ? (
-          <EmptyState message="Chưa có bánh tặng nào. Bấm “+ Bánh tặng” để thêm." />
+          <EmptyState message={'Chưa có bánh tặng nào. Bấm "+ Bánh tặng" để thêm.'} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

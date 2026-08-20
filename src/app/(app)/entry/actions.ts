@@ -241,6 +241,22 @@ export async function createShrimpPurchase(
   return { ok: true, error: null };
 }
 
+/** Sửa một lần nhập tôm. */
+export async function updateShrimpPurchase(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const id = String(formData.get('id') ?? '').trim();
+  if (!id) return;
+  const shrimp_count = parseInt(String(formData.get('shrimp_count') ?? '0'));
+  const kg           = parseFloat(String(formData.get('kg') ?? '')) || null;
+  const total_cost   = parseFloat(String(formData.get('total_cost') ?? '').replace(/\./g, '').replace(',', '.')) || null;
+  const purchase_date = String(formData.get('purchase_date') ?? '').trim() || undefined;
+  const note         = String(formData.get('note') ?? '').trim() || undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await supabase.from('shrimp_purchases').update({ shrimp_count, kg, total_cost, purchase_date, note } as any).eq('id', id);
+  revalidatePath('/inventory');
+  revalidatePath('/dashboard');
+}
+
 /** Xóa một lần nhập tôm (RLS chỉ cho owner xóa). */
 export async function deleteShrimpPurchase(formData: FormData): Promise<void> {
   const supabase = await createClient();
