@@ -9,7 +9,10 @@ create table if not exists push_subscriptions (
 
 alter table push_subscriptions enable row level security;
 
-create policy "owner_manage" on push_subscriptions
-  for all to authenticated
-  using  (user_id = auth.uid())
-  with check (user_id = auth.uid());
+do $$ begin
+  create policy "owner_manage" on push_subscriptions
+    for all to authenticated
+    using  (user_id = auth.uid())
+    with check (user_id = auth.uid());
+exception when duplicate_object then null;
+end $$;

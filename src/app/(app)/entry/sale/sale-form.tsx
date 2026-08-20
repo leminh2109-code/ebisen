@@ -35,6 +35,18 @@ export default function SaleForm({
   // Khách quen: giữ giá 2-tôm = 90k dù menu đã đổi lên 100k.
   const loyalRef = useRef(false);
   const [loyalUI, setLoyalUI] = useState(false);
+
+  // Không dùng túi bạc.
+  const noBagRef = useRef(false);
+  const [noBagUI, setNoBagUI] = useState(false);
+  const noBagInputRef = useRef<HTMLInputElement>(null);
+
+  const toggleNoBag = () => {
+    const next = !noBagRef.current;
+    noBagRef.current = next;
+    setNoBagUI(next);
+    if (noBagInputRef.current) noBagInputRef.current.value = next ? 'true' : 'false';
+  };
   const twoTomItem = menu.find((m) => m.name === '2 tôm');
   const showLoyal = twoTomItem && twoTomItem.price > LOYAL_PRICE_2TOM;
 
@@ -88,12 +100,17 @@ export default function SaleForm({
       firstQtyRef.current?.focus();
       // Nếu đang bật khách quen, re-apply giá 90k sau khi reset (reset trả về defaultValue 100k).
       if (loyalRef.current) applyLoyalDOM(true);
+      // Reset túi bạc mỗi đơn (mỗi khách khác nhau).
+      noBagRef.current = false;
+      setNoBagUI(false);
+      if (noBagInputRef.current) noBagInputRef.current.value = 'false';
     }
   }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <form ref={formRef} action={formAction} className="space-y-4">
       {token && <input type="hidden" name="token" value={token} />}
+      <input ref={noBagInputRef} type="hidden" name="no_bag" defaultValue="false" />
 
       <div>
         <label className="block text-sm font-medium mb-1">
@@ -162,6 +179,28 @@ export default function SaleForm({
             )}
           </button>
         )}
+
+        <button
+          type="button"
+          onClick={toggleNoBag}
+          className={`mt-2 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
+            noBagUI
+              ? 'border-sky-400 bg-sky-50 font-medium text-sky-700'
+              : 'border-border text-muted hover:border-accent'
+          }`}
+        >
+          <span className="text-base leading-none">{noBagUI ? '🚫' : '🛍️'}</span>
+          <span>
+            {noBagUI
+              ? 'Không dùng túi bạc — đã tích'
+              : 'Khách không dùng túi bạc? Bấm để tích'}
+          </span>
+          {noBagUI && (
+            <span className="ml-auto text-xs font-normal text-sky-600">
+              Bấm để bỏ
+            </span>
+          )}
+        </button>
       </div>
 
       <div className="rounded-lg bg-background px-3 py-2 text-sm flex justify-between">

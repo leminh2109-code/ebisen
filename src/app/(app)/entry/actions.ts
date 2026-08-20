@@ -23,6 +23,7 @@ export async function createSale(
   const source = String(formData.get('source') ?? '').trim() || null;
   const staff_id = String(formData.get('staff_id') ?? '').trim() || null;
   const note = String(formData.get('note') ?? '').trim() || null;
+  const no_bag = formData.get('no_bag') === 'true';
 
   if (lines.length === 0) return { ok: false, error: 'Nhập số lượng ít nhất 1 loại bánh.' };
 
@@ -63,11 +64,13 @@ export async function createSale(
       staff, // snapshot tên NV
       staff_id,
       note,
+      no_bag,
       created_by: user.id,
     };
   });
 
-  const { error } = await supabase.from('sales').insert(rows);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await supabase.from('sales').insert(rows as any);
 
   if (error) return { ok: false, error: error.message };
 
