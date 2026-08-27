@@ -220,54 +220,116 @@ export async function createShrimpPurchase(
 
   const purchase_date = String(formData.get('purchase_date') ?? '').trim();
   const shrimp_count = parseNumber(String(formData.get('shrimp_count') ?? ''));
-  const kg = parseNumber(String(formData.get('kg') ?? '')); // tùy chọn
-  const total_cost = parseNumber(String(formData.get('total_cost') ?? '')); // tùy chọn
+  const kg = parseNumber(String(formData.get('kg') ?? ''));
+  const total_cost = parseNumber(String(formData.get('total_cost') ?? ''));
   const note = String(formData.get('note') ?? '').trim() || null;
 
   if (!purchase_date) return { ok: false, error: 'Thiếu ngày nhập.' };
   if (shrimp_count === null || shrimp_count <= 0)
     return { ok: false, error: 'Số con tôm không hợp lệ.' };
 
+  const costVal = total_cost !== null && total_cost > 0 ? total_cost : null;
+
+  // Tự tạo expense khi có số tiền — tránh phải nhập 2 lần.
+  let expense_id: string | null = null;
+  if (costVal !== null) {
+    const desc = note ?? `Nhập ${shrimp_count.toLocaleString('vi-VN')} con tôm${kg && kg > 0 ? `, ${kg} kg` : ''}`;
+    const { data: exp, error: expErr } = await supabase
+      .from('expenses')
+      .insert({
+        expense_date: purchase_date,
+        amount: costVal,
+        category: 'Tôm',
+        expense_type: 'Biến đổi',
+        cost_center: 'Nguyên liệu',
+        description: desc,
+        created_by: user.id,
+      })
+      .select('id')
+      .single();
+    if (expErr) return { ok: false, error: `Lỗi tạo chi phí: ${expErr.message}` };
+    expense_id = exp.id;
+  }
+
   const { error } = await supabase.from('shrimp_purchases').insert({
     purchase_date,
     shrimp_count,
     kg: kg === null || kg <= 0 ? null : kg,
-    total_cost: total_cost === null || total_cost < 0 ? null : total_cost,
+    total_cost: costVal,
     note,
+    expense_id,
     created_by: user.id,
   });
 
   if (error) return { ok: false, error: error.message };
 
   revalidatePath('/inventory');
+  revalidatePath('/expenses');
   revalidatePath('/dashboard');
+  revalidatePath('/pnl');
   return { ok: true, error: null };
 }
 
-/** Sửa một lần nhập tôm. */
+/** Sửa một lần nhập tôm — đồng thời sync expense liên kết nếu có. */
 export async function updateShrimpPurchase(formData: FormData): Promise<void> {
   const supabase = await createClient();
   const id = String(formData.get('id') ?? '').trim();
   if (!id) return;
-  const shrimp_count = parseInt(String(formData.get('shrimp_count') ?? '0'));
-  const kg           = parseFloat(String(formData.get('kg') ?? '')) || null;
-  const total_cost   = parseFloat(String(formData.get('total_cost') ?? '').replace(/\./g, '').replace(',', '.')) || null;
+  const shrimp_count  = parseInt(String(formData.get('shrimp_count') ?? '0'));
+  const kg            = parseFloat(String(formData.get('kg') ?? '')) || null;
+  const total_cost    = parseFloat(String(formData.get('total_cost') ?? '').replace(/\./g, '').replace(',', '.')) || null;
   const purchase_date = String(formData.get('purchase_date') ?? '').trim() || undefined;
-  const note         = String(formData.get('note') ?? '').trim() || undefined;
+  const note          = String(formData.get('note') ?? '').trim() || undefined;
+
+  // Đọc expense_id hiện tại.
+  const { data: existing } = await supabase
+    .from('shrimp_purchases')
+    .select('expense_id')
+    .eq('id', id)
+    .single();
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await supabase.from('shrimp_purchases').update({ shrimp_count, kg, total_cost, purchase_date, note } as any).eq('id', id);
+
+  // Sync expense liên kết nếu có.
+  if (existing?.expense_id && purchase_date && total_cost !== null) {
+    const desc = note ?? `Nhập ${shrimp_count.toLocaleString('vi-VN')} con tôm${kg ? `, ${kg} kg` : ''}`;
+    await supabase.from('expenses').update({
+      expense_date: purchase_date,
+      amount: total_cost,
+      description: desc,
+    }).eq('id', existing.expense_id);
+  }
+
   revalidatePath('/inventory');
+  revalidatePath('/expenses');
   revalidatePath('/dashboard');
+  revalidatePath('/pnl');
 }
 
-/** Xóa một lần nhập tôm (RLS chỉ cho owner xóa). */
+/** Xóa một lần nhập tôm — đồng thời xóa expense liên kết (nếu có). */
 export async function deleteShrimpPurchase(formData: FormData): Promise<void> {
   const supabase = await createClient();
   const id = String(formData.get('id') ?? '').trim();
   if (!id) return;
+
+  const { data: existing } = await supabase
+    .from('shrimp_purchases')
+    .select('expense_id')
+    .eq('id', id)
+    .single();
+
   await supabase.from('shrimp_purchases').delete().eq('id', id);
+
+  // Xóa expense liên kết (do tồn kho tạo ra) tránh duplicate trong chi phí.
+  if (existing?.expense_id) {
+    await supabase.from('expenses').delete().eq('id', existing.expense_id);
+  }
+
   revalidatePath('/inventory');
+  revalidatePath('/expenses');
   revalidatePath('/dashboard');
+  revalidatePath('/pnl');
 }
 
 export async function createShrimpGift(
