@@ -25,6 +25,7 @@ export default async function PnlPage() {
   const totalExpenses = rows.reduce((s, r) => s + Number(r.expenses), 0);
   const totalProfit = totalRevenue - totalExpenses;
   const hasMaterial = rows.some((r) => Number(r.material_cost) > 0);
+  const hasBox = rows.some((r) => Number(r.box_cost) > 0);
 
   return (
     <div>
@@ -57,6 +58,9 @@ export default async function PnlPage() {
                   {hasMaterial && (
                     <th className="px-4 py-2 font-medium text-right">CP túi/tem</th>
                   )}
+                  {hasBox && (
+                    <th className="px-4 py-2 font-medium text-right">CP hộp</th>
+                  )}
                   <th className="px-4 py-2 font-medium text-right">Chia sẻ trạm 30%</th>
                   <th className="px-4 py-2 font-medium text-right">Lãi/Lỗ</th>
                 </tr>
@@ -76,6 +80,11 @@ export default async function PnlPage() {
                       {hasMaterial && (
                         <td className="px-4 py-2.5 text-right tabular text-muted">
                           {formatCurrency(r.material_cost)}
+                        </td>
+                      )}
+                      {hasBox && (
+                        <td className="px-4 py-2.5 text-right tabular text-muted">
+                          {Number(r.box_cost) > 0 ? formatCurrency(r.box_cost) : '—'}
                         </td>
                       )}
                       <td className="px-4 py-2.5 text-right tabular text-muted">
@@ -99,9 +108,10 @@ export default async function PnlPage() {
 
       <p className="mt-4 text-xs text-muted">
         &quot;Chi phí&quot; là chi phí tiền mặt (bảng Chi phí).
-        {hasMaterial && ' "CP túi/tem" là vật tư đóng gói phân bổ dần theo số bánh dùng (xem Tồn kho vật tư).'}{' '}
+        {hasMaterial && ' "CP túi/tem" là vật tư đóng gói (túi bạc + tem) phân bổ theo số bánh dùng (xem Tồn kho vật tư).'}{' '}
+        {hasBox && '"CP hộp" là chi phí hộp combo phân bổ theo số hộp đã bán (xem Tồn kho hộp).'}{' '}
         &quot;Chia sẻ trạm 30%&quot; = 30% tổng doanh thu trả cho trạm dừng nghỉ (cố
-        định theo doanh thu). Lãi/Lỗ = Doanh thu − Chi phí{hasMaterial ? ' − CP túi/tem' : ''} − Chia sẻ trạm.
+        định theo doanh thu). Lãi/Lỗ = Doanh thu − Chi phí{hasMaterial ? ' − CP túi/tem' : ''}{hasBox ? ' − CP hộp' : ''} − Chia sẻ trạm.
       </p>
     </div>
   );

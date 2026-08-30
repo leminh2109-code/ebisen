@@ -39,8 +39,9 @@ export type MonthlyPnl = {
   revenue: number;
   cash_expenses: number;
   material_cost: number;
+  box_cost: number;
   station_share: number; // chia sẻ 30% doanh thu với trạm
-  expenses: number; // = cash_expenses + material_cost + station_share
+  expenses: number; // = cash_expenses + material_cost + box_cost + station_share
   profit: number;
 };
 /** Một nhóm chi phí (theo danh mục / loại / trung tâm chi phí) trong 1 tháng. */
@@ -260,12 +261,12 @@ export async function getPaymentSplitByMonth(): Promise<MonthlyPaymentSplit[]> {
 
 export async function getPnlByMonth(): Promise<MonthlyPnl[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('pnl_by_month')
     .select('*')
     .order('month', { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as MonthlyPnl[];
 }
 
 /**
