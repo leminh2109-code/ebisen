@@ -35,6 +35,7 @@ export default async function PublicCustomerPage({
     active: true,
     sort_order: 0,
     shrimp_per_unit: 0,
+    is_box: false,
   }));
 
   return (

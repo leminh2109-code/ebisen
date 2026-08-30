@@ -129,9 +129,14 @@ export default function SaleForm({
           {menu.map((m, i) => (
             <div
               key={m.id}
-              className="grid grid-cols-[1fr_5rem_7.5rem] items-center gap-2 border-t border-border px-3 py-2"
+              className={`grid grid-cols-[1fr_5rem_7.5rem] items-center gap-2 border-t border-border px-3 py-2 ${
+                m.is_box ? 'bg-amber-50/50' : ''
+              }`}
             >
-              <span className="text-sm font-medium">{m.name}</span>
+              <span className="text-sm font-medium">
+                {m.name}
+                {m.is_box && <span className="ml-1.5 text-[10px] font-normal text-amber-600 bg-amber-100 rounded px-1">hộp</span>}
+              </span>
               <input
                 ref={i === 0 ? firstQtyRef : undefined}
                 name={`qty_${m.id}`}

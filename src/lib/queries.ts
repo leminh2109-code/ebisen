@@ -660,24 +660,61 @@ export type MenuItem = {
   active: boolean;
   sort_order: number;
   shrimp_per_unit: number;
+  is_box: boolean;
 };
 
 /** Thực đơn — mọi món (cho trang quản lý). */
 export async function getMenu(): Promise<MenuItem[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('menu')
-    .select('id, name, price, active, sort_order, shrimp_per_unit')
+    .select('id, name, price, active, sort_order, shrimp_per_unit, is_box')
     .order('sort_order', { ascending: true })
     .order('name', { ascending: true });
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as MenuItem[];
 }
 
 /** Món đang bán (cho dropdown form nhập bán hàng). */
 export async function getActiveMenu(): Promise<MenuItem[]> {
   const items = await getMenu();
   return items.filter((m) => m.active);
+}
+
+// ── Box inventory ────────────────────────────────────────────────────────────
+
+export type BoxInventory = {
+  total_in: number;
+  total_cost_in: number;
+  unit_cost: number;
+  start_date: string;
+  used: number;
+  on_hand: number;
+};
+
+export type BoxPurchase = {
+  id: string;
+  purchase_date: string;
+  quantity: number;
+  total_cost: number;
+  note: string | null;
+  created_at: string;
+};
+
+export async function getBoxInventory(): Promise<BoxInventory | null> {
+  const supabase = await createClient();
+  const { data } = await (supabase as any).from('box_inventory').select('*').maybeSingle();
+  return data as BoxInventory | null;
+}
+
+export async function getBoxPurchases(): Promise<BoxPurchase[]> {
+  const supabase = await createClient();
+  const { data, error } = await (supabase as any)
+    .from('box_purchases')
+    .select('id, purchase_date, quantity, total_cost, note, created_at')
+    .order('purchase_date', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as BoxPurchase[];
 }
 
 export type Employee = {
