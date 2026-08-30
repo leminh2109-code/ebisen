@@ -74,6 +74,8 @@ export type SaleRow = {
   source: string | null;
   staff: string | null;
   note: string | null;
+  /** Số bánh thực tế mỗi đơn vị bán. Hộp 3 bánh = 3; các loại khác = 1. */
+  banh_per_unit: number;
 };
 
 /** Số lượng bánh bán theo tháng, tách 1 tôm / 2 tôm / khác (từ sales). */
@@ -277,15 +279,22 @@ export async function getSales(): Promise<SaleRow[]> {
   const all: SaleRow[] = [];
 
   for (let from = 0; ; from += PAGE) {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('sales')
-      .select('id, sale_date, sold_at, menu_item_id, cake_type, quantity, unit_price, amount, source, staff, note')
+      .select('id, sale_date, sold_at, menu_item_id, cake_type, quantity, unit_price, amount, source, staff, note, menu!menu_item_id(shrimp_per_unit, is_box)')
       .order('sale_date', { ascending: false })
       .order('sold_at', { ascending: false })
       .range(from, from + PAGE - 1);
     if (error) throw error;
     if (!data || data.length === 0) break;
-    all.push(...data);
+    const rows: SaleRow[] = (data as any[]).map((row) => {
+      const m = row.menu as { shrimp_per_unit?: number; is_box?: boolean } | null;
+      const banh_per_unit = m?.is_box ? (m.shrimp_per_unit ?? 1) : 1;
+      const { menu: _menu, ...rest } = row;
+      void _menu;
+      return { ...rest, banh_per_unit };
+    });
+    all.push(...rows);
     if (data.length < PAGE) break;
   }
 

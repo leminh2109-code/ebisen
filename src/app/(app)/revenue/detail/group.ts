@@ -50,14 +50,21 @@ export function groupByMonthDay(
       month.days.push(day);
     }
 
+    const banhCount = quantity * (s.banh_per_unit ?? 1);
     day.rows.push(s);
-    day.qty += quantity;
-    if (s.cake_type?.includes('1 tôm')) day.qty1 += quantity;
-    else if (s.cake_type?.includes('2 tôm')) day.qty2 += quantity;
+    day.qty += banhCount;
+    if (s.banh_per_unit != null && s.banh_per_unit > 1) {
+      // Hộp: mỗi hộp = banh_per_unit bánh 1 tôm
+      day.qty1 += banhCount;
+    } else if (s.cake_type?.includes('1 tôm')) {
+      day.qty1 += quantity;
+    } else if (s.cake_type?.includes('2 tôm')) {
+      day.qty2 += quantity;
+    }
     day.total += amount;
     if (s.source === 'TM') day.tm += amount;
     else if (s.source === 'CK') day.ck += amount;
-    month.qty += quantity;
+    month.qty += banhCount;
     month.total += amount;
   }
 

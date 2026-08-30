@@ -36,6 +36,7 @@ export default async function PublicSalesViewPage({
     menu_item_id: null,
     staff: null,
     note: null,
+    banh_per_unit: 1,
   }));
   const total = sales.reduce((s, i) => s + Number(i.amount), 0);
   const qty = sales.reduce((s, i) => s + Number(i.quantity), 0);

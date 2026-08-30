@@ -41,6 +41,7 @@ export default async function StationViewPage({
     menu_item_id: null,
     staff: null,
     note: null,
+    banh_per_unit: 1,
   }));
   const months = groupByMonthDay(sales);
 
