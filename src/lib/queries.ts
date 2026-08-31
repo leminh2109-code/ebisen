@@ -328,6 +328,7 @@ export type ShrimpGiftRow = {
   gift_date: string;
   cake_type: string | null;
   quantity: number;
+  banh_count: number; // số bánh thực tế (hộp × shrimp_per_unit, bánh lẻ × 1)
   note: string | null;
   customer_id: string | null;
   customer_name: string | null;
@@ -383,9 +384,9 @@ export async function getShrimpGiftByMonth(): Promise<MonthlyShrimpGift[]> {
 /** Lịch sử bánh tặng (mới → cũ), kèm khách nhận (nếu có). */
 export async function getShrimpGifts(): Promise<ShrimpGiftRow[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('shrimp_gifts')
-    .select('id, gift_date, cake_type, quantity, note, customer_id, customers(name, phone)')
+    .select('id, gift_date, cake_type, quantity, note, customer_id, customers(name, phone), menu!menu_item_id(shrimp_per_unit, is_box)')
     .order('gift_date', { ascending: false })
     .order('created_at', { ascending: false });
   if (error) throw error;
@@ -397,17 +398,23 @@ export async function getShrimpGifts(): Promise<ShrimpGiftRow[]> {
     note: string | null;
     customer_id: string | null;
     customers: { name: string | null; phone: string | null } | null;
+    menu: { shrimp_per_unit: number | null; is_box: boolean | null } | null;
   };
-  return ((data ?? []) as unknown as GiftJoin[]).map((g) => ({
-    id: g.id,
-    gift_date: g.gift_date,
-    cake_type: g.cake_type,
-    quantity: g.quantity,
-    note: g.note,
-    customer_id: g.customer_id,
-    customer_name: g.customers?.name ?? null,
-    customer_phone: g.customers?.phone ?? null,
-  }));
+  return ((data ?? []) as unknown as GiftJoin[]).map((g) => {
+    const m = g.menu;
+    const banhCount = m?.is_box ? g.quantity * (m.shrimp_per_unit ?? 1) : g.quantity;
+    return {
+      id: g.id,
+      gift_date: g.gift_date,
+      cake_type: g.cake_type,
+      quantity: g.quantity,
+      banh_count: banhCount,
+      note: g.note,
+      customer_id: g.customer_id,
+      customer_name: g.customers?.name ?? null,
+      customer_phone: g.customers?.phone ?? null,
+    };
+  });
 }
 
 /** Danh sách khách gọn (cho dropdown), theo tên. */

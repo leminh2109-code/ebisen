@@ -191,7 +191,7 @@ export default async function InventoryPage() {
                   <tr key={g.id} className="border-b border-border last:border-0">
                     <td className="px-4 py-2 tabular">{formatDate(g.gift_date)}</td>
                     <td className="px-4 py-2">{g.cake_type ?? '—'}</td>
-                    <td className="px-4 py-2 text-right tabular font-medium">{n(g.quantity)}</td>
+                    <td className="px-4 py-2 text-right tabular font-medium">{n(g.banh_count)}</td>
                     <td className="px-4 py-2">
                       {g.customer_id ? (
                         <Link href={`/customers/${g.customer_id}`} className="text-accent hover:underline">
