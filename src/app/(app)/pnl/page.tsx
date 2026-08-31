@@ -26,6 +26,7 @@ export default async function PnlPage() {
   const totalProfit = totalRevenue - totalExpenses;
   const hasMaterial = rows.some((r) => Number(r.material_cost) > 0);
   const hasBox = rows.some((r) => Number(r.box_cost) > 0);
+  const hasShrimp = rows.some((r) => Number(r.shrimp_cost) > 0);
 
   return (
     <div>
@@ -61,6 +62,9 @@ export default async function PnlPage() {
                   {hasBox && (
                     <th className="px-4 py-2 font-medium text-right">CP hộp</th>
                   )}
+                  {hasShrimp && (
+                    <th className="px-4 py-2 font-medium text-right">CP tôm</th>
+                  )}
                   <th className="px-4 py-2 font-medium text-right">Chia sẻ trạm 30%</th>
                   <th className="px-4 py-2 font-medium text-right">Lãi/Lỗ</th>
                 </tr>
@@ -87,6 +91,11 @@ export default async function PnlPage() {
                           {Number(r.box_cost) > 0 ? formatCurrency(r.box_cost) : '—'}
                         </td>
                       )}
+                      {hasShrimp && (
+                        <td className="px-4 py-2.5 text-right tabular text-muted">
+                          {Number(r.shrimp_cost) > 0 ? formatCurrency(r.shrimp_cost) : '—'}
+                        </td>
+                      )}
                       <td className="px-4 py-2.5 text-right tabular text-muted">
                         {formatCurrency(r.station_share)}
                       </td>
@@ -110,8 +119,9 @@ export default async function PnlPage() {
         &quot;Chi phí&quot; là chi phí tiền mặt (bảng Chi phí).
         {hasMaterial && ' "CP túi/tem" là vật tư đóng gói (túi bạc + tem) phân bổ theo số bánh dùng (xem Tồn kho vật tư).'}{' '}
         {hasBox && '"CP hộp" là chi phí hộp combo phân bổ theo số hộp đã bán (xem Tồn kho hộp).'}{' '}
+        {hasShrimp && '"CP tôm" là chi phí tôm phân bổ theo số tôm đã dùng × đơn giá bình quân (xem Tồn kho tôm).'}{' '}
         &quot;Chia sẻ trạm 30%&quot; = 30% tổng doanh thu trả cho trạm dừng nghỉ (cố
-        định theo doanh thu). Lãi/Lỗ = Doanh thu − Chi phí{hasMaterial ? ' − CP túi/tem' : ''}{hasBox ? ' − CP hộp' : ''} − Chia sẻ trạm.
+        định theo doanh thu). Lãi/Lỗ = Doanh thu − Chi phí{hasMaterial ? ' − CP túi/tem' : ''}{hasBox ? ' − CP hộp' : ''}{hasShrimp ? ' − CP tôm' : ''} − Chia sẻ trạm.
       </p>
     </div>
   );

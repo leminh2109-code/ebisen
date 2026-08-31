@@ -40,8 +40,9 @@ export type MonthlyPnl = {
   cash_expenses: number;
   material_cost: number;
   box_cost: number;
+  shrimp_cost: number;
   station_share: number; // chia sẻ 30% doanh thu với trạm
-  expenses: number; // = cash_expenses + material_cost + box_cost + station_share
+  expenses: number; // = cash_expenses + material_cost + box_cost + shrimp_cost + station_share
   profit: number;
 };
 /** Một nhóm chi phí (theo danh mục / loại / trung tâm chi phí) trong 1 tháng. */
