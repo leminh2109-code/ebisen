@@ -138,7 +138,14 @@ export function SalesDetailTable({
                               </span>
                             </td>
                             <td className="px-4 py-2.5 text-right tabular">
-                              {s.quantity}
+                              {(s.banh_per_unit ?? 1) > 1 ? (
+                                <span className="whitespace-nowrap">
+                                  {s.quantity * (s.banh_per_unit ?? 1)}{' '}
+                                  <span className="text-[11px] text-muted font-normal">
+                                    ({s.quantity} hộp)
+                                  </span>
+                                </span>
+                              ) : s.quantity}
                             </td>
                             <td className="px-4 py-2.5 text-right tabular">
                               {formatCurrency(s.unit_price)}
