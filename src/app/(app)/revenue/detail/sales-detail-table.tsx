@@ -105,6 +105,8 @@ export function SalesDetailTable({
                                     d.qty2 > 0 && `${d.qty2} bánh 2t`,
                                   ].filter(Boolean).join(', ')})
                                 </span>
+                              )}{d.hop_count > 0 && (
+                                <span className="ml-1 font-normal text-muted">· {d.hop_count} hộp</span>
                               )} · {formatCurrency(d.total)}
                               {(d.tm > 0 || d.ck > 0) && (
                                 <span className="ml-1.5 text-[11px] font-normal text-muted">

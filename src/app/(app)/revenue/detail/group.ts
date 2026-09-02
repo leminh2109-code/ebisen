@@ -8,6 +8,7 @@ export type DayGroup = {
   qty: number;
   qty1: number;
   qty2: number;
+  hop_count: number; // số hộp bán (không phải số bánh)
   total: number;
   tm: number;
   ck: number;
@@ -46,7 +47,7 @@ export function groupByMonthDay(
       day = undefined;
     }
     if (!day || day.key !== dayKey) {
-      day = { key: dayKey, qty: 0, qty1: 0, qty2: 0, total: 0, tm: 0, ck: 0, weather: weatherByDay?.[dayKey] ?? null, rows: [] };
+      day = { key: dayKey, qty: 0, qty1: 0, qty2: 0, hop_count: 0, total: 0, tm: 0, ck: 0, weather: weatherByDay?.[dayKey] ?? null, rows: [] };
       month.days.push(day);
     }
 
@@ -55,6 +56,7 @@ export function groupByMonthDay(
     day.qty += banhCount;
     if (s.banh_per_unit != null && s.banh_per_unit > 1) {
       // Hộp: mỗi hộp = banh_per_unit bánh 1 tôm
+      day.hop_count += quantity;
       day.qty1 += banhCount;
     } else if (s.cake_type?.includes('1 tôm')) {
       day.qty1 += quantity;
