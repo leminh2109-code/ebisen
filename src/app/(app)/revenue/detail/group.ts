@@ -20,6 +20,8 @@ export type MonthGroup = {
   key: string;
   qty: number;
   total: number;
+  tm: number;
+  ck: number;
   days: DayGroup[];
 };
 
@@ -42,7 +44,7 @@ export function groupByMonthDay(
     const quantity = Number(s.quantity);
 
     if (!month || month.key !== monthKey) {
-      month = { key: monthKey, qty: 0, total: 0, days: [] };
+      month = { key: monthKey, qty: 0, total: 0, tm: 0, ck: 0, days: [] };
       months.push(month);
       day = undefined;
     }
@@ -68,6 +70,8 @@ export function groupByMonthDay(
     else if (s.source === 'CK') day.ck += amount;
     month.qty += banhCount;
     month.total += amount;
+    if (s.source === 'TM') month.tm += amount;
+    else if (s.source === 'CK') month.ck += amount;
   }
 
   return months;

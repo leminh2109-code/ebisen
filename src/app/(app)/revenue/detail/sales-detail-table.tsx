@@ -49,6 +49,14 @@ export function SalesDetailTable({
             </h2>
             <span className="text-sm text-muted tabular">
               {m.qty} bánh · {formatCurrency(m.total)}
+              {(m.tm > 0 || m.ck > 0) && (
+                <span className="ml-1.5 text-xs">
+                  ({[
+                    m.tm > 0 && `TM ${Math.round(m.tm / 1000).toLocaleString('vi-VN')}k`,
+                    m.ck > 0 && `CK ${Math.round(m.ck / 1000).toLocaleString('vi-VN')}k`,
+                  ].filter(Boolean).join(' · ')})
+                </span>
+              )}
             </span>
           </div>
 
