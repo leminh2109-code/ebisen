@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, useState } from 'react';
 import { createSale, type EntryState } from '../actions';
 import { formatCurrency } from '@/lib/format';
 import { groupDigits, formatMoneyInput } from '@/lib/number-input';
-import type { MenuItem, Employee } from '@/lib/queries';
+import type { MenuItem, Employee, CustomerOption } from '@/lib/queries';
 
 const initial: EntryState = { ok: false, error: null };
 const parse = (s: string) => Number(s.replace(/[.\s,]/g, '')) || 0;
@@ -16,11 +16,13 @@ type SaleAction = (state: EntryState, formData: FormData) => Promise<EntryState>
 export default function SaleForm({
   menu,
   employees,
+  customers = [],
   action = createSale,
   token,
 }: {
   menu: MenuItem[];
   employees: Employee[];
+  customers?: CustomerOption[];
   /** Server action nhận (state, formData). Mặc định createSale (bản đăng nhập). */
   action?: SaleAction;
   /** Token của link công khai — chèn vào formData để server xác thực. */
@@ -31,6 +33,9 @@ export default function SaleForm({
   const totalRef = useRef<HTMLSpanElement>(null);
   const sourceRef = useRef<HTMLSelectElement>(null);
   const firstQtyRef = useRef<HTMLInputElement>(null);
+
+  // Khách cũ: chọn từ danh sách để hiện tổng bánh đã mua.
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(null);
 
   // Khách quen: giữ giá 2-tôm = 90k dù menu đã đổi lên 100k.
   const loyalRef = useRef(false);
@@ -104,6 +109,7 @@ export default function SaleForm({
       noBagRef.current = false;
       setNoBagUI(false);
       if (noBagInputRef.current) noBagInputRef.current.value = 'false';
+      setSelectedCustomer(null);
     }
   }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -214,6 +220,32 @@ export default function SaleForm({
           {formatCurrency(0)}
         </span>
       </div>
+
+      {customers.length > 0 && (
+        <Field label="Khách hàng">
+          <select
+            name="customer_id"
+            defaultValue=""
+            onChange={(e) => {
+              const c = customers.find((c) => c.id === e.target.value) ?? null;
+              setSelectedCustomer(c);
+            }}
+            className={inputCls}
+          >
+            <option value="">— Khách vãng lai —</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name ?? c.phone}{c.name ? ` · ${c.phone}` : ''}
+              </option>
+            ))}
+          </select>
+          {selectedCustomer && (
+            <p className="mt-1 text-xs font-medium text-accent">
+              ★ {selectedCustomer.name ?? selectedCustomer.phone} — đã mua {selectedCustomer.total_qty} bánh
+            </p>
+          )}
+        </Field>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <Field label="Nguồn">

@@ -418,15 +418,15 @@ export async function getShrimpGifts(): Promise<ShrimpGiftRow[]> {
 }
 
 /** Danh sách khách gọn (cho dropdown), theo tên. */
-export type CustomerOption = { id: string; name: string | null; phone: string };
+export type CustomerOption = { id: string; name: string | null; phone: string; total_qty: number };
 export async function getCustomerOptions(): Promise<CustomerOption[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('customers')
-    .select('id, name, phone')
-    .order('name', { ascending: true, nullsFirst: false });
+  const { data, error } = await (supabase as any)
+    .from('customer_stats')
+    .select('id, name, phone, total_qty')
+    .order('total_qty', { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map((d: any) => ({ ...d, total_qty: Number(d.total_qty ?? 0) }));
 }
 
 /** Lịch sử nhập tôm (mới → cũ). */
