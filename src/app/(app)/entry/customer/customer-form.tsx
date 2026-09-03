@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useRef } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { createCustomerOrder, type CustomerState } from '../../customers/actions';
 import { today } from '@/lib/format';
 import type { MenuItem, CustomerOption } from '@/lib/queries';
@@ -28,6 +28,8 @@ export default function CustomerForm({
   const phoneRef = useRef<HTMLInputElement>(null);
   const custRef = useRef<HTMLSelectElement>(null);
   const newBoxRef = useRef<HTMLDivElement>(null);
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [qtyRaw, setQtyRaw] = useState('');
 
   // Chọn khách cũ → ẩn ô nhập liên hệ; chọn "Khách mới" → hiện lại. Dùng DOM để
   // tránh setState trong effect (rule react-hooks/set-state-in-effect).
@@ -42,6 +44,8 @@ export default function CustomerForm({
       formRef.current?.reset();
       if (newBoxRef.current) newBoxRef.current.hidden = false;
       if (phoneRef.current) phoneRef.current.required = true;
+      setSelectedItem(null);
+      setQtyRaw('');
       if (custRef.current) custRef.current.focus();
       else phoneRef.current?.focus();
     }
@@ -102,19 +106,36 @@ export default function CustomerForm({
         <Field label="Ngày mua" required>
           <input name="order_date" type="date" required defaultValue={today()} className={inputCls} />
         </Field>
-        <Field label="Số lượng bánh" required>
+        <Field label={selectedItem?.is_box ? 'Số hộp' : 'Số lượng bánh'} required>
           <input
             name="quantity"
             inputMode="numeric"
             required
+            value={qtyRaw}
+            onChange={(e) => setQtyRaw(e.target.value)}
             className={`${inputCls} tabular`}
-            placeholder="VD: 5"
+            placeholder={selectedItem?.is_box ? 'VD: 2' : 'VD: 5'}
           />
+          {selectedItem?.is_box && qtyRaw && Number(qtyRaw) > 0 && (
+            <p className="mt-1 text-xs text-accent font-medium">
+              = {Number(qtyRaw) * selectedItem.shrimp_per_unit} bánh
+            </p>
+          )}
         </Field>
       </div>
 
       <Field label="Loại bánh" required>
-        <select name="menu_item_id" required defaultValue="" className={inputCls}>
+        <select
+          name="menu_item_id"
+          required
+          defaultValue=""
+          onChange={(e) => {
+            const item = menu.find((m) => m.id === e.target.value) ?? null;
+            setSelectedItem(item);
+            setQtyRaw('');
+          }}
+          className={inputCls}
+        >
           <option value="" disabled>
             — Chọn loại bánh —
           </option>

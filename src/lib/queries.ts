@@ -851,6 +851,8 @@ export type CustomerOrderRow = {
   cake_type: string | null;
   quantity: number;
   note: string | null;
+  is_box: boolean;
+  shrimp_per_unit: number;
 };
 
 /** Danh sách khách + thống kê (mua gần nhất trước). */
@@ -872,14 +874,22 @@ export async function getCustomer(id: string): Promise<CustomerStats | null> {
 /** Lịch sử mua của một khách (mới → cũ). */
 export async function getCustomerOrders(customerId: string): Promise<CustomerOrderRow[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('customer_orders')
-    .select('id, order_date, cake_type, quantity, note')
+    .select('id, order_date, cake_type, quantity, note, menu:menu_item_id(is_box, shrimp_per_unit)')
     .eq('customer_id', customerId)
     .order('order_date', { ascending: false })
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map((o: any) => ({
+    id: o.id,
+    order_date: o.order_date,
+    cake_type: o.cake_type,
+    quantity: o.quantity,
+    note: o.note,
+    is_box: o.menu?.is_box ?? false,
+    shrimp_per_unit: o.menu?.shrimp_per_unit ?? 1,
+  }));
 }
 
 /** Dữ liệu form khách công khai (menu) theo token. Gọi RPC security definer. */

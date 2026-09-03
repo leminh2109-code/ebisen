@@ -78,7 +78,16 @@ export default async function CustomerDetailPage({
                   <tr key={o.id} className="border-b border-border last:border-0">
                     <td className="px-4 py-2 tabular">{formatDate(o.order_date)}</td>
                     <td className="px-4 py-2">{o.cake_type ?? '—'}</td>
-                    <td className="px-4 py-2 text-right tabular font-medium">{n(o.quantity)}</td>
+                    <td className="px-4 py-2 text-right tabular font-medium">
+                      {o.is_box ? (
+                        <span className="whitespace-nowrap">
+                          {n(o.quantity * o.shrimp_per_unit)}{' '}
+                          <span className="text-[11px] font-normal text-muted">
+                            ({o.quantity} hộp)
+                          </span>
+                        </span>
+                      ) : n(o.quantity)}
+                    </td>
                     <td className="px-4 py-2 text-muted">{o.note ?? ''}</td>
                     {isOwner && (
                       <td className="px-4 py-2 text-right">
