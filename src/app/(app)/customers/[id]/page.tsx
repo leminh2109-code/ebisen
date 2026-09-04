@@ -81,7 +81,7 @@ export default async function CustomerDetailPage({
                     <td className="px-4 py-2 text-right tabular font-medium">
                       {o.is_box ? (
                         <span className="whitespace-nowrap">
-                          {n(o.quantity * o.shrimp_per_unit)}{' '}
+                          {n(o.quantity * o.cakes_per_unit)}{' '}
                           <span className="text-[11px] font-normal text-muted">
                             ({o.quantity} hộp)
                           </span>

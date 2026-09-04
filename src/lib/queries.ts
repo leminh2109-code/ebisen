@@ -283,15 +283,15 @@ export async function getSales(): Promise<SaleRow[]> {
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await (supabase as any)
       .from('sales')
-      .select('id, sale_date, sold_at, menu_item_id, cake_type, quantity, unit_price, amount, source, staff, note, menu!menu_item_id(shrimp_per_unit, is_box)')
+      .select('id, sale_date, sold_at, menu_item_id, cake_type, quantity, unit_price, amount, source, staff, note, menu!menu_item_id(shrimp_per_unit, is_box, cakes_per_unit)')
       .order('sale_date', { ascending: false })
       .order('sold_at', { ascending: false })
       .range(from, from + PAGE - 1);
     if (error) throw error;
     if (!data || data.length === 0) break;
     const rows: SaleRow[] = (data as any[]).map((row) => {
-      const m = row.menu as { shrimp_per_unit?: number; is_box?: boolean } | null;
-      const banh_per_unit = m?.is_box ? (m.shrimp_per_unit ?? 1) : 1;
+      const m = row.menu as { shrimp_per_unit?: number; is_box?: boolean; cakes_per_unit?: number | null } | null;
+      const banh_per_unit = m?.is_box ? (m.cakes_per_unit ?? m.shrimp_per_unit ?? 1) : 1;
       const { menu: _menu, ...rest } = row;
       void _menu;
       return { ...rest, banh_per_unit };
@@ -386,7 +386,7 @@ export async function getShrimpGifts(): Promise<ShrimpGiftRow[]> {
   const supabase = await createClient();
   const { data, error } = await (supabase as any)
     .from('shrimp_gifts')
-    .select('id, gift_date, cake_type, quantity, note, customer_id, customers(name, phone), menu!menu_item_id(shrimp_per_unit, is_box)')
+    .select('id, gift_date, cake_type, quantity, note, customer_id, customers(name, phone), menu!menu_item_id(shrimp_per_unit, is_box, cakes_per_unit)')
     .order('gift_date', { ascending: false })
     .order('created_at', { ascending: false });
   if (error) throw error;
@@ -398,11 +398,11 @@ export async function getShrimpGifts(): Promise<ShrimpGiftRow[]> {
     note: string | null;
     customer_id: string | null;
     customers: { name: string | null; phone: string | null } | null;
-    menu: { shrimp_per_unit: number | null; is_box: boolean | null } | null;
+    menu: { shrimp_per_unit: number | null; is_box: boolean | null; cakes_per_unit: number | null } | null;
   };
   return ((data ?? []) as unknown as GiftJoin[]).map((g) => {
     const m = g.menu;
-    const banhCount = m?.is_box ? g.quantity * (m.shrimp_per_unit ?? 1) : g.quantity;
+    const banhCount = m?.is_box ? g.quantity * (m.cakes_per_unit ?? m.shrimp_per_unit ?? 1) : g.quantity;
     return {
       id: g.id,
       gift_date: g.gift_date,
@@ -679,6 +679,7 @@ export type MenuItem = {
   sort_order: number;
   shrimp_per_unit: number;
   is_box: boolean;
+  cakes_per_unit: number | null;
 };
 
 /** Thực đơn — mọi món (cho trang quản lý). */
@@ -686,7 +687,7 @@ export async function getMenu(): Promise<MenuItem[]> {
   const supabase = await createClient();
   const { data, error } = await (supabase as any)
     .from('menu')
-    .select('id, name, price, active, sort_order, shrimp_per_unit, is_box')
+    .select('id, name, price, active, sort_order, shrimp_per_unit, is_box, cakes_per_unit')
     .order('sort_order', { ascending: true })
     .order('name', { ascending: true });
   if (error) throw error;
@@ -853,6 +854,7 @@ export type CustomerOrderRow = {
   note: string | null;
   is_box: boolean;
   shrimp_per_unit: number;
+  cakes_per_unit: number;
 };
 
 /** Danh sách khách + thống kê (mua gần nhất trước). */
@@ -876,7 +878,7 @@ export async function getCustomerOrders(customerId: string): Promise<CustomerOrd
   const supabase = await createClient();
   const { data, error } = await (supabase as any)
     .from('customer_orders')
-    .select('id, order_date, cake_type, quantity, note, menu:menu_item_id(is_box, shrimp_per_unit)')
+    .select('id, order_date, cake_type, quantity, note, menu:menu_item_id(is_box, shrimp_per_unit, cakes_per_unit)')
     .eq('customer_id', customerId)
     .order('order_date', { ascending: false })
     .order('created_at', { ascending: false });
@@ -889,6 +891,7 @@ export async function getCustomerOrders(customerId: string): Promise<CustomerOrd
     note: o.note,
     is_box: o.menu?.is_box ?? false,
     shrimp_per_unit: o.menu?.shrimp_per_unit ?? 1,
+    cakes_per_unit: o.menu?.cakes_per_unit ?? o.menu?.shrimp_per_unit ?? 1,
   }));
 }
 

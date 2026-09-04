@@ -118,7 +118,7 @@ export default function CustomerForm({
           />
           {selectedItem?.is_box && qtyRaw && Number(qtyRaw) > 0 && (
             <p className="mt-1 text-xs text-accent font-medium">
-              = {Number(qtyRaw) * selectedItem.shrimp_per_unit} bánh
+              = {Number(qtyRaw) * (selectedItem.cakes_per_unit ?? selectedItem.shrimp_per_unit)} bánh
             </p>
           )}
         </Field>
