@@ -106,7 +106,7 @@ export default function CustomerForm({
         <Field label="Ngày mua" required>
           <input name="order_date" type="date" required defaultValue={today()} className={inputCls} />
         </Field>
-        <Field label={selectedItem?.is_box ? 'Số hộp' : 'Số lượng bánh'} required>
+        <Field label={selectedItem?.is_box ? 'Số hộp' : 'Số lượng'} required>
           <input
             name="quantity"
             inputMode="numeric"

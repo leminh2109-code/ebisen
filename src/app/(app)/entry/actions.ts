@@ -74,6 +74,25 @@ export async function createSale(
 
   if (error) return { ok: false, error: error.message };
 
+  // Nếu chọn khách → tự tạo customer_orders (1 dòng/loại bánh).
+  const customer_id = String(formData.get('customer_id') ?? '').trim() || null;
+  if (customer_id) {
+    const orderRows = lines.map((l) => {
+      const item = byId.get(l.menu_item_id)!;
+      return {
+        customer_id,
+        order_date: sale_date,
+        menu_item_id: l.menu_item_id,
+        cake_type: item.name,
+        quantity: l.quantity,
+        note,
+        created_by: user.id,
+      };
+    });
+    await supabase.from('customer_orders').insert(orderRows);
+    revalidatePath('/customers');
+  }
+
   // Trigger tự cập nhật doanh thu ngày → revalidate các trang liên quan.
   revalidatePath('/revenue/detail');
   revalidatePath('/revenue/monthly');
