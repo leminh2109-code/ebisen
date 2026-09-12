@@ -249,34 +249,14 @@ export async function createShrimpPurchase(
 
   const costVal = total_cost !== null && total_cost > 0 ? total_cost : null;
 
-  // Tự tạo expense khi có số tiền — tránh phải nhập 2 lần.
-  let expense_id: string | null = null;
-  if (costVal !== null) {
-    const desc = note ?? `Nhập ${shrimp_count.toLocaleString('vi-VN')} con tôm${kg && kg > 0 ? `, ${kg} kg` : ''}`;
-    const { data: exp, error: expErr } = await supabase
-      .from('expenses')
-      .insert({
-        expense_date: purchase_date,
-        amount: costVal,
-        category: 'Tôm',
-        expense_type: 'Biến đổi',
-        cost_center: 'Nguyên liệu',
-        description: desc,
-        created_by: user.id,
-      })
-      .select('id')
-      .single();
-    if (expErr) return { ok: false, error: `Lỗi tạo chi phí: ${expErr.message}` };
-    expense_id = exp.id;
-  }
-
+  // Không tạo expense — chi phí tôm tính qua shrimp_cost_by_month (tồn kho × đơn giá)
+  // để tránh trùng lặp với cash_expenses trong P&L.
   const { error } = await supabase.from('shrimp_purchases').insert({
     purchase_date,
     shrimp_count,
     kg: kg === null || kg <= 0 ? null : kg,
     total_cost: costVal,
     note,
-    expense_id,
     created_by: user.id,
   });
 
@@ -300,25 +280,8 @@ export async function updateShrimpPurchase(formData: FormData): Promise<void> {
   const purchase_date = String(formData.get('purchase_date') ?? '').trim() || undefined;
   const note          = String(formData.get('note') ?? '').trim() || undefined;
 
-  // Đọc expense_id hiện tại.
-  const { data: existing } = await supabase
-    .from('shrimp_purchases')
-    .select('expense_id')
-    .eq('id', id)
-    .single();
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await supabase.from('shrimp_purchases').update({ shrimp_count, kg, total_cost, purchase_date, note } as any).eq('id', id);
-
-  // Sync expense liên kết nếu có.
-  if (existing?.expense_id && purchase_date && total_cost !== null) {
-    const desc = note ?? `Nhập ${shrimp_count.toLocaleString('vi-VN')} con tôm${kg ? `, ${kg} kg` : ''}`;
-    await supabase.from('expenses').update({
-      expense_date: purchase_date,
-      amount: total_cost,
-      description: desc,
-    }).eq('id', existing.expense_id);
-  }
 
   revalidatePath('/inventory');
   revalidatePath('/expenses');
@@ -332,18 +295,7 @@ export async function deleteShrimpPurchase(formData: FormData): Promise<void> {
   const id = String(formData.get('id') ?? '').trim();
   if (!id) return;
 
-  const { data: existing } = await supabase
-    .from('shrimp_purchases')
-    .select('expense_id')
-    .eq('id', id)
-    .single();
-
   await supabase.from('shrimp_purchases').delete().eq('id', id);
-
-  // Xóa expense liên kết (do tồn kho tạo ra) tránh duplicate trong chi phí.
-  if (existing?.expense_id) {
-    await supabase.from('expenses').delete().eq('id', existing.expense_id);
-  }
 
   revalidatePath('/inventory');
   revalidatePath('/expenses');
