@@ -963,6 +963,56 @@ export async function getPublicStationToken(): Promise<string | null> {
   return (data as { token: string } | null)?.token ?? null;
 }
 
+// ── Siêu thị ──────────────────────────────────────────────────────────────────
+
+export type SupermarketBatch = {
+  id: string;
+  batch_date: string;
+  quantity_in: number;
+  quantity_sold: number | null;
+  note: string | null;
+};
+
+export type SupermarketMonth = {
+  month: string;
+  batch_count: number;
+  total_in: number;
+  total_sold: number;
+  total_remaining: number;
+};
+
+export async function getSupermarketBatches(): Promise<SupermarketBatch[]> {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('supermarket_batches')
+    .select('id, batch_date, quantity_in, quantity_sold, note')
+    .order('batch_date', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((d: any) => ({
+    ...d,
+    quantity_in: Number(d.quantity_in),
+    quantity_sold: d.quantity_sold !== null ? Number(d.quantity_sold) : null,
+  }));
+}
+
+export async function getSupermarketByMonth(): Promise<SupermarketMonth[]> {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('supermarket_by_month')
+    .select('*')
+    .order('month', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((d: any) => ({
+    month: d.month,
+    batch_count: Number(d.batch_count),
+    total_in: Number(d.total_in),
+    total_sold: Number(d.total_sold),
+    total_remaining: Number(d.total_remaining),
+  }));
+}
+
 /** Role của user hiện tại — dùng để gate trang P&L. */
 export async function getCurrentRole(): Promise<'owner' | 'staff' | null> {
   const supabase = await createClient();

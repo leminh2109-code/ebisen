@@ -39,6 +39,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { href: '/ingredients', label: 'Tồn kho bột & gia vị', icon: '🌾' },
       { href: '/materials', label: 'Tồn kho vật tư', icon: '📦' },
       { href: '/boxes', label: 'Tồn kho hộp', icon: '📫' },
+      { href: '/supermarket', label: 'Siêu thị', icon: '🏪' },
     ],
   },
   {
