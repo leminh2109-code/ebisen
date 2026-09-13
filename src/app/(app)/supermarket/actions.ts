@@ -30,16 +30,25 @@ export async function createBatch(
   return { ok: true, error: null };
 }
 
-export async function updateSold(formData: FormData): Promise<void> {
+export async function updateSold(
+  _prev: SupermarketState,
+  formData: FormData,
+): Promise<SupermarketState> {
   const supabase = await createClient();
   const id = String(formData.get('id') ?? '').trim();
   const quantity_sold = parseInt(String(formData.get('quantity_sold') ?? ''));
-  if (!id || isNaN(quantity_sold) || quantity_sold < 0) return;
+  if (!id) return { ok: false, error: 'Thiếu ID.' };
+  if (isNaN(quantity_sold) || quantity_sold < 0) return { ok: false, error: 'Số không hợp lệ.' };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any).from('supermarket_batches').update({ quantity_sold }).eq('id', id);
+  const { error } = await (supabase as any)
+    .from('supermarket_batches')
+    .update({ quantity_sold })
+    .eq('id', id);
+  if (error) return { ok: false, error: (error as { message: string }).message };
 
   revalidatePath('/supermarket');
+  return { ok: true, error: null };
 }
 
 export async function deleteBatch(formData: FormData): Promise<void> {

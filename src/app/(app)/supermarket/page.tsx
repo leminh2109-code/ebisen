@@ -3,6 +3,7 @@ import { PageHeader, Card } from '@/components/ui';
 import { formatDate, today } from '@/lib/format';
 import { createBatch, updateSold, deleteBatch } from './actions';
 import SupermarketForm from './supermarket-form';
+import { UpdateSoldForm } from './update-sold-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,20 +93,11 @@ export default async function SupermarketPage() {
                           <td className="px-4 py-2 tabular">{formatDate(b.batch_date)}</td>
                           <td className="px-4 py-2 text-right tabular font-medium">{n(b.quantity_in)}</td>
                           <td className="px-4 py-2 text-right">
-                            <form action={updateSold} className="flex items-center justify-end gap-1">
-                              <input type="hidden" name="id" value={b.id} />
-                              <input
-                                name="quantity_sold"
-                                type="number"
-                                min="0"
-                                defaultValue={b.quantity_sold ?? ''}
-                                placeholder="—"
-                                className="w-16 rounded border border-border bg-background px-2 py-1 text-right text-sm tabular outline-none focus:border-accent"
-                              />
-                              <button type="submit" className="rounded bg-accent px-2 py-1 text-xs text-accent-fg hover:opacity-90">
-                                Lưu
-                              </button>
-                            </form>
+                            <UpdateSoldForm
+                              id={b.id}
+                              currentSold={b.quantity_sold}
+                              action={updateSold}
+                            />
                           </td>
                           <td className="px-4 py-2 text-muted text-xs">{b.note ?? ''}</td>
                           {isOwner && (
