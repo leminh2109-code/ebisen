@@ -51,6 +51,34 @@ export async function updateSold(
   return { ok: true, error: null };
 }
 
+export async function updateBatch(
+  _prev: SupermarketState,
+  formData: FormData,
+): Promise<SupermarketState> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Phiên đăng nhập hết hạn.' };
+
+  const id = String(formData.get('id') ?? '').trim();
+  const batch_date = String(formData.get('batch_date') ?? '').trim();
+  const quantity_in = parseInt(String(formData.get('quantity_in') ?? ''));
+  const note = String(formData.get('note') ?? '').trim() || null;
+
+  if (!id) return { ok: false, error: 'Thiếu ID.' };
+  if (!batch_date) return { ok: false, error: 'Thiếu ngày giao hàng.' };
+  if (!quantity_in || quantity_in <= 0) return { ok: false, error: 'Số hộp không hợp lệ.' };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('supermarket_batches')
+    .update({ batch_date, quantity_in, note })
+    .eq('id', id);
+  if (error) return { ok: false, error: (error as { message: string }).message };
+
+  revalidatePath('/supermarket');
+  return { ok: true, error: null };
+}
+
 export async function deleteBatch(formData: FormData): Promise<void> {
   const supabase = await createClient();
   const id = String(formData.get('id') ?? '').trim();

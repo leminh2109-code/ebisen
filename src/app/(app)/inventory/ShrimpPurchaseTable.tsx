@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { type ShrimpPurchaseRow } from '@/lib/queries';
-import { updateShrimpPurchase, deleteShrimpPurchase } from '../entry/actions';
+import { updateShrimpPurchase, deleteShrimpPurchase, toggleShrimpPaid } from '../entry/actions';
 import { formatDate, formatCurrency } from '@/lib/format';
 
 const n = (v: number | null) => Number(v ?? 0).toLocaleString('vi-VN');
@@ -47,6 +47,7 @@ export default function ShrimpPurchaseTable({
             <th className="px-4 py-2 font-medium text-right">Số kg</th>
             <th className="px-4 py-2 font-medium text-right">Số tiền</th>
             <th className="px-4 py-2 font-medium">Ghi chú</th>
+            <th className="px-4 py-2 font-medium text-center">Đã TT</th>
             {isOwner && <th className="px-4 py-2 font-medium text-right">Thao tác</th>}
           </tr>
         </thead>
@@ -115,6 +116,17 @@ export default function ShrimpPurchaseTable({
                       />
                     </label>
 
+                    <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer pb-0.5">
+                      <input
+                        type="checkbox"
+                        name="is_paid"
+                        value="true"
+                        defaultChecked={p.is_paid}
+                        className="h-4 w-4 rounded border-border accent-accent"
+                      />
+                      Đã thanh toán
+                    </label>
+
                     <div className="flex gap-2 pb-0.5">
                       <button
                         type="button"
@@ -145,6 +157,23 @@ export default function ShrimpPurchaseTable({
                   {p.total_cost === null ? '—' : formatCurrency(p.total_cost)}
                 </td>
                 <td className="px-4 py-2 text-muted">{p.note ?? ''}</td>
+                <td className="px-4 py-2 text-center">
+                  <form action={toggleShrimpPaid}>
+                    <input type="hidden" name="id" value={p.id} />
+                    <input type="hidden" name="is_paid" value={p.is_paid ? 'false' : 'true'} />
+                    <button
+                      type="submit"
+                      title={p.is_paid ? 'Đã thanh toán — nhấn để đánh dấu chưa TT' : 'Chưa thanh toán — nhấn để đánh dấu đã TT'}
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${
+                        p.is_paid
+                          ? 'bg-positive/10 text-positive hover:bg-positive/20'
+                          : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                      }`}
+                    >
+                      {p.is_paid ? '✓ Đã TT' : 'Chưa TT'}
+                    </button>
+                  </form>
+                </td>
                 {isOwner && (
                   <td className="px-4 py-2 text-right">
                     <div className="flex gap-3 justify-end">

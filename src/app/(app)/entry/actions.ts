@@ -242,6 +242,7 @@ export async function createShrimpPurchase(
   const kg = parseNumber(String(formData.get('kg') ?? ''));
   const total_cost = parseNumber(String(formData.get('total_cost') ?? ''));
   const note = String(formData.get('note') ?? '').trim() || null;
+  const is_paid = formData.get('is_paid') === 'true';
 
   if (!purchase_date) return { ok: false, error: 'Thiếu ngày nhập.' };
   if (shrimp_count === null || shrimp_count <= 0)
@@ -251,12 +252,14 @@ export async function createShrimpPurchase(
 
   // Không tạo expense — chi phí tôm tính qua shrimp_cost_by_month (tồn kho × đơn giá)
   // để tránh trùng lặp với cash_expenses trong P&L.
-  const { error } = await supabase.from('shrimp_purchases').insert({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from('shrimp_purchases').insert({
     purchase_date,
     shrimp_count,
     kg: kg === null || kg <= 0 ? null : kg,
     total_cost: costVal,
     note,
+    is_paid,
     created_by: user.id,
   });
 
@@ -279,14 +282,26 @@ export async function updateShrimpPurchase(formData: FormData): Promise<void> {
   const total_cost    = parseFloat(String(formData.get('total_cost') ?? '').replace(/\./g, '').replace(',', '.')) || null;
   const purchase_date = String(formData.get('purchase_date') ?? '').trim() || undefined;
   const note          = String(formData.get('note') ?? '').trim() || undefined;
+  const is_paid       = formData.get('is_paid') === 'true';
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await supabase.from('shrimp_purchases').update({ shrimp_count, kg, total_cost, purchase_date, note } as any).eq('id', id);
+  await supabase.from('shrimp_purchases').update({ shrimp_count, kg, total_cost, purchase_date, note, is_paid } as any).eq('id', id);
 
   revalidatePath('/inventory');
   revalidatePath('/expenses');
   revalidatePath('/dashboard');
   revalidatePath('/pnl');
+}
+
+/** Toggle trạng thái thanh toán của một lần nhập tôm. */
+export async function toggleShrimpPaid(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const id = String(formData.get('id') ?? '').trim();
+  const is_paid = formData.get('is_paid') === 'true';
+  if (!id) return;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('shrimp_purchases').update({ is_paid }).eq('id', id);
+  revalidatePath('/inventory');
 }
 
 /** Xóa một lần nhập tôm — đồng thời xóa expense liên kết (nếu có). */

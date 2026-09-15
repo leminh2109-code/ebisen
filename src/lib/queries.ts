@@ -342,6 +342,7 @@ export type ShrimpPurchaseRow = {
   shrimp_count: number;
   total_cost: number | null;
   note: string | null;
+  is_paid: boolean;
 };
 
 export async function getShrimpInventory(): Promise<ShrimpInventory> {
@@ -432,13 +433,14 @@ export async function getCustomerOptions(): Promise<CustomerOption[]> {
 /** Lịch sử nhập tôm (mới → cũ). */
 export async function getShrimpPurchases(): Promise<ShrimpPurchaseRow[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from('shrimp_purchases')
-    .select('id, purchase_date, kg, shrimp_count, total_cost, note')
+    .select('id, purchase_date, kg, shrimp_count, total_cost, note, is_paid')
     .order('purchase_date', { ascending: false })
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map((d: any) => ({ ...d, is_paid: Boolean(d.is_paid) }));
 }
 
 // ─── Bột & gia vị (bột mì, bột năng, muối, đường) ────────────────────────────

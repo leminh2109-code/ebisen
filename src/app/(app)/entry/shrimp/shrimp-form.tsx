@@ -60,6 +60,16 @@ export default function ShrimpForm() {
         <textarea name="note" rows={2} className={inputCls} placeholder="VD: 5 thùng, nhà cung cấp…" />
       </Field>
 
+      <label className="flex items-center gap-2 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          name="is_paid"
+          value="true"
+          className="h-4 w-4 rounded border-border accent-accent"
+        />
+        <span className="text-sm font-medium">Đã thanh toán cho nhà cung cấp</span>
+      </label>
+
       {state.error && <p className="text-sm text-negative">{state.error}</p>}
       {state.ok && <p className="text-sm text-positive">✓ Đã lưu. Nhập tiếp bên dưới.</p>}
 
