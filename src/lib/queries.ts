@@ -671,7 +671,7 @@ export async function getExpenseCategories(): Promise<string[]> {
  * "Tôm thử" tách khỏi "Tôm" vì tôm ăn thử KHÔNG nhập vào tồn kho bán —
  * chọn "Tôm" mới hiện ô số kg/số con để cộng tồn kho.
  */
-const ALWAYS_SUGGESTED_CATEGORIES = ['Tôm thử'];
+const ALWAYS_SUGGESTED_CATEGORIES = ['Tôm thử', 'Túi nilon trong hộp'];
 
 export type MenuItem = {
   id: string;
