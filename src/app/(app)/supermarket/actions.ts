@@ -15,6 +15,7 @@ export async function createBatch(
 
   const batch_date = String(formData.get('batch_date') ?? '').trim();
   const quantity_in = parseInt(String(formData.get('quantity_in') ?? ''));
+  const shrimp_per_box = parseInt(String(formData.get('shrimp_per_box') ?? '3')) || 3;
   const note = String(formData.get('note') ?? '').trim() || null;
 
   if (!batch_date) return { ok: false, error: 'Thiếu ngày giao hàng.' };
@@ -22,7 +23,7 @@ export async function createBatch(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).from('supermarket_batches').insert({
-    batch_date, quantity_in, note, created_by: user.id,
+    batch_date, quantity_in, shrimp_per_box, note, created_by: user.id,
   });
   if (error) return { ok: false, error: (error as { message: string }).message };
 
@@ -62,6 +63,7 @@ export async function updateBatch(
   const id = String(formData.get('id') ?? '').trim();
   const batch_date = String(formData.get('batch_date') ?? '').trim();
   const quantity_in = parseInt(String(formData.get('quantity_in') ?? ''));
+  const shrimp_per_box = parseInt(String(formData.get('shrimp_per_box') ?? '3')) || 3;
   const note = String(formData.get('note') ?? '').trim() || null;
 
   if (!id) return { ok: false, error: 'Thiếu ID.' };
@@ -71,7 +73,7 @@ export async function updateBatch(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('supermarket_batches')
-    .update({ batch_date, quantity_in, note })
+    .update({ batch_date, quantity_in, shrimp_per_box, note })
     .eq('id', id);
   if (error) return { ok: false, error: (error as { message: string }).message };
 

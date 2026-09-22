@@ -973,6 +973,7 @@ export type SupermarketBatch = {
   quantity_in: number;
   quantity_sold: number | null;
   note: string | null;
+  shrimp_per_box: number;
 };
 
 export type SupermarketMonth = {
@@ -988,13 +989,14 @@ export async function getSupermarketBatches(): Promise<SupermarketBatch[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('supermarket_batches')
-    .select('id, batch_date, quantity_in, quantity_sold, note')
+    .select('id, batch_date, quantity_in, quantity_sold, note, shrimp_per_box')
     .order('batch_date', { ascending: false });
   if (error) throw error;
   return (data ?? []).map((d: any) => ({
     ...d,
     quantity_in: Number(d.quantity_in),
     quantity_sold: d.quantity_sold !== null ? Number(d.quantity_sold) : null,
+    shrimp_per_box: Number(d.shrimp_per_box ?? 3),
   }));
 }
 

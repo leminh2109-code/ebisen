@@ -29,6 +29,9 @@ export default function SupermarketForm({
           <input name="quantity_in" type="number" min="1" required placeholder="VD: 15" className={`${inputCls} tabular`} />
         </Field>
       </div>
+      <Field label="Số tôm/hộp" required>
+        <input name="shrimp_per_box" type="number" min="0" required defaultValue={3} className={`${inputCls} tabular`} />
+      </Field>
       <Field label="Ghi chú">
         <input name="note" className={inputCls} placeholder="VD: đợt 1 tháng 9" />
       </Field>
