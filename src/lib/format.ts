@@ -21,6 +21,13 @@ export function formatCurrencyCompact(amount: number | null | undefined): string
   return `${vndCompact.format(amount ?? 0)} ₫`;
 }
 
+const mFmt = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+
+/** 90430000 -> "90,4M" (dạng triệu, cho bảng P&L gọn) */
+export function formatM(amount: number | null | undefined): string {
+  return mFmt.format((amount ?? 0) / 1_000_000) + 'M';
+}
+
 /** "2026-07-16" -> "16/07/2026" */
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return '';
