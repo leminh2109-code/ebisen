@@ -27,6 +27,7 @@ export default async function PnlPage() {
   const hasMaterial = rows.some((r) => Number(r.material_cost) > 0);
   const hasBox = rows.some((r) => Number(r.box_cost) > 0);
   const hasShrimp = rows.some((r) => Number(r.shrimp_cost) > 0);
+  const hasBonus = rows.some((r) => Number(r.bonus_cost) > 0);
 
   return (
     <div>
@@ -65,6 +66,9 @@ export default async function PnlPage() {
                   {hasShrimp && (
                     <th className="px-4 py-2 font-medium text-right">CP tôm</th>
                   )}
+                  {hasBonus && (
+                    <th className="px-4 py-2 font-medium text-right">Thưởng NV</th>
+                  )}
                   <th className="px-4 py-2 font-medium text-right">Chia sẻ trạm 30%</th>
                   <th className="px-4 py-2 font-medium text-right">Lãi/Lỗ</th>
                 </tr>
@@ -96,6 +100,11 @@ export default async function PnlPage() {
                           {Number(r.shrimp_cost) > 0 ? formatCurrency(r.shrimp_cost) : '—'}
                         </td>
                       )}
+                      {hasBonus && (
+                        <td className="px-4 py-2.5 text-right tabular text-muted">
+                          {Number(r.bonus_cost) > 0 ? formatCurrency(r.bonus_cost) : '—'}
+                        </td>
+                      )}
                       <td className="px-4 py-2.5 text-right tabular text-muted">
                         {formatCurrency(r.station_share)}
                       </td>
@@ -121,7 +130,8 @@ export default async function PnlPage() {
         {hasBox && '"CP hộp" là chi phí hộp combo phân bổ theo số hộp đã bán (xem Tồn kho hộp).'}{' '}
         {hasShrimp && '"CP tôm" là chi phí tôm phân bổ theo số tôm đã dùng × đơn giá bình quân (xem Tồn kho tôm).'}{' '}
         &quot;Chia sẻ trạm 30%&quot; = 30% tổng doanh thu trả cho trạm dừng nghỉ (cố
-        định theo doanh thu). Lãi/Lỗ = Doanh thu − Chi phí{hasMaterial ? ' − CP túi/tem' : ''}{hasBox ? ' − CP hộp' : ''}{hasShrimp ? ' − CP tôm' : ''} − Chia sẻ trạm.
+        định theo doanh thu).{hasBonus && ' "Thưởng NV" = tổng bánh (bán + tặng) × 10.000đ, tính tự động từ T9/2026.'}{' '}
+        Lãi/Lỗ = Doanh thu − Chi phí{hasMaterial ? ' − CP túi/tem' : ''}{hasBox ? ' − CP hộp' : ''}{hasShrimp ? ' − CP tôm' : ''}{hasBonus ? ' − Thưởng NV' : ''} − Chia sẻ trạm.
       </p>
     </div>
   );
