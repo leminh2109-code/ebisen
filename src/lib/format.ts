@@ -56,6 +56,13 @@ export function formatMonth(iso: string | null | undefined): string {
   return `Tháng ${d.getMonth() + 1}/${d.getFullYear()}`;
 }
 
+/** "2026-07-01" -> "T7/2026" (dạng ngắn cho bảng) */
+export function formatMonthShort(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `T${d.getMonth() + 1}/${d.getFullYear()}`;
+}
+
 /** Ngày hôm nay dạng "YYYY-MM-DD" (local, cho input[type=date]) */
 export function today(): string {
   const d = new Date();
