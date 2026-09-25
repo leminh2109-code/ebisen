@@ -27,6 +27,7 @@ export default async function PnlPage() {
   const hasMaterial = rows.some((r) => Number(r.material_cost) > 0);
   const hasBox = rows.some((r) => Number(r.box_cost) > 0);
   const hasShrimp = rows.some((r) => Number(r.shrimp_cost) > 0);
+  const hasIngredient = rows.some((r) => Number(r.ingredient_cost) > 0);
   const hasBonus = rows.some((r) => Number(r.bonus_cost) > 0);
 
   return (
@@ -66,6 +67,9 @@ export default async function PnlPage() {
                   {hasShrimp && (
                     <th className="px-3 py-2 font-medium text-right">CP tôm</th>
                   )}
+                  {hasIngredient && (
+                    <th className="px-3 py-2 font-medium text-right">CP bột</th>
+                  )}
                   {hasBonus && (
                     <th className="px-3 py-2 font-medium text-right">Thưởng NV</th>
                   )}
@@ -100,6 +104,11 @@ export default async function PnlPage() {
                           {Number(r.shrimp_cost) > 0 ? formatCurrency(r.shrimp_cost) : '—'}
                         </td>
                       )}
+                      {hasIngredient && (
+                        <td className="px-3 py-2.5 text-right tabular text-muted">
+                          {Number(r.ingredient_cost) > 0 ? formatCurrency(r.ingredient_cost) : '—'}
+                        </td>
+                      )}
                       {hasBonus && (
                         <td className="px-3 py-2.5 text-right tabular text-muted">
                           {Number(r.bonus_cost) > 0 ? formatCurrency(r.bonus_cost) : '—'}
@@ -129,9 +138,10 @@ export default async function PnlPage() {
         {hasMaterial && ' "CP túi/tem" là vật tư đóng gói (túi bạc + tem) phân bổ theo số bánh dùng (xem Tồn kho vật tư).'}{' '}
         {hasBox && '"CP hộp" là chi phí hộp combo phân bổ theo số hộp đã bán (xem Tồn kho hộp).'}{' '}
         {hasShrimp && '"CP tôm" là chi phí tôm phân bổ theo số tôm đã dùng × đơn giá bình quân (xem Tồn kho tôm).'}{' '}
+        {hasIngredient && '"CP bột" = số bánh (bán+tặng) × định mức (bột mì 57,5g · bột năng 27,5g · muối 3,5g · đường 10g) × giá bình quân. Từ T7/2026.'}{' '}
         &quot;Chia sẻ trạm 30%&quot; = 30% tổng doanh thu trả cho trạm dừng nghỉ (cố
         định theo doanh thu).{hasBonus && ' "Thưởng NV" = tổng bánh (bán + tặng) × 10.000đ, tính tự động từ T9/2026.'}{' '}
-        Lãi/Lỗ = Doanh thu − Chi phí{hasMaterial ? ' − CP túi/tem' : ''}{hasBox ? ' − CP hộp' : ''}{hasShrimp ? ' − CP tôm' : ''}{hasBonus ? ' − Thưởng NV' : ''} − Chia sẻ trạm.
+        Lãi/Lỗ = Doanh thu − Chi phí{hasMaterial ? ' − CP túi/tem' : ''}{hasBox ? ' − CP hộp' : ''}{hasShrimp ? ' − CP tôm' : ''}{hasIngredient ? ' − CP bột' : ''}{hasBonus ? ' − Thưởng NV' : ''} − Chia sẻ trạm.
       </p>
     </div>
   );
