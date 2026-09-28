@@ -48,7 +48,7 @@ export default async function DashboardPage() {
       />
 
       {/* Hàng 1 — vận hành hằng ngày: doanh thu hôm nay · bánh · tôm còn lại */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Link
           href="/revenue/daily"
           className="rounded-xl border border-border bg-surface p-4 hover:border-accent transition block"
