@@ -75,6 +75,18 @@ export default async function DashboardPage() {
           href="/inventory"
           className="rounded-xl border border-border bg-surface p-4 hover:border-accent transition block"
         >
+          <p className="text-sm text-muted">Bánh tặng tháng này</p>
+          <p className="mt-1 text-2xl font-semibold tabular">
+            {Number(shrimp.thisMonthGiftCakes).toLocaleString('vi-VN')} bánh
+          </p>
+          <p className="mt-1 text-xs text-muted tabular">
+            {n(Number(shrimp.thisMonthGift))} con tôm · xem chi tiết →
+          </p>
+        </Link>
+        <Link
+          href="/inventory"
+          className="rounded-xl border border-border bg-surface p-4 hover:border-accent transition block"
+        >
           <p className="text-sm text-muted">Tồn kho tôm</p>
           <p
             className={`mt-1 text-2xl font-semibold tabular ${

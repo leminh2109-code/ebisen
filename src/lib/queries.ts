@@ -590,11 +590,13 @@ export async function getShrimpSummary() {
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   const thisMonthIn = purchasedByMonth.find((p) => p.month === currentMonth)?.shrimp_in ?? 0;
   const thisMonthSold = usedByMonth.find((u) => u.month === currentMonth)?.shrimp_used ?? 0;
-  const thisMonthGift = giftByMonth.find((g) => g.month === currentMonth)?.gift_shrimp ?? 0;
+  const giftRow = giftByMonth.find((g) => g.month === currentMonth);
+  const thisMonthGift = giftRow?.gift_shrimp ?? 0;
+  const thisMonthGiftCakes = giftRow?.gift_qty ?? 0;
   // Tôm dùng = bán + tặng (khớp cách tính tồn kho).
   const thisMonthUsed = Number(thisMonthSold) + Number(thisMonthGift);
 
-  return { inventory, thisMonthIn, thisMonthSold, thisMonthGift, thisMonthUsed, currentMonth };
+  return { inventory, thisMonthIn, thisMonthSold, thisMonthGift, thisMonthGiftCakes, thisMonthUsed, currentMonth };
 }
 
 /** Tổng quan tháng hiện tại cho Dashboard. */
