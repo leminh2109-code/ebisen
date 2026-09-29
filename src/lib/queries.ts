@@ -846,6 +846,8 @@ export type CustomerStats = {
   note: string | null;
   created_at: string;
   order_count: number;
+  purchase_qty: number;
+  gift_qty: number;
   total_qty: number;
   first_order: string | null;
   last_order: string | null;
@@ -868,7 +870,7 @@ export async function getCustomers(): Promise<CustomerStats[]> {
   const supabase = await createClient();
   const { data, error } = await supabase.from('customer_stats').select('*');
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as unknown as CustomerStats[];
 }
 
 /** Một khách theo id (kèm thống kê). */
@@ -876,7 +878,7 @@ export async function getCustomer(id: string): Promise<CustomerStats | null> {
   const supabase = await createClient();
   const { data, error } = await supabase.from('customer_stats').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
-  return data;
+  return data as unknown as CustomerStats | null;
 }
 
 /** Lịch sử mua của một khách (mới → cũ). */

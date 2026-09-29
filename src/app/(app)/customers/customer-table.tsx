@@ -161,7 +161,14 @@ export function CustomerTable({
                     {hidden.has('phone') ? maskPhone(c.phone) : c.phone}
                   </td>
                   <td className="px-4 py-2 text-right tabular">{n(c.order_count)}</td>
-                  <td className="px-4 py-2 text-right tabular">{n(c.total_qty)}</td>
+                  <td className="px-4 py-2 text-right tabular">
+                    {n(c.total_qty)}
+                    {Number(c.gift_qty) > 0 && (
+                      <span className="ml-1 text-xs text-muted">
+                        ({n(c.purchase_qty)} mua + {n(c.gift_qty)} tặng)
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-2">{c.top_cake ?? '—'}</td>
                   <td className="px-4 py-2 tabular">{c.last_order ? formatDate(c.last_order) : '—'}</td>
                   <td className="px-4 py-2">
