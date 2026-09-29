@@ -29,6 +29,7 @@ export default async function PnlPage() {
   const hasShrimp = rows.some((r) => Number(r.shrimp_cost) > 0);
   const hasIngredient = rows.some((r) => Number(r.ingredient_cost) > 0);
   const hasBonus = rows.some((r) => Number(r.bonus_cost) > 0);
+  const hasSalary = rows.some((r) => Number(r.salary_cost) > 0);
 
   return (
     <div>
@@ -73,6 +74,9 @@ export default async function PnlPage() {
                   {hasBonus && (
                     <th className="px-3 py-2 font-medium text-right">Thưởng NV</th>
                   )}
+                  {hasSalary && (
+                    <th className="px-3 py-2 font-medium text-right">Lương NV</th>
+                  )}
                   <th className="px-3 py-2 font-medium text-right">Trạm 30%</th>
                   <th className="px-3 py-2 font-medium text-right">Lãi/Lỗ</th>
                 </tr>
@@ -114,6 +118,11 @@ export default async function PnlPage() {
                           {Number(r.bonus_cost) > 0 ? formatCurrency(r.bonus_cost) : '—'}
                         </td>
                       )}
+                      {hasSalary && (
+                        <td className="px-3 py-2.5 text-right tabular text-muted">
+                          {Number(r.salary_cost) > 0 ? formatCurrency(r.salary_cost) : '—'}
+                        </td>
+                      )}
                       <td className="px-3 py-2.5 text-right tabular text-muted">
                         {formatCurrency(r.station_share)}
                       </td>
@@ -141,7 +150,8 @@ export default async function PnlPage() {
         {hasIngredient && '"CP bột" = số bánh (bán+tặng) × định mức (bột mì 57,5g · bột năng 27,5g · muối 3,5g · đường 10g) × giá bình quân. Từ T7/2026.'}{' '}
         &quot;Chia sẻ trạm 30%&quot; = 30% tổng doanh thu trả cho trạm dừng nghỉ (cố
         định theo doanh thu).{hasBonus && ' "Thưởng NV" = tổng bánh (bán + tặng) × 10.000đ, tính tự động từ T9/2026.'}{' '}
-        Lãi/Lỗ = Doanh thu − Chi phí{hasMaterial ? ' − CP túi/tem' : ''}{hasBox ? ' − CP hộp' : ''}{hasShrimp ? ' − CP tôm' : ''}{hasIngredient ? ' − CP bột' : ''}{hasBonus ? ' − Thưởng NV' : ''} − Chia sẻ trạm.
+        {hasSalary && '"Lương NV" = lương cố định nhập tay cuối tháng, tách riêng khỏi Chi phí từ T9/2026.'}{' '}
+        Lãi/Lỗ = Doanh thu − Chi phí{hasMaterial ? ' − CP túi/tem' : ''}{hasBox ? ' − CP hộp' : ''}{hasShrimp ? ' − CP tôm' : ''}{hasIngredient ? ' − CP bột' : ''}{hasBonus ? ' − Thưởng NV' : ''}{hasSalary ? ' − Lương NV' : ''} − Chia sẻ trạm.
       </p>
     </div>
   );

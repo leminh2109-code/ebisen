@@ -43,6 +43,7 @@ export type MonthlyPnl = {
   shrimp_cost: number;
   ingredient_cost: number; // bột+gia vị = bánh × định mức × giá bình quân, từ T7/2026
   bonus_cost: number; // thưởng NV = tổng bánh (bán+tặng) × 10k, tính tự động từ T9/2026
+  salary_cost: number; // lương NV cố định, nhập tay cuối tháng từ T9/2026
   station_share: number; // chia sẻ 30% doanh thu với trạm
   expenses: number; // tổng tất cả chi phí
   profit: number;
