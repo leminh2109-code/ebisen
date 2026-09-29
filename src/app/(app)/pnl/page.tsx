@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getPnlByMonth, getCurrentRole } from '@/lib/queries';
-import { formatCurrency, formatMonth, formatMonthShort } from '@/lib/format';
+import { formatM, formatMonth, formatMonthShort } from '@/lib/format';
 import { PageHeader, Card, EmptyState, StatCard } from '@/components/ui';
 import { BarChart } from '@/components/BarChart';
 
@@ -56,29 +56,29 @@ export default async function PnlPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border text-left text-muted">
-                  <th className="px-3 py-2 font-medium">Tháng</th>
-                  <th className="px-3 py-2 font-medium text-right">Doanh thu</th>
-                  <th className="px-3 py-2 font-medium text-right">Chi phí</th>
+                  <th className="px-2 py-2 font-medium">Tháng</th>
+                  <th className="px-2 py-2 font-medium text-right">DT</th>
+                  <th className="px-2 py-2 font-medium text-right">Chi phí</th>
                   {hasMaterial && (
-                    <th className="px-3 py-2 font-medium text-right">CP túi/tem</th>
+                    <th className="px-2 py-2 font-medium text-right">Túi/tem</th>
                   )}
                   {hasBox && (
-                    <th className="px-3 py-2 font-medium text-right">CP hộp</th>
+                    <th className="px-2 py-2 font-medium text-right">Hộp</th>
                   )}
                   {hasShrimp && (
-                    <th className="px-3 py-2 font-medium text-right">CP tôm</th>
+                    <th className="px-2 py-2 font-medium text-right">Tôm</th>
                   )}
                   {hasIngredient && (
-                    <th className="px-3 py-2 font-medium text-right">CP bột</th>
+                    <th className="px-2 py-2 font-medium text-right">Bột</th>
                   )}
                   {hasBonus && (
-                    <th className="px-3 py-2 font-medium text-right">Thưởng NV</th>
+                    <th className="px-2 py-2 font-medium text-right">Thưởng</th>
                   )}
                   {hasSalary && (
-                    <th className="px-3 py-2 font-medium text-right">Lương NV</th>
+                    <th className="px-2 py-2 font-medium text-right">Lương</th>
                   )}
-                  <th className="px-3 py-2 font-medium text-right">Trạm 30%</th>
-                  <th className="px-3 py-2 font-medium text-right">Lãi/Lỗ</th>
+                  <th className="px-2 py-2 font-medium text-right">Trạm</th>
+                  <th className="px-2 py-2 font-medium text-right">Lãi/Lỗ</th>
                 </tr>
               </thead>
               <tbody>
@@ -86,52 +86,52 @@ export default async function PnlPage() {
                   const profit = Number(r.profit);
                   return (
                     <tr key={r.month} className="border-b border-border last:border-0">
-                      <td className="px-3 py-2.5">{formatMonthShort(r.month)}</td>
-                      <td className="px-3 py-2.5 text-right tabular">
-                        {formatCurrency(r.revenue)}
+                      <td className="px-2 py-2">{formatMonthShort(r.month)}</td>
+                      <td className="px-2 py-2 text-right tabular">
+                        {formatM(r.revenue)}
                       </td>
-                      <td className="px-3 py-2.5 text-right tabular">
-                        {formatCurrency(r.cash_expenses)}
+                      <td className="px-2 py-2 text-right tabular">
+                        {formatM(r.cash_expenses)}
                       </td>
                       {hasMaterial && (
-                        <td className="px-3 py-2.5 text-right tabular text-muted">
-                          {formatCurrency(r.material_cost)}
+                        <td className="px-2 py-2 text-right tabular text-muted">
+                          {formatM(r.material_cost)}
                         </td>
                       )}
                       {hasBox && (
-                        <td className="px-3 py-2.5 text-right tabular text-muted">
-                          {Number(r.box_cost) > 0 ? formatCurrency(r.box_cost) : '—'}
+                        <td className="px-2 py-2 text-right tabular text-muted">
+                          {Number(r.box_cost) > 0 ? formatM(r.box_cost) : '—'}
                         </td>
                       )}
                       {hasShrimp && (
-                        <td className="px-3 py-2.5 text-right tabular text-muted">
-                          {Number(r.shrimp_cost) > 0 ? formatCurrency(r.shrimp_cost) : '—'}
+                        <td className="px-2 py-2 text-right tabular text-muted">
+                          {Number(r.shrimp_cost) > 0 ? formatM(r.shrimp_cost) : '—'}
                         </td>
                       )}
                       {hasIngredient && (
-                        <td className="px-3 py-2.5 text-right tabular text-muted">
-                          {Number(r.ingredient_cost) > 0 ? formatCurrency(r.ingredient_cost) : '—'}
+                        <td className="px-2 py-2 text-right tabular text-muted">
+                          {Number(r.ingredient_cost) > 0 ? formatM(r.ingredient_cost) : '—'}
                         </td>
                       )}
                       {hasBonus && (
-                        <td className="px-3 py-2.5 text-right tabular text-muted">
-                          {Number(r.bonus_cost) > 0 ? formatCurrency(r.bonus_cost) : '—'}
+                        <td className="px-2 py-2 text-right tabular text-muted">
+                          {Number(r.bonus_cost) > 0 ? formatM(r.bonus_cost) : '—'}
                         </td>
                       )}
                       {hasSalary && (
-                        <td className="px-3 py-2.5 text-right tabular text-muted">
-                          {Number(r.salary_cost) > 0 ? formatCurrency(r.salary_cost) : '—'}
+                        <td className="px-2 py-2 text-right tabular text-muted">
+                          {Number(r.salary_cost) > 0 ? formatM(r.salary_cost) : '—'}
                         </td>
                       )}
-                      <td className="px-3 py-2.5 text-right tabular text-muted">
-                        {formatCurrency(r.station_share)}
+                      <td className="px-2 py-2 text-right tabular text-muted">
+                        {formatM(r.station_share)}
                       </td>
                       <td
-                        className={`px-3 py-2.5 text-right tabular font-medium ${
+                        className={`px-2 py-2 text-right tabular font-semibold ${
                           profit >= 0 ? 'text-blue-600' : 'text-negative'
                         }`}
                       >
-                        {formatCurrency(profit)}
+                        {formatM(profit)}
                       </td>
                     </tr>
                   );

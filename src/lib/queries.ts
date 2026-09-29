@@ -242,6 +242,7 @@ export async function getExpensesDetail(): Promise<ExpenseRow[]> {
     const { data, error } = await supabase
       .from('expenses')
       .select('id, expense_date, amount, category, expense_type, cost_center, description')
+      .not('category', 'eq', 'Lương nhân viên')
       .order('expense_date', { ascending: false })
       .order('created_at', { ascending: false })
       .range(from, from + PAGE - 1);
