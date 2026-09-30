@@ -32,6 +32,9 @@ export default function SupermarketForm({
       <Field label="Số tôm/hộp" required>
         <input name="shrimp_per_box" type="number" min="0" required defaultValue={3} className={`${inputCls} tabular`} />
       </Field>
+      <Field label="Giá/hộp (đ)" required>
+        <input name="price_per_box" type="number" min="0" required defaultValue={210000} className={`${inputCls} tabular`} />
+      </Field>
       <Field label="Ghi chú">
         <input name="note" className={inputCls} placeholder="VD: đợt 1 tháng 9" />
       </Field>
