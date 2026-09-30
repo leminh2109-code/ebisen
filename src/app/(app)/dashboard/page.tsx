@@ -4,6 +4,7 @@ import {
   getShrimpSummary,
   getCurrentRole,
   getRevenueByDayCompare,
+  getSupermarketByMonth,
 } from '@/lib/queries';
 import { formatCurrency, formatDate, formatMonth, todayVN } from '@/lib/format';
 import { PageHeader, StatCard, Card } from '@/components/ui';
@@ -15,12 +16,15 @@ export const dynamic = 'force-dynamic';
 const n = (v: number) => Number(v).toLocaleString('vi-VN');
 
 export default async function DashboardPage() {
-  const [summary, shrimp, role, days] = await Promise.all([
+  const [summary, shrimp, role, days, supermarketMonths] = await Promise.all([
     getDashboardSummary(),
     getShrimpSummary(),
     getCurrentRole(),
     getRevenueByDayCompare(14),
+    getSupermarketByMonth(),
   ]);
+  const currentMonthKey = todayVN().slice(0, 7);
+  const supermarket = supermarketMonths.find((m) => m.month.slice(0, 7) === currentMonthKey) ?? null;
   const isOwner = role === 'owner';
 
   // Hôm nay (giờ VN). Chưa bán gì thì chưa có dòng trong daily_revenue.
@@ -130,7 +134,7 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link
           href="/revenue/detail"
           className="rounded-xl border border-border bg-surface p-4 hover:border-accent transition"
@@ -144,6 +148,23 @@ export default async function DashboardPage() {
         >
           <p className="font-medium">Nhập chi phí →</p>
           <p className="text-sm text-muted mt-1">Ghi lại một khoản chi mới</p>
+        </Link>
+        <Link
+          href="/supermarket"
+          className="rounded-xl border border-border bg-surface p-4 hover:border-accent transition"
+        >
+          <p className="font-medium">Siêu thị →</p>
+          {supermarket ? (
+            <p className="text-sm text-muted mt-1 tabular">
+              Giao {n(supermarket.total_in)} · Bán{' '}
+              <span className={supermarket.total_remaining > 0 ? 'text-amber-600 font-medium' : 'text-positive font-medium'}>
+                {n(supermarket.total_sold)}
+              </span>{' '}
+              · Tồn {n(supermarket.total_remaining)} hộp
+            </p>
+          ) : (
+            <p className="text-sm text-muted mt-1">Chưa giao hàng tháng này</p>
+          )}
         </Link>
       </div>
 
