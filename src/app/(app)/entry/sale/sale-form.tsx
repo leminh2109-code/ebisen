@@ -49,6 +49,25 @@ export default function SaleForm({
   // Số lượng hộp đang nhập (để show/hide sub-form thành phần).
   const [boxQty, setBoxQty] = useState<Record<string, number>>({});
 
+  // Giá bánh lẻ để tính giá hộp từ thành phần.
+  const price1Tom = menu.find((m) => m.name === '1 tôm')?.price ?? 70_000;
+  const price2Tom = menu.find((m) => m.name === '2 tôm')?.price ?? 100_000;
+
+  // Khi thành phần hộp thay đổi: tự điền ô kia (sum=3) + tính lại đơn giá hộp.
+  const applyBoxCompo = (menuItemId: string, changed: 'box_1tom' | 'box_2tom') => {
+    const form = formRef.current;
+    if (!form) return;
+    const f1 = form.elements.namedItem(`box_1tom_${menuItemId}`) as HTMLInputElement | null;
+    const f2 = form.elements.namedItem(`box_2tom_${menuItemId}`) as HTMLInputElement | null;
+    const priceEl = form.elements.namedItem(`price_${menuItemId}`) as HTMLInputElement | null;
+    if (!f1 || !f2 || !priceEl) return;
+    const val = Math.min(3, Math.max(0, parseInt((changed === 'box_1tom' ? f1 : f2).value) || 0));
+    if (changed === 'box_1tom') { f1.value = String(val); f2.value = String(3 - val); }
+    else { f2.value = String(val); f1.value = String(3 - val); }
+    priceEl.value = groupDigits(String(parseInt(f1.value) * price1Tom + parseInt(f2.value) * price2Tom));
+    recompute();
+  };
+
   const toggleNoBag = () => {
     const next = !noBagRef.current;
     noBagRef.current = next;
@@ -99,6 +118,23 @@ export default function SaleForm({
     formatMoneyInput(e.currentTarget);
     recompute();
   };
+
+  // Khi sub-form thành phần vừa xuất hiện (boxQty > 0), tính giá hộp theo defaultValue.
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    for (const [id, qty] of Object.entries(boxQty)) {
+      const priceEl = form.elements.namedItem(`price_${id}`) as HTMLInputElement | null;
+      if (!priceEl) continue;
+      if (qty <= 0) continue;
+      const f1 = form.elements.namedItem(`box_1tom_${id}`) as HTMLInputElement | null;
+      const f2 = form.elements.namedItem(`box_2tom_${id}`) as HTMLInputElement | null;
+      if (f1 && f2) {
+        priceEl.value = groupDigits(String(parseInt(f1.value) * price1Tom + parseInt(f2.value) * price2Tom));
+      }
+    }
+    recompute();
+  }, [boxQty]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (state.ok) {
@@ -152,7 +188,15 @@ export default function SaleForm({
                   name={`qty_${m.id}`}
                   inputMode="numeric"
                   onInput={(e) => {
-                    if (m.is_box) setBoxQty((prev) => ({ ...prev, [m.id]: parseInt(e.currentTarget.value) || 0 }));
+                    const qty = parseInt(e.currentTarget.value) || 0;
+                    if (m.is_box) {
+                      setBoxQty((prev) => ({ ...prev, [m.id]: qty }));
+                      if (qty === 0) {
+                        // Trả giá về mặc định menu khi xóa số lượng.
+                        const priceEl = formRef.current?.elements.namedItem(`price_${m.id}`) as HTMLInputElement | null;
+                        if (priceEl) priceEl.value = groupDigits(String(m.price));
+                      }
+                    }
                     recompute();
                   }}
                   className={`${inputCls} tabular text-right`}
@@ -178,6 +222,7 @@ export default function SaleForm({
                         min="0"
                         max="3"
                         defaultValue={2}
+                        onInput={() => applyBoxCompo(m.id, 'box_1tom')}
                         className="w-14 rounded border border-amber-300 bg-white px-2 py-1 text-sm text-right tabular outline-none focus:border-amber-500"
                       />
                     </label>
@@ -190,6 +235,7 @@ export default function SaleForm({
                         min="0"
                         max="3"
                         defaultValue={1}
+                        onInput={() => applyBoxCompo(m.id, 'box_2tom')}
                         className="w-14 rounded border border-amber-300 bg-white px-2 py-1 text-sm text-right tabular outline-none focus:border-amber-500"
                       />
                     </label>
