@@ -30,6 +30,7 @@ export async function submitPublicSale(
 
   const supabase = await createClient();
   for (const line of lines) {
+    const hasCompo = line.box_1tom !== null && line.box_2tom !== null;
     const { error } = await supabase.rpc('public_submit_sale', {
       p_token: token,
       p_sale_date: sale_date,
@@ -39,6 +40,7 @@ export async function submitPublicSale(
       p_source: source,
       p_staff_id: staff_id,
       p_note: note,
+      ...(hasCompo ? { p_box_1tom: line.box_1tom, p_box_2tom: line.box_2tom } : {}),
     });
 
     if (error) {

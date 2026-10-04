@@ -8,7 +8,7 @@ export type PublicFormBootstrap =
   | { valid: false }
   | {
       valid: true;
-      menu: { id: string; name: string; price: number }[];
+      menu: { id: string; name: string; price: number; is_box: boolean }[];
       employees: { id: string; name: string }[];
     };
 
@@ -53,6 +53,8 @@ export type Database = {
           active: boolean;
           sort_order: number;
           shrimp_per_unit: number;
+          is_box: boolean;
+          cakes_per_unit: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -62,6 +64,8 @@ export type Database = {
           active?: boolean;
           sort_order?: number;
           shrimp_per_unit?: number;
+          is_box?: boolean;
+          cakes_per_unit?: number | null;
         };
         Update: {
           name?: string;
@@ -69,6 +73,8 @@ export type Database = {
           active?: boolean;
           sort_order?: number;
           shrimp_per_unit?: number;
+          is_box?: boolean;
+          cakes_per_unit?: number | null;
         };
         Relationships: Rel;
       };
@@ -282,6 +288,9 @@ export type Database = {
           staff: string | null;
           staff_id: string | null;
           note: string | null;
+          no_bag: boolean | null;
+          box_1tom: number | null;
+          box_2tom: number | null;
           created_at: string;
           created_by: string | null;
           updated_at: string;
@@ -300,6 +309,9 @@ export type Database = {
           staff?: string | null;
           staff_id?: string | null;
           note?: string | null;
+          no_bag?: boolean | null;
+          box_1tom?: number | null;
+          box_2tom?: number | null;
           created_by?: string | null;
         };
         Update: {
@@ -503,6 +515,8 @@ export type Database = {
           revenue: number;
           cash_expenses: number;
           material_cost: number;
+          box_cost: number;
+          shrimp_cost: number;
           station_share: number;
           expenses: number;
           profit: number;
@@ -632,6 +646,8 @@ export type Database = {
           p_source: string | null;
           p_staff_id: string | null;
           p_note: string | null;
+          p_box_1tom?: number | null;
+          p_box_2tom?: number | null;
         };
         Returns: string;
       };

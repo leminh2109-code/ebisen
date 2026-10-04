@@ -31,10 +31,20 @@ export async function createSale(
   // giá (giảm giá), dùng giá đã sửa; nếu không, lấy giá menu hiện tại.
   const { data: items } = await supabase
     .from('menu')
-    .select('id, name, price')
+    .select('id, name, price, is_box')
     .in('id', lines.map((l) => l.menu_item_id));
   const byId = new Map((items ?? []).map((it) => [it.id, it]));
   for (const l of lines) if (!byId.has(l.menu_item_id)) return { ok: false, error: 'Món không tồn tại.' };
+
+  // Validate thành phần hộp: mỗi hộp phải gồm đúng 3 bánh (1-tôm + 2-tôm).
+  for (const l of lines) {
+    const item = byId.get(l.menu_item_id)!;
+    if (item.is_box && l.box_1tom !== null && l.box_2tom !== null) {
+      if (l.box_1tom + l.box_2tom !== 3) {
+        return { ok: false, error: 'Thành phần hộp phải gồm đúng 3 bánh (1 tôm + 2 tôm = 3).' };
+      }
+    }
+  }
 
   // Snapshot tên nhân viên từ bảng employees (giữ nguyên nếu sau này sửa/xóa NV).
   let staff: string | null = null;
@@ -52,20 +62,21 @@ export async function createSale(
   const rows = lines.map((l) => {
     const item = byId.get(l.menu_item_id)!;
     const unit_price = l.unit_price ?? Number(item.price);
+    const hasCompo = item.is_box && l.box_1tom !== null && l.box_2tom !== null;
     return {
       sale_date,
-      // sold_at để trống → mặc định now() (đúng thời điểm gửi form).
       menu_item_id: l.menu_item_id,
-      cake_type: item.name, // snapshot tên món
+      cake_type: item.name,
       quantity: l.quantity,
       unit_price,
       amount: l.quantity * unit_price,
       source,
-      staff, // snapshot tên NV
+      staff,
       staff_id,
       note,
       no_bag,
       created_by: user.id,
+      ...(hasCompo ? { box_1tom: l.box_1tom, box_2tom: l.box_2tom } : {}),
     };
   });
 

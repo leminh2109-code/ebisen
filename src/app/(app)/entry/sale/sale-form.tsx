@@ -46,6 +46,9 @@ export default function SaleForm({
   const [noBagUI, setNoBagUI] = useState(false);
   const noBagInputRef = useRef<HTMLInputElement>(null);
 
+  // Số lượng hộp đang nhập (để show/hide sub-form thành phần).
+  const [boxQty, setBoxQty] = useState<Record<string, number>>({});
+
   const toggleNoBag = () => {
     const next = !noBagRef.current;
     noBagRef.current = next;
@@ -110,6 +113,7 @@ export default function SaleForm({
       setNoBagUI(false);
       if (noBagInputRef.current) noBagInputRef.current.value = 'false';
       setSelectedCustomer(null);
+      setBoxQty({});
     }
   }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -133,31 +137,66 @@ export default function SaleForm({
             <span className="text-right">Đơn giá (₫)</span>
           </div>
           {menu.map((m, i) => (
-            <div
-              key={m.id}
-              className={`grid grid-cols-[1fr_5rem_7.5rem] items-center gap-2 border-t border-border px-3 py-2 ${
-                m.is_box ? 'bg-amber-50/50' : ''
-              }`}
-            >
-              <span className="text-sm font-medium">
-                {m.name}
-                {m.is_box && <span className="ml-1.5 text-[10px] font-normal text-amber-600 bg-amber-100 rounded px-1">hộp</span>}
-              </span>
-              <input
-                ref={i === 0 ? firstQtyRef : undefined}
-                name={`qty_${m.id}`}
-                inputMode="numeric"
-                onInput={recompute}
-                className={`${inputCls} tabular text-right`}
-                placeholder="0"
-              />
-              <input
-                name={`price_${m.id}`}
-                inputMode="numeric"
-                defaultValue={groupDigits(String(m.price))}
-                onInput={onPriceInput}
-                className={`${inputCls} tabular text-right`}
-              />
+            <div key={m.id}>
+              <div
+                className={`grid grid-cols-[1fr_5rem_7.5rem] items-center gap-2 border-t border-border px-3 py-2 ${
+                  m.is_box ? 'bg-amber-50/50' : ''
+                }`}
+              >
+                <span className="text-sm font-medium">
+                  {m.name}
+                  {m.is_box && <span className="ml-1.5 text-[10px] font-normal text-amber-600 bg-amber-100 rounded px-1">hộp</span>}
+                </span>
+                <input
+                  ref={i === 0 ? firstQtyRef : undefined}
+                  name={`qty_${m.id}`}
+                  inputMode="numeric"
+                  onInput={(e) => {
+                    if (m.is_box) setBoxQty((prev) => ({ ...prev, [m.id]: parseInt(e.currentTarget.value) || 0 }));
+                    recompute();
+                  }}
+                  className={`${inputCls} tabular text-right`}
+                  placeholder="0"
+                />
+                <input
+                  name={`price_${m.id}`}
+                  inputMode="numeric"
+                  defaultValue={groupDigits(String(m.price))}
+                  onInput={onPriceInput}
+                  className={`${inputCls} tabular text-right`}
+                />
+              </div>
+              {m.is_box && (boxQty[m.id] ?? 0) > 0 && (
+                <div className="border-t border-amber-200 bg-amber-50 px-3 py-2.5">
+                  <p className="text-xs text-amber-700 mb-2">Thành phần mỗi hộp (tổng = 3 bánh)</p>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <label className="flex items-center gap-1.5 text-sm">
+                      <span className="text-amber-800 font-medium">1 tôm</span>
+                      <input
+                        name={`box_1tom_${m.id}`}
+                        type="number"
+                        min="0"
+                        max="3"
+                        defaultValue={2}
+                        className="w-14 rounded border border-amber-300 bg-white px-2 py-1 text-sm text-right tabular outline-none focus:border-amber-500"
+                      />
+                    </label>
+                    <span className="text-amber-600 text-sm">+</span>
+                    <label className="flex items-center gap-1.5 text-sm">
+                      <span className="text-amber-800 font-medium">2 tôm</span>
+                      <input
+                        name={`box_2tom_${m.id}`}
+                        type="number"
+                        min="0"
+                        max="3"
+                        defaultValue={1}
+                        className="w-14 rounded border border-amber-300 bg-white px-2 py-1 text-sm text-right tabular outline-none focus:border-amber-500"
+                      />
+                    </label>
+                    <span className="text-xs text-amber-600">= 3 bánh/hộp</span>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
