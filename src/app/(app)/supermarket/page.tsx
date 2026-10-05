@@ -32,30 +32,28 @@ export default async function SupermarketPage() {
         subtitle="Theo dõi hộp xuất cho siêu thị — giao / bán / tồn"
       />
 
-      {/* Tổng quan tháng */}
-      {monthly.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          {monthly.slice(0, 1).map((m) => {
-            const label = new Date(m.month + 'T00:00:00').toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
-            return (
-              <>
-                <div key="in" className="rounded-xl border border-border bg-surface p-4">
-                  <p className="text-sm text-muted">Đã giao ({label})</p>
-                  <p className="mt-1 text-2xl font-semibold tabular">{n(m.total_in)} hộp</p>
-                </div>
-                <div key="sold" className="rounded-xl border border-border bg-surface p-4">
-                  <p className="text-sm text-muted">Đã bán ({label})</p>
-                  <p className="mt-1 text-2xl font-semibold tabular">{n(m.total_sold)} hộp</p>
-                </div>
-                <div key="rem" className={`rounded-xl border p-4 ${m.total_remaining > 0 ? 'border-amber-200 bg-amber-50' : 'border-border bg-surface'}`}>
-                  <p className="text-sm text-muted">Còn tồn ({label})</p>
-                  <p className={`mt-1 text-2xl font-semibold tabular ${m.total_remaining > 0 ? 'text-amber-700' : ''}`}>{n(m.total_remaining)} hộp</p>
-                </div>
-              </>
-            );
-          })}
-        </div>
-      )}
+      {/* Tổng quan — cộng dồn tất cả tháng */}
+      {monthly.length > 0 && (() => {
+        const totalIn = monthly.reduce((s, m) => s + m.total_in, 0);
+        const totalSold = monthly.reduce((s, m) => s + m.total_sold, 0);
+        const totalRemaining = monthly.reduce((s, m) => s + m.total_remaining, 0);
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="rounded-xl border border-border bg-surface p-4">
+              <p className="text-sm text-muted">Đã giao (tất cả)</p>
+              <p className="mt-1 text-2xl font-semibold tabular">{n(totalIn)} hộp</p>
+            </div>
+            <div className="rounded-xl border border-border bg-surface p-4">
+              <p className="text-sm text-muted">Đã bán (tất cả)</p>
+              <p className="mt-1 text-2xl font-semibold tabular">{n(totalSold)} hộp</p>
+            </div>
+            <div className={`rounded-xl border p-4 ${totalRemaining > 0 ? 'border-amber-200 bg-amber-50' : 'border-border bg-surface'}`}>
+              <p className="text-sm text-muted">Còn tồn tại siêu thị</p>
+              <p className={`mt-1 text-2xl font-semibold tabular ${totalRemaining > 0 ? 'text-amber-700' : ''}`}>{n(totalRemaining)} hộp</p>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Form nhập */}

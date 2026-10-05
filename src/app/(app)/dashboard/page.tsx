@@ -25,6 +25,8 @@ export default async function DashboardPage() {
   ]);
   const currentMonthKey = todayVN().slice(0, 7);
   const supermarket = supermarketMonths.find((m) => m.month.slice(0, 7) === currentMonthKey) ?? null;
+  // Tồn kho thực tế = cộng dồn tất cả tháng (T9 còn tồn vẫn ở siêu thị).
+  const supermarketTotalRemaining = supermarketMonths.reduce((s, m) => s + m.total_remaining, 0);
   const isOwner = role === 'owner';
 
   // Hôm nay (giờ VN). Chưa bán gì thì chưa có dòng trong daily_revenue.
@@ -160,7 +162,10 @@ export default async function DashboardPage() {
               <span className={supermarket.total_remaining > 0 ? 'text-amber-600 font-medium' : 'text-positive font-medium'}>
                 {n(supermarket.total_sold)}
               </span>{' '}
-              · Tồn {n(supermarket.total_remaining)} hộp
+              · Tồn{' '}
+              <span className={supermarketTotalRemaining > 0 ? 'text-amber-600 font-medium' : ''}>
+                {n(supermarketTotalRemaining)}
+              </span>{' '}hộp
             </p>
           ) : (
             <p className="text-sm text-muted mt-1">Chưa giao hàng tháng này</p>
