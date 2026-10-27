@@ -55,6 +55,9 @@ export default function SaleForm({
   const price1Tom = menu.find((m) => m.name === '1 tôm')?.price ?? 70_000;
   const price2Tom = menu.find((m) => m.name === '2 tôm')?.price ?? 100_000;
 
+  // Ẩn "Hộp 3 bánh 2 tôm" — đã gộp vào thành phần của "Hộp 3 bánh".
+  const displayMenu = menu.filter((m) => m.name !== 'Hộp 3 bánh 2 tôm');
+
   // Khi staff điền 1 tôm: cập nhật state, tính giá hộp, cập nhật hidden box_2tom.
   const handleBoxCompo = (menuItemId: string, raw: string) => {
     const val = Math.min(3, Math.max(0, parseInt(raw) || 0));
@@ -156,7 +159,7 @@ export default function SaleForm({
             <span className="text-right">SL</span>
             <span className="text-right">Đơn giá (₫)</span>
           </div>
-          {menu.map((m, i) => (
+          {displayMenu.map((m, i) => (
             <div key={m.id}>
               <div
                 className={`grid grid-cols-[1fr_5rem_7.5rem] items-center gap-2 border-t border-border px-3 py-2 ${
@@ -225,7 +228,7 @@ export default function SaleForm({
             </div>
           ))}
         </div>
-        {menu.length === 0 && (
+        {displayMenu.length === 0 && (
           <p className="mt-1 text-xs text-negative">
             Chưa có món nào. Chủ DN vào trang Thực đơn để thêm.
           </p>
