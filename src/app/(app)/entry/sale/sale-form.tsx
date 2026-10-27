@@ -48,23 +48,23 @@ export default function SaleForm({
 
   // Số lượng hộp đang nhập (để show/hide sub-form thành phần).
   const [boxQty, setBoxQty] = useState<Record<string, number>>({});
+  // Thành phần hộp: key = menu_item_id, value = số bánh 1 tôm (0–3); 2 tôm = 3 - value.
+  const [boxCompo, setBoxCompo] = useState<Record<string, number>>({});
 
   // Giá bánh lẻ để tính giá hộp từ thành phần.
   const price1Tom = menu.find((m) => m.name === '1 tôm')?.price ?? 70_000;
   const price2Tom = menu.find((m) => m.name === '2 tôm')?.price ?? 100_000;
 
-  // Khi thành phần hộp thay đổi: tự điền ô kia (sum=3) + tính lại đơn giá hộp.
-  const applyBoxCompo = (menuItemId: string, changed: 'box_1tom' | 'box_2tom') => {
+  // Khi staff điền 1 tôm: cập nhật state, tính giá hộp, cập nhật hidden box_2tom.
+  const handleBoxCompo = (menuItemId: string, raw: string) => {
+    const val = Math.min(3, Math.max(0, parseInt(raw) || 0));
+    setBoxCompo((prev) => ({ ...prev, [menuItemId]: val }));
     const form = formRef.current;
     if (!form) return;
-    const f1 = form.elements.namedItem(`box_1tom_${menuItemId}`) as HTMLInputElement | null;
-    const f2 = form.elements.namedItem(`box_2tom_${menuItemId}`) as HTMLInputElement | null;
     const priceEl = form.elements.namedItem(`price_${menuItemId}`) as HTMLInputElement | null;
-    if (!f1 || !f2 || !priceEl) return;
-    const val = Math.min(3, Math.max(0, parseInt((changed === 'box_1tom' ? f1 : f2).value) || 0));
-    if (changed === 'box_1tom') { f1.value = String(val); f2.value = String(3 - val); }
-    else { f2.value = String(val); f1.value = String(3 - val); }
-    priceEl.value = groupDigits(String(parseInt(f1.value) * price1Tom + parseInt(f2.value) * price2Tom));
+    if (priceEl) {
+      priceEl.value = groupDigits(String(val * price1Tom + (3 - val) * price2Tom));
+    }
     recompute();
   };
 
@@ -119,23 +119,6 @@ export default function SaleForm({
     recompute();
   };
 
-  // Khi sub-form thành phần vừa xuất hiện (boxQty > 0), tính giá hộp theo defaultValue.
-  useEffect(() => {
-    const form = formRef.current;
-    if (!form) return;
-    for (const [id, qty] of Object.entries(boxQty)) {
-      const priceEl = form.elements.namedItem(`price_${id}`) as HTMLInputElement | null;
-      if (!priceEl) continue;
-      if (qty <= 0) continue;
-      const f1 = form.elements.namedItem(`box_1tom_${id}`) as HTMLInputElement | null;
-      const f2 = form.elements.namedItem(`box_2tom_${id}`) as HTMLInputElement | null;
-      if (f1 && f2) {
-        priceEl.value = groupDigits(String(parseInt(f1.value) * price1Tom + parseInt(f2.value) * price2Tom));
-      }
-    }
-    recompute();
-  }, [boxQty]); // eslint-disable-line react-hooks/exhaustive-deps
-
   useEffect(() => {
     if (state.ok) {
       formRef.current?.reset(); // khôi phục đơn giá mặc định (defaultValue) + xóa SL
@@ -150,6 +133,7 @@ export default function SaleForm({
       if (noBagInputRef.current) noBagInputRef.current.value = 'false';
       setSelectedCustomer(null);
       setBoxQty({});
+      setBoxCompo({});
     }
   }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -212,34 +196,29 @@ export default function SaleForm({
               </div>
               {m.is_box && (boxQty[m.id] ?? 0) > 0 && (
                 <div className="border-t border-amber-200 bg-amber-50 px-3 py-2.5">
-                  <p className="text-xs text-amber-700 mb-2">Thành phần mỗi hộp (tổng = 3 bánh)</p>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <label className="flex items-center gap-1.5 text-sm">
-                      <span className="text-amber-800 font-medium">1 tôm</span>
+                  <p className="text-xs text-amber-700 mb-2.5">Thành phần mỗi hộp (tổng = 3 bánh)</p>
+                  {/* Hidden inputs gửi lên server */}
+                  <input type="hidden" name={`box_1tom_${m.id}`} value={boxCompo[m.id] ?? ''} />
+                  <input type="hidden" name={`box_2tom_${m.id}`} value={boxCompo[m.id] !== undefined ? 3 - boxCompo[m.id] : ''} />
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 text-sm">
+                      <span className="text-amber-800 font-medium w-10">1 tôm</span>
                       <input
-                        name={`box_1tom_${m.id}`}
                         type="number"
+                        inputMode="numeric"
                         min="0"
                         max="3"
-                        defaultValue={2}
-                        onInput={() => applyBoxCompo(m.id, 'box_1tom')}
-                        className="w-14 rounded border border-amber-300 bg-white px-2 py-1 text-sm text-right tabular outline-none focus:border-amber-500"
+                        placeholder="?"
+                        value={boxCompo[m.id] !== undefined ? boxCompo[m.id] : ''}
+                        onChange={(e) => handleBoxCompo(m.id, e.currentTarget.value)}
+                        className="w-16 h-11 rounded-lg border border-amber-300 bg-white px-2 text-base text-center font-semibold tabular outline-none focus:border-amber-500"
                       />
                     </label>
-                    <span className="text-amber-600 text-sm">+</span>
-                    <label className="flex items-center gap-1.5 text-sm">
-                      <span className="text-amber-800 font-medium">2 tôm</span>
-                      <input
-                        name={`box_2tom_${m.id}`}
-                        type="number"
-                        min="0"
-                        max="3"
-                        defaultValue={1}
-                        onInput={() => applyBoxCompo(m.id, 'box_2tom')}
-                        className="w-14 rounded border border-amber-300 bg-white px-2 py-1 text-sm text-right tabular outline-none focus:border-amber-500"
-                      />
-                    </label>
-                    <span className="text-xs text-amber-600">= 3 bánh/hộp</span>
+                    {boxCompo[m.id] !== undefined && (
+                      <span className="text-sm text-amber-700">
+                        → 2 tôm: <strong>{3 - boxCompo[m.id]}</strong>
+                      </span>
+                    )}
                   </div>
                 </div>
               )}
