@@ -5,8 +5,8 @@ export default function ConsumableEntryPage() {
   return (
     <div>
       <PageHeader
-        title="Nhập dầu ăn / túi bóng kính"
-        subtitle="Ghi lần nhập dầu ăn (lít) hoặc túi bóng kính (kg)"
+        title="Nhập dầu ăn / túi bóng kính / túi trắng"
+        subtitle="Ghi lần nhập dầu ăn (lít), túi bóng kính (kg) hoặc túi trắng (kg)"
       />
       <ConsumableForm />
     </div>
