@@ -55,6 +55,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { href: '/entry/gift', label: 'Nhập bánh tặng', icon: '＋' },
       { href: '/entry/ingredient', label: 'Nhập bột/gia vị', icon: '＋' },
       { href: '/entry/material', label: 'Nhập túi/tem', icon: '＋' },
+      { href: '/entry/consumable', label: 'Nhập dầu/túi bóng', icon: '＋' },
       { href: '/entry/box', label: 'Nhập hộp', icon: '＋' },
       { href: '/entry/customer', label: 'Nhập khách hàng', icon: '＋' },
     ],

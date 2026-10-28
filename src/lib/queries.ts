@@ -1025,6 +1025,66 @@ export async function getSupermarketByMonth(): Promise<SupermarketMonth[]> {
   }));
 }
 
+// ── Consumables (dầu ăn / túi bóng kính) ─────────────────────────────────────
+
+export type ConsumableItem = 'dau_an' | 'tui_bong_kinh';
+
+export interface ConsumableInventoryRow {
+  item: ConsumableItem;
+  total_in: number;
+  total_cost: number;
+  cost_per_unit: number | null;
+  first_purchase: string | null;
+  last_purchase: string | null;
+  purchase_count: number;
+}
+
+export interface ConsumablePurchaseRow {
+  id: string;
+  item: ConsumableItem;
+  purchase_date: string;
+  quantity: number;
+  total_cost: number;
+  note: string | null;
+}
+
+export async function getConsumableInventory(): Promise<ConsumableInventoryRow[]> {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('consumable_inventory')
+    .select('*');
+  if (error) throw error;
+  return (data ?? []).map((d: any) => ({
+    item: d.item as ConsumableItem,
+    total_in: Number(d.total_in ?? 0),
+    total_cost: Number(d.total_cost ?? 0),
+    cost_per_unit: d.cost_per_unit != null ? Number(d.cost_per_unit) : null,
+    first_purchase: d.first_purchase ?? null,
+    last_purchase: d.last_purchase ?? null,
+    purchase_count: Number(d.purchase_count ?? 0),
+  }));
+}
+
+export async function getConsumablePurchases(): Promise<ConsumablePurchaseRow[]> {
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('consumable_purchases')
+    .select('id, item, purchase_date, quantity, total_cost, note')
+    .order('purchase_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((d: any) => ({
+    id: d.id,
+    item: d.item as ConsumableItem,
+    purchase_date: d.purchase_date,
+    quantity: Number(d.quantity),
+    total_cost: Number(d.total_cost),
+    note: d.note ?? null,
+  }));
+}
+
 /** Role của user hiện tại — dùng để gate trang P&L. */
 export async function getCurrentRole(): Promise<'owner' | 'staff' | null> {
   const supabase = await createClient();

@@ -512,6 +512,56 @@ export async function deleteMaterialPurchase(formData: FormData): Promise<void> 
   revalidatePath('/pnl');
 }
 
+// ── Consumable purchases (dầu ăn / túi bóng kính) ────────────────────────────
+
+/** Nhập dầu ăn hoặc túi bóng kính. */
+export async function createConsumablePurchase(
+  _prev: EntryState,
+  formData: FormData,
+): Promise<EntryState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Phiên đăng nhập hết hạn.' };
+
+  const item = String(formData.get('item') ?? '').trim();
+  const purchase_date = String(formData.get('purchase_date') ?? '').trim();
+  const quantity = parseNumber(String(formData.get('quantity') ?? ''));
+  const total_cost = parseNumber(String(formData.get('total_cost') ?? ''));
+  const note = String(formData.get('note') ?? '').trim() || null;
+
+  if (item !== 'dau_an' && item !== 'tui_bong_kinh')
+    return { ok: false, error: 'Chọn loại vật tư.' };
+  if (!purchase_date) return { ok: false, error: 'Thiếu ngày nhập.' };
+  if (quantity === null || quantity <= 0) return { ok: false, error: 'Số lượng không hợp lệ.' };
+  if (total_cost === null || total_cost < 0) return { ok: false, error: 'Tổng chi phí không hợp lệ.' };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from('consumable_purchases').insert({
+    item,
+    purchase_date,
+    quantity,
+    total_cost,
+    note,
+    created_by: user.id,
+  });
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath('/materials');
+  return { ok: true, error: null };
+}
+
+/** Xóa một lần nhập dầu ăn / túi bóng kính (owner only). */
+export async function deleteConsumablePurchase(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const id = String(formData.get('id') ?? '').trim();
+  if (!id) return;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any).from('consumable_purchases').delete().eq('id', id);
+  revalidatePath('/materials');
+}
+
 // ── Box inventory ────────────────────────────────────────────────────────────
 
 /** Nhập hộp combo vào kho. */

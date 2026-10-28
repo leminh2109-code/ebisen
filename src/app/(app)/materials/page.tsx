@@ -1,20 +1,35 @@
 import Link from 'next/link';
-import { getMaterialSummary, getMaterialPurchases, getCurrentRole } from '@/lib/queries';
+import {
+  getMaterialSummary, getMaterialPurchases, getCurrentRole,
+  getConsumableInventory, getConsumablePurchases,
+  type ConsumableItem,
+} from '@/lib/queries';
 import { PageHeader, Card, EmptyState } from '@/components/ui';
 import { formatCurrency, formatDate, formatMonth } from '@/lib/format';
-import { deleteMaterialPurchase } from '../entry/actions';
+import { deleteMaterialPurchase, deleteConsumablePurchase } from '../entry/actions';
 import { MATERIAL_LOW_STOCK, isMaterialLow } from '@/lib/inventory-thresholds';
 
 export const dynamic = 'force-dynamic';
 
 const n = (v: number | null) => Number(v ?? 0).toLocaleString('vi-VN');
+const nDec = (v: number | null, d = 3) => Number(v ?? 0).toLocaleString('vi-VN', { maximumFractionDigits: d });
 const LABEL: Record<string, string> = { tui: 'Túi', tem: 'Tem' };
+const CONSUMABLE_LABEL: Record<ConsumableItem, string> = {
+  dau_an: 'Dầu ăn',
+  tui_bong_kinh: 'Túi bóng kính',
+};
+const CONSUMABLE_UNIT: Record<ConsumableItem, string> = {
+  dau_an: 'lít',
+  tui_bong_kinh: 'kg',
+};
 
 export default async function MaterialsPage() {
-  const [summary, purchases, role] = await Promise.all([
+  const [summary, purchases, role, consumableInventory, consumablePurchases] = await Promise.all([
     getMaterialSummary(),
     getMaterialPurchases(),
     getCurrentRole(),
+    getConsumableInventory(),
+    getConsumablePurchases(),
   ]);
   const isOwner = role === 'owner';
   const { tui, tem, thisMonthCost, costByMonth } = summary;
@@ -154,6 +169,104 @@ export default async function MaterialsPage() {
         giá (túi+tem), cộng vào P&L. Phần chưa dùng giữ nguyên là giá trị tồn kho.
         Tính từ tháng nhập vật tư đầu tiên. Mọi con số tính trong Postgres.
       </p>
+
+      {/* ── Dầu ăn & Túi bóng kính ── */}
+      <div className="mt-8 flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold">Dầu ăn &amp; Túi bóng kính</h2>
+          <p className="text-xs text-muted mt-0.5">Tồn kho theo lít / kg — nhập thủ công mỗi lần mua</p>
+        </div>
+        <Link
+          href="/entry/consumable"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:opacity-90"
+        >
+          + Nhập dầu / túi
+        </Link>
+      </div>
+
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {(['dau_an', 'tui_bong_kinh'] as ConsumableItem[]).map((key) => {
+          const inv = consumableInventory.find((i) => i.item === key);
+          const unit = CONSUMABLE_UNIT[key];
+          const label = CONSUMABLE_LABEL[key];
+          if (!inv) {
+            return (
+              <div key={key} className="rounded-xl border border-dashed border-border bg-surface p-4">
+                <p className="text-sm text-muted">{label}</p>
+                <p className="mt-1 text-sm text-muted">Chưa có dữ liệu nhập.</p>
+              </div>
+            );
+          }
+          return (
+            <div key={key} className="rounded-xl border border-border bg-surface p-4">
+              <div className="flex items-baseline justify-between">
+                <p className="text-sm text-muted">{label} — tổng đã nhập</p>
+                {inv.cost_per_unit != null && (
+                  <p className="text-xs text-muted tabular">
+                    {formatCurrency(inv.cost_per_unit)}/{unit}
+                  </p>
+                )}
+              </div>
+              <p className="mt-1 text-2xl font-semibold tabular">
+                {nDec(inv.total_in)} {unit}
+              </p>
+              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-muted tabular">
+                <span>Tổng chi: {formatCurrency(inv.total_cost)}</span>
+                <span>Lần nhập: {inv.purchase_count}</span>
+              </div>
+              {inv.last_purchase && (
+                <p className="mt-1 text-xs text-muted">
+                  Lần nhập cuối: {formatDate(inv.last_purchase)}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <Card title="Lịch sử nhập dầu ăn &amp; túi bóng kính" className="mt-6">
+        {consumablePurchases.length === 0 ? (
+          <EmptyState message='Chưa có lần nhập nào. Bấm "+ Nhập dầu / túi" để thêm.' />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-muted">
+                  <th className="px-4 py-2 font-medium">Ngày</th>
+                  <th className="px-4 py-2 font-medium">Loại</th>
+                  <th className="px-4 py-2 font-medium text-right">Số lượng</th>
+                  <th className="px-4 py-2 font-medium text-right">Tổng chi phí</th>
+                  <th className="px-4 py-2 font-medium">Ghi chú</th>
+                  {isOwner && <th className="px-4 py-2 font-medium text-right">Xóa</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {consumablePurchases.map((p) => (
+                  <tr key={p.id} className="border-b border-border last:border-0">
+                    <td className="px-4 py-2 tabular">{formatDate(p.purchase_date)}</td>
+                    <td className="px-4 py-2">{CONSUMABLE_LABEL[p.item]}</td>
+                    <td className="px-4 py-2 text-right tabular">
+                      {nDec(p.quantity)} {CONSUMABLE_UNIT[p.item]}
+                    </td>
+                    <td className="px-4 py-2 text-right tabular">{formatCurrency(p.total_cost)}</td>
+                    <td className="px-4 py-2 text-muted">{p.note ?? ''}</td>
+                    {isOwner && (
+                      <td className="px-4 py-2 text-right">
+                        <form action={deleteConsumablePurchase}>
+                          <input type="hidden" name="id" value={p.id} />
+                          <button type="submit" className="text-negative hover:underline text-xs">
+                            Xóa
+                          </button>
+                        </form>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
