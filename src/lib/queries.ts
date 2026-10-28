@@ -1031,7 +1031,7 @@ export async function getSupermarketByMonth(): Promise<SupermarketMonth[]> {
 
 // ── Consumables (dầu ăn / túi bóng kính) ─────────────────────────────────────
 
-export type ConsumableItem = 'dau_an' | 'tui_bong_kinh';
+export type ConsumableItem = 'dau_an' | 'tui_bong_kinh' | 'tui_trang';
 
 export interface ConsumableInventoryRow {
   item: ConsumableItem;

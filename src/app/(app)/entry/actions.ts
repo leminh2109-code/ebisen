@@ -531,7 +531,7 @@ export async function createConsumablePurchase(
   const total_cost = parseNumber(String(formData.get('total_cost') ?? ''));
   const note = String(formData.get('note') ?? '').trim() || null;
 
-  if (item !== 'dau_an' && item !== 'tui_bong_kinh')
+  if (!['dau_an', 'tui_bong_kinh', 'tui_trang'].includes(item))
     return { ok: false, error: 'Chọn loại vật tư.' };
   if (!purchase_date) return { ok: false, error: 'Thiếu ngày nhập.' };
   if (quantity === null || quantity <= 0) return { ok: false, error: 'Số lượng không hợp lệ.' };

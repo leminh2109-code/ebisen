@@ -17,10 +17,12 @@ const LABEL: Record<string, string> = { tui: 'Túi', tem: 'Tem' };
 const CONSUMABLE_LABEL: Record<ConsumableItem, string> = {
   dau_an: 'Dầu ăn',
   tui_bong_kinh: 'Túi bóng kính',
+  tui_trang: 'Túi trắng',
 };
 const CONSUMABLE_UNIT: Record<ConsumableItem, string> = {
   dau_an: 'lít',
   tui_bong_kinh: 'kg',
+  tui_trang: 'cái',
 };
 
 export default async function MaterialsPage() {
@@ -185,7 +187,7 @@ export default async function MaterialsPage() {
       </div>
 
       <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {(['dau_an', 'tui_bong_kinh'] as ConsumableItem[]).map((key) => {
+        {(['dau_an', 'tui_bong_kinh', 'tui_trang'] as ConsumableItem[]).map((key) => {
           const inv = consumableInventory.find((i) => i.item === key);
           const unit = CONSUMABLE_UNIT[key];
           const label = CONSUMABLE_LABEL[key];

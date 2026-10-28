@@ -10,13 +10,14 @@ const initial: EntryState = { ok: false, error: null };
 const ITEMS = [
   { value: 'dau_an',        label: 'Dầu ăn',        unit: 'lít', placeholder: 'VD: 5' },
   { value: 'tui_bong_kinh', label: 'Túi bóng kính', unit: 'kg',  placeholder: 'VD: 2.5' },
+  { value: 'tui_trang',     label: 'Túi trắng',     unit: 'cái', placeholder: 'VD: 200' },
 ] as const;
 
 export default function ConsumableForm() {
   const [state, action, pending] = useActionState(createConsumablePurchase, initial);
   const formRef = useRef<HTMLFormElement>(null);
   const qtyRef = useRef<HTMLInputElement>(null);
-  const [item, setItem] = useState<'dau_an' | 'tui_bong_kinh'>('dau_an');
+  const [item, setItem] = useState<'dau_an' | 'tui_bong_kinh' | 'tui_trang'>('dau_an');
 
   const meta = ITEMS.find((i) => i.value === item) ?? ITEMS[0];
 
