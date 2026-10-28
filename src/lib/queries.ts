@@ -42,6 +42,7 @@ export type MonthlyPnl = {
   box_cost: number;
   shrimp_cost: number;
   ingredient_cost: number; // bột+gia vị = bánh × định mức × giá bình quân, từ T7/2026
+  consumable_cost: number; // dầu ăn + túi bóng kính (từ consumable_purchases)
   bonus_cost: number; // thưởng NV = tổng bánh (bán+tặng) × 10k, tính tự động từ T9/2026
   salary_cost: number; // lương NV cố định, nhập tay cuối tháng từ T9/2026
   station_share: number; // chia sẻ 30% doanh thu với trạm
@@ -271,7 +272,10 @@ export async function getPnlByMonth(): Promise<MonthlyPnl[]> {
     .select('*')
     .order('month', { ascending: false });
   if (error) throw error;
-  return (data ?? []) as MonthlyPnl[];
+  return (data ?? []).map((d: any) => ({
+    ...d,
+    consumable_cost: Number(d.consumable_cost ?? 0),
+  })) as MonthlyPnl[];
 }
 
 /**

@@ -28,6 +28,7 @@ export default async function PnlPage() {
   const hasBox = rows.some((r) => Number(r.box_cost) > 0);
   const hasShrimp = rows.some((r) => Number(r.shrimp_cost) > 0);
   const hasIngredient = rows.some((r) => Number(r.ingredient_cost) > 0);
+  const hasConsumable = rows.some((r) => Number(r.consumable_cost) > 0);
   const hasBonus = rows.some((r) => Number(r.bonus_cost) > 0);
   const hasSalary = rows.some((r) => Number(r.salary_cost) > 0);
 
@@ -71,6 +72,9 @@ export default async function PnlPage() {
                   {hasIngredient && (
                     <th className="px-2 py-2 font-medium text-right">Bột</th>
                   )}
+                  {hasConsumable && (
+                    <th className="px-2 py-2 font-medium text-right">CP khác</th>
+                  )}
                   {hasBonus && (
                     <th className="px-2 py-2 font-medium text-right">Thưởng</th>
                   )}
@@ -111,6 +115,11 @@ export default async function PnlPage() {
                       {hasIngredient && (
                         <td className="px-2 py-2 text-right tabular text-muted">
                           {Number(r.ingredient_cost) > 0 ? formatM(r.ingredient_cost) : '—'}
+                        </td>
+                      )}
+                      {hasConsumable && (
+                        <td className="px-2 py-2 text-right tabular text-muted">
+                          {Number(r.consumable_cost) > 0 ? formatM(r.consumable_cost) : '—'}
                         </td>
                       )}
                       {hasBonus && (
