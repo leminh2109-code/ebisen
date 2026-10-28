@@ -22,7 +22,7 @@ const CONSUMABLE_LABEL: Record<ConsumableItem, string> = {
 const CONSUMABLE_UNIT: Record<ConsumableItem, string> = {
   dau_an: 'lít',
   tui_bong_kinh: 'kg',
-  tui_trang: 'cái',
+  tui_trang: 'kg',
 };
 
 export default async function MaterialsPage() {

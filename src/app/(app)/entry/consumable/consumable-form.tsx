@@ -10,7 +10,7 @@ const initial: EntryState = { ok: false, error: null };
 const ITEMS = [
   { value: 'dau_an',        label: 'Dầu ăn',        unit: 'lít', placeholder: 'VD: 5' },
   { value: 'tui_bong_kinh', label: 'Túi bóng kính', unit: 'kg',  placeholder: 'VD: 2.5' },
-  { value: 'tui_trang',     label: 'Túi trắng',     unit: 'cái', placeholder: 'VD: 200' },
+  { value: 'tui_trang',     label: 'Túi trắng',     unit: 'kg',  placeholder: 'VD: 2' },
 ] as const;
 
 export default function ConsumableForm() {
